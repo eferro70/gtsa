@@ -6,76 +6,85 @@ O GTSA é uma ferramenta automatizada para análise, geração e execução de t
 
 - **Geração de testes baseada em OpenAPI**
 - **Análise heurística e via LLM dos endpoints**
-- **Execução automatizada com Schemathesis + Pytest**
+- **Execução automatizada com Pytest**
 - **Relatórios de riscos, PII e vulnerabilidades**
 - **Suporte a autenticação (token, cookies, headers)**
 
 ## Estrutura do Projeto
 
 ```
-├── README.md                  # Documentação principal
-├── requirements.txt           # Dependências Python
-├── pytest.ini                 # Configuração de testes
-├── orquestrador.sh            # Orquestrador de execução
-├── config/                    # Configurações (auth, PII)
-│   ├── auth_config.json
-│   └── pii_patterns.json
-├── output/                    # Resultados e artefatos gerados
-│   ├── openapi.json/.yaml     # Especificação OpenAPI
-│   ├── enriched_endpoints.json# Endpoints enriquecidos
-│   ├── analysis_with_llm.json # Análise de risco (LLM)
-│   ├── analysis_with_llm_report.md
-│   ├── enrichment_report.json # Relatório de enriquecimento
-│   ├── analises/              # Execuções e relatórios históricos
-│   ├── scan_*/                # Scans estáticos por execução
-│   └── tests/                 # Testes gerados automaticamente
+gtsa/
+├── README.md                        # Documentação principal
+├── requirements.txt                 # Dependências Python
+├── pytest.ini                       # Configuração de testes
+├── orquestrador.sh                  # Orquestrador da pipeline completa
+├── config/                          # Configurações declarativas
+│   ├── auth_config.json             # Regras de autenticação e tokens por role
+│   └── pii_patterns.json            # Padrões de campos PII
+├── output/                          # Artefatos gerados pela pipeline
+│   ├── openapi.json / openapi.yaml  # Especificação OpenAPI
+│   ├── enriched_endpoints.json      # Endpoints enriquecidos (base dos testes)
+│   ├── enrichment_report.json       # Relatório do enriquecimento
+│   ├── analysis_with_llm.json       # Análise de risco via LLM
+│   ├── analysis_with_llm_report.md  # Relatório da análise LLM
+│   ├── analises/                    # Resultados de análise de risco e enriquecimento (sempre sobrescritos)
+│   ├── scan_<data-hora>/            # Resultados do scan estático por execução
+│   │   ├── all_endpoints.json
+│   │   ├── REPORT.md
+│   │   └── summary.json
+│   └── tests/                       # Testes gerados automaticamente
 │       ├── test_api_security.py
-│       ├── hooks/
 │       ├── run_llm_tests.sh
-│       └── dados/             # Dados de exemplo por endpoint
-└── src/                       # Código-fonte principal
-  ├── application/           # Orquestração de etapas
-  │   ├── pipeline/          # Scripts de cada etapa
-  │   │   ├── step1_scan.py
-  │   │   ├── step2_openapi.py
-  │   │   ├── step3_dados_exemplo.py
-  │   │   ├── step4_ast_parser.py
-  │   │   ├── step5_analyzer.py
-  │   │   ├── step6_enricher.py
-  │   │   └── step7_generator.py
-  │   └── reporting/         # Geração de relatórios
-  │       └── gerar_relatorio_markdown.py
-  ├── domain/                # Payloads, regras e entidades
-  │   └── security_payloads.py
-  ├── infrastructure/        # Implementações técnicas
-  │   ├── generators/        # Scripts de geração
-  │   │   ├── gerar_dados_exemplo.py
-  │   │   ├── node_openapi_generator.py
-  │   │   └── smart_generator.py
-  │   ├── llm/               # Integração com LLM
-  │   │   └── llm_analyzer.py
-  │   ├── parsers/           # Parsers de AST
-  │   │   ├── ast_parser_node.py
-  │   │   └── test_parser.py
-  │   └── interfaces/        # Hooks e interfaces
-  │       └── hooks/
-  │           ├── auth_hooks.py
-  │           └── llm_hooks.py
-  └── interfaces/            # (Reservado para integrações externas)
+│       ├── test_api_llm.log
+│       ├── test_api_llm_summary.md
+│       └── dados/                   # Payloads de exemplo por endpoint
+└── src/                             # Código-fonte principal
+    ├── application/
+    │   ├── pipeline/                # Um módulo por etapa da pipeline
+    │   │   ├── step1_scan.py
+    │   │   ├── step2_openapi.py
+    │   │   ├── step3_dados_exemplo.py
+    │   │   ├── step4_ast_parser.py
+    │   │   ├── step5_analyzer.py
+    │   │   ├── step6_enricher.py
+    │   │   └── step7_generator.py
+    │   └── reporting/
+    │       └── gerar_relatorio_markdown.py
+    ├── domain/
+    │   └── security_payloads.py     # Payloads e regras de segurança
+    ├── infrastructure/
+    │   ├── generators/
+    │   │   ├── gerar_dados_exemplo.py
+    │   │   ├── node_openapi_generator.py
+    │   │   └── smart_generator.py
+    │   ├── llm/
+    │   │   └── llm_analyzer.py
+    │   └── parsers/
+    │       ├── ast_parser_node.py
+    │       └── test_parser.py
+    └── interfaces/
+        ├── hooks/                   # Hooks de autenticação para os testes
+        │   ├── auth_hooks.py
+        │   └── llm_hooks.py
+        └── stateful/                # Testes stateful baseados em Hypothesis
+            ├── api_state_machine.py
+            └── test_stateful_api.py
 ```
 
 **Principais diretórios e funções:**
 
-- **config/**: Arquivos de configuração de autenticação e padrões PII.
-- **output/**: Resultados gerados (relatórios, endpoints, testes, exemplos).
-- **src/application/pipeline/**: Scripts de orquestração das etapas do fluxo.
-- **src/infrastructure/generators/**: Scripts de geração de dados, OpenAPI e testes.
-- **src/infrastructure/parsers/**: Parsers de AST e extração de endpoints.
-- **src/infrastructure/llm/**: Scripts de análise com LLM.
-- **src/domain/**: Payloads e regras de negócio.
-- **src/infrastructure/interfaces/hooks/**: Hooks de autenticação e LLM para testes.
+- **config/**: Configurações declarativas de autenticação e padrões PII. Devem ser adaptados para cada API testada.
+- **output/**: Todos os artefatos gerados pela pipeline. Podem ser versionados para auditoria.
+- **src/application/pipeline/**: Scripts de orquestração de cada etapa da pipeline (steps 1–7).
+- **src/application/reporting/**: Geração do relatório Markdown a partir do log de testes.
+- **src/infrastructure/generators/**: Geração de dados de exemplo, OpenAPI e testes inteligentes.
+- **src/infrastructure/parsers/**: Parsers de AST e extração de endpoints do código TypeScript.
+- **src/infrastructure/llm/**: Integração com modelos de linguagem para análise de risco e PII.
+- **src/domain/**: Payloads e regras de segurança reutilizáveis.
+- **src/interfaces/hooks/**: Hooks de autenticação usados pelos testes gerados.
+- **src/interfaces/stateful/**: Testes stateful que simulam fluxos reais de uso da API.
 
-## Instação e Configuração
+## Instalação e Configuração
 
 ### 1. Instale as dependências
 
@@ -85,40 +94,34 @@ source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
-### 2. Adapte os arquivos JSON de configuração à sua API
+### 2. Adapte os arquivos de configuração à sua API
 
-- **auth_config.json**: Define regras de autenticação, headers fixos, tokens de roles e prefixos de autenticação usados nos testes automatizados. Permite customizar como cada teste irá autenticar na API.
+- **config/auth_config.json**: Define regras de autenticação, headers fixos, tokens por role e prefixos usados nos testes. Permite customizar como cada teste autentica na API.
 
-- **pii_patterns.json**: Lista de padrões de campos considerados PII (informação pessoal sensível) para análise heurística e LLM. Exemplo:
+- **config/pii_patterns.json**: Lista de padrões de campos considerados PII (informação pessoal sensível). Exemplo:
 
-  [
-  "cpf",
-  "cnpj",
-  "email",
-  "telefone",
-  "celular",
-  "nome",
-  "documento"
-  ]
+  ```json
+  ["cpf", "cnpj", "email", "telefone", "celular", "nome", "documento"]
+  ```
 
-  > Edite este arquivo para adaptar a detecção de PII ao seu domínio. O formato é um array JSON simples, sem comentários (limitação do padrão JSON).
+  > Edite este arquivo para adaptar a detecção de PII ao seu domínio.
 
-- **outros arquivos .json em output/**: São artefatos gerados automaticamente (endpoints, relatórios, enriquecimento, etc). Não devem ser editados manualmente.
+- **Arquivos em output/**: São artefatos gerados automaticamente. Não devem ser editados manualmente.
 
 ### 3. Configuração do arquivo .env
 
-O arquivo `.env` centraliza variáveis de ambiente sensíveis e parâmetros de execução para o GTSA. Ele é carregado automaticamente pelos scripts Python do projeto (via python-dotenv).
+O arquivo `.env` centraliza variáveis de ambiente sensíveis e parâmetros de execução. É carregado automaticamente pelos scripts Python via `python-dotenv`.
 
-**Principais variáveis suportadas:**
+**Principais variáveis:**
 
-- `API_BASE_URL` – URL base da API a ser testada (ex: http://localhost, https://api.suaempresa.com)
-- `ENDPOINT_PREFIX` – Prefixo dos endpoints da API (ex: /api, /api/v1)
+- `API_BASE_URL` – URL base da API (ex: `http://localhost`, `https://api.suaempresa.com`)
+- `ENDPOINT_PREFIX` – Prefixo dos endpoints (ex: `/api`, `/api/v1`)
 - `AUTH_COOKIE_NAME` – Nome do cookie de autenticação, se aplicável
-- `TOKEN_ADMIN_PRIMEIRO`, `TOKEN_GESTOR1`, ... – Tokens JWT para diferentes perfis de usuário (usados nos testes)
+- `TOKEN_REQ`, `TOKEN_GES`, `TOKEN_ADM`, ... – Tokens JWT por perfil de usuário
 - `CHAVE_ACESSO_SISTEMA` – Chave de acesso do sistema, se necessário
-- `LLM_BACKEND` – Backend LLM a ser usado (ex: gatiator, ollama)
-- `LLM_BASE_URL` – URL do serviço LLM (ex: http://localhost:1313/v1/chat/completions)
-- `LLM_MODEL` – Nome do modelo LLM (ex: codellama:7b, phi:2.7b)
+- `LLM_BACKEND` – Backend LLM (ex: `gatiator`, `ollama`)
+- `LLM_BASE_URL` – URL do serviço LLM (ex: `http://localhost:1313/v1/chat/completions`)
+- `LLM_MODEL` – Modelo LLM (ex: `codellama:7b`, `phi:2.7b`)
 
 **Exemplo de .env:**
 
@@ -126,7 +129,9 @@ O arquivo `.env` centraliza variáveis de ambiente sensíveis e parâmetros de e
 API_BASE_URL=http://localhost
 ENDPOINT_PREFIX=/api
 AUTH_COOKIE_NAME=neosigner-auth
-TOKEN_ADMIN_PRIMEIRO=eyJhbGciOi...
+TOKEN_REQ=eyJhbGciOi...
+TOKEN_GES=eyJhbGciOi...
+TOKEN_ADM=eyJhbGciOi...
 CHAVE_ACESSO_SISTEMA=...
 LLM_BACKEND=gatiator
 LLM_BASE_URL=http://localhost:1313/v1/chat/completions
@@ -135,242 +140,194 @@ LLM_MODEL=codellama:7b
 
 > **Dicas:**
 >
-> - Não versionar o arquivo `.env` com segredos reais em repositórios públicos.
+> - Não versione o `.env` com segredos reais em repositórios públicos.
 > - Sempre revise as variáveis antes de rodar testes em produção.
-> - Variáveis de autenticação (tokens, cookies) podem ser usadas automaticamente pelos hooks de teste.
 
 ## Execução
 
-### Passo 1: Faça o scan do projeto
+### Passo 1: Scan estático do projeto
 
-O primeiro passo da análise estática é executar o scan do projeto TypeScript:
+Executa a análise estática do código TypeScript para extrair todos os endpoints:
 
 ```bash
-python3 src/ast/test_parser.py -i <caminho/para/o/projeto> [--parser ast_parser_node]
+python3 src/infrastructure/parsers/test_parser.py -i <caminho/para/o/projeto>
 ```
 
-- Antes de iniciar, o script **limpa apenas os diretórios `output/ast/scan_*`** (removendo resultados de execuções anteriores), preservando outros arquivos em `output/ast`.
-- Ele percorre todos os arquivos `.ts` e `.tsx` do projeto, ignora pastas de testes e dependências, e extrai todos os endpoints de API encontrados.
-- Para cada arquivo analisado, gera um arquivo `.json` detalhado com os endpoints e um resumo da AST.
-- Ao final, gera também:
-  - `all_endpoints.json`: lista plana com todos os endpoints encontrados no projeto
-  - `REPORT.md`: relatório em Markdown com resumo e tabela dos endpoints
-  - `summary.json`: resumo da análise (quantidade de arquivos, endpoints, erros, etc)
-  - `errors.log`: log de erros encontrados (se houver)
-- Todos esses arquivos ficam em um diretório `output/ast/scan_<data-hora>/` exclusivo para cada execução.
+- Percorre todos os arquivos `.ts` e `.tsx`, ignorando testes e `node_modules`.
+- Gera um diretório `output/scan_<data-hora>/` com:
+  - `all_endpoints.json`: lista plana de todos os endpoints encontrados
+  - `REPORT.md`: relatório em Markdown com tabela de endpoints
+  - `summary.json`: resumo da análise (arquivos, endpoints, erros)
+  - `errors.log`: log de erros, se houver
 
-**Para que serve essa saída?**
+**Para que serve:** mapear a superfície de ataque e alimentar as etapas seguintes.
 
-Esses arquivos servem como base para:
+### Passo 2: Geração automática do OpenAPI (opcional)
 
-- Visualizar rapidamente todos os endpoints expostos pela API
-- Mapear a superfície de ataque do sistema
-- Alimentar as próximas etapas de geração e execução de testes de segurança
-- Auditar mudanças e comparar execuções ao longo do tempo
-
-### Passo 2: Geração Automática da Especificação da API (opcional)
-
-Se você não possui uma documentação OpenAPI (openapi.json) oficial da sua API, pode gerar uma especificação automaticamente a partir do código-fonte usando o script `src/generators/node_openapi_generator.py`.
-
-**Como funciona:**
-
-- O script analisa o código do backend (ex: Node.js/TypeScript) e tenta extrair rotas, métodos e descrições para montar um arquivo `openapi.json` básico.
-- É útil para projetos legados ou APIs sem documentação formal, acelerando a integração com o GTSA.
-
-**Como usar:**
+Se a API não possui documentação OpenAPI oficial, gere uma especificação básica a partir do código-fonte:
 
 ```bash
-python3 src/generators/node_openapi_generator.py
+python3 src/infrastructure/generators/node_openapi_generator.py
 ```
 
-> **Importante:**
->
-> - Se sua API já possui um arquivo OpenAPI oficial, basta usá-lo diretamente nas etapas seguintes (não é necessário rodar este script).
-> - A geração automática pode não capturar todos os detalhes (ex: exemplos, descrições, schemas complexos). Sempre revise e ajuste o arquivo gerado conforme necessário.
+> Se sua API já possui um OpenAPI oficial, pule este passo e use-o diretamente nas etapas seguintes.
 
-### Passo 3: Gere dados de exemplo para testes (opcional, recomendado)
+### Passo 3: Geração de dados de exemplo (opcional, recomendado)
 
-O script `gerar_dados_exemplo.py` automatiza a criação de arquivos JSON com exemplos de payload para cada endpoint definido no seu OpenAPI. Esses arquivos são usados nos testes automatizados para garantir que cada rota seja exercitada com dados realistas e válidos.
-
-**O que o script faz:**
-
-- Para cada endpoint/método do OpenAPI, gera um arquivo em `output/tests/dados/{METHOD}_{endpoint}.json`.
-- Prioriza exemplos já definidos no OpenAPI (`example` ou `examples`).
-- Se não houver exemplo, gera dados automaticamente usando um modelo LLM (Ollama ou Gatiator), conforme configurado no `.env`.
-- Salva parâmetros de path resolvidos no campo especial `_path_params` do JSON.
-
-**Como usar:**
+Gera payloads JSON realistas para cada endpoint, usados nos testes automatizados:
 
 ```bash
-python src/generators/gerar_dados_exemplo.py <caminho/para/openapi.json>
+python3 src/infrastructure/generators/gerar_dados_exemplo.py <caminho/para/openapi.json>
 ```
 
 **Principais opções:**
 
-- `--llm-backend ollama|gatiator` — Define o backend LLM para geração automática de exemplos (default: valor do .env).
-- `--llm-model <modelo>` — Define o modelo LLM a ser usado (ex: codellama:7b, phi:2.7b).
-- `--only-with-body` — Gera arquivos apenas para endpoints que possuem requestBody.
-- `--no-overwrite` — Não sobrescreve arquivos já existentes.
+- `--llm-backend ollama|gatiator` — Backend LLM para geração automática (default: valor do `.env`)
+- `--llm-model <modelo>` — Modelo LLM a usar (ex: `codellama:7b`)
+- `--only-with-body` — Gera apenas para endpoints com `requestBody`
+- `--no-overwrite` — Não sobrescreve arquivos já existentes
 
-**Exemplo:**
+**Saída:** um arquivo JSON por endpoint em `output/tests/dados/`, pronto para uso nos testes.
 
-```bash
-python src/generators/gerar_dados_exemplo.py output/openapi.json --llm-backend ollama --llm-model llama3
-```
+> Recomenda-se rodar sempre que o OpenAPI for atualizado.
 
-**Saída:**
+### Passo 4: Parser AST detalhado
 
-- Um arquivo JSON para cada endpoint/método em `output/tests/dados/`, pronto para ser usado nos testes.
-- Cada arquivo contém um exemplo de payload realista, alinhado ao schema do endpoint.
-
-> Recomenda-se rodar este passo sempre que atualizar o OpenAPI ou quiser garantir exemplos atualizados para os testes.
-
-### Passo 4: Execute o parser AST apontando para o diretório do seu projeto TypeScript
+Extrai endpoints com contexto detalhado (handler, parâmetros, autenticação):
 
 ```bash
-python3 src/ast/parsers/ast_parser_node.py <caminho/para/o/projeto>
+python3 src/application/pipeline/step4_ast_parser.py <caminho/para/o/projeto>
 ```
 
-1. O script irá:
-   - Percorrer todos os arquivos `.ts` e `.tsx` (exceto testes e node_modules)
-   - Extrair endpoints de API (método, path, handler, parâmetros, linha, contexto)
-   - Detectar se a rota exige autenticação ou é pública
-   - Gerar relatórios detalhados em JSON e Markdown no diretório de saída, com nomes:
-     - `endpoints_<data-hora>.json`: lista completa dos endpoints extraídos
-     - `report_<data-hora>.md`: relatório em Markdown com resumo e tabela dos endpoints
+Gera em `output/`:
 
-2. Consulte os relatórios gerados em `output/ast/` para visualizar todos os endpoints e suas características.
+- `regular_endpoints.json`: lista completa dos endpoints extraídos (sempre sobrescrito)
+- `regular_endpoints_report.md`: relatório em Markdown (sempre sobrescrito)
 
-> Esse processo é essencial para mapear a superfície de ataque da API antes de gerar e executar os testes dinâmicos.
+### Passo 5: Análise de risco e PII
 
-### Passo 5: Análise de risco e enriquecimento dos endpoints (LLM ou heurística)
+Analisa os endpoints para identificar riscos, dados sensíveis (PII) e possíveis vulnerabilidades, utilizando LLM local (Ollama ou Gatiator) ou heurística.
 
-Após gerar o arquivo `all_endpoints.json`, é hora de enriquecer e analisar os endpoints para identificar riscos, dados sensíveis (PII) e possíveis vulnerabilidades. Isso pode ser feito de duas formas:
-
-#### **A) Modo LLM (análise inteligente com IA) — recomendado**
-
-Utiliza um modelo de linguagem (LLM) para analisar cada endpoint de forma mais contextualizada e inteligente.
-
-**Comando:**
+#### Execução (LLM ou heurística)
 
 ```bash
-python src/analyzers/llm_analyzer.py output/ast/scan_YYYYMMDD_HHMMSS/all_endpoints.json
+python3 src/application/pipeline/step5_analyzer.py output/scan_<data-hora>/all_endpoints.json [opções]
 ```
 
-**Arquivos gerados:**
+Principais opções:
 
-- `output/analysis_with_llm.json`: análise detalhada dos endpoints feita pelo LLM.
-- `output/analysis_with_llm_report.md`: relatório em Markdown com estatísticas, riscos e vulnerabilidades.
+- `--llm-backend gatiator|ollama|none` — Backend LLM a ser usado (default: valor do .env)
+- `--llm-model <modelo>` — Modelo LLM (ex: codellama:7b)
+- `--llm-url <url>` — URL customizada do backend LLM
+- `--no-llm` — Usa apenas heurística, sem IA
+- `--dry-run` — Executa sem gravar arquivos de saída
 
-#### **B) Modo heurístico (análise rápida, sem IA)**
+**O script limpa automaticamente o diretório `output/analises/` antes de cada execução (exceto se usar `--dry-run`). Todos os arquivos de saída são gravados diretamente em `output/analises/`.**
 
-Utiliza apenas regras fixas do script para analisar os endpoints. É mais rápido e não depende de modelo LLM, mas a análise é menos sofisticada.
+Saídas geradas em `output/analises/`:
 
-**Comando:**
+- `enriched_endpoints.json`: endpoints enriquecidos com análise de risco, PII, vulnerabilidades e contexto de negócio
+- `enriched_endpoints_report.md`: relatório detalhado em Markdown
+
+| Modo         | Inteligência | Velocidade | Dependência de IA |
+| ------------ | ------------ | ---------- | ----------------- |
+| LLM (padrão) | Alta         | Média      | Sim               |
+| Heurístico   | Média        | Alta       | Não               |
+
+### Passo 6: Enriquecimento dos endpoints
+
+Gera o `enriched_endpoints.json` que serve de base para a geração de testes inteligentes:
 
 ```bash
-python src/analyzers/llm_analyzer.py output/ast/scan_YYYYMMDD_HHMMSS/all_endpoints.json --heuristic
+python3 src/infrastructure/parsers/ast_parser_node.py <openapi.json|yaml> --source <caminho/codigo>
 ```
 
-**Arquivos gerados:**
+Gera em `output/`:
 
-- `output/analysis_heuristic.json`: análise heurística dos endpoints.
-- `output/analysis_heuristic_report.md`: relatório em Markdown com estatísticas, riscos e vulnerabilidades.
+- `enriched_endpoints.json`: endpoints com contexto de negócio, exemplos e regras
+- `enrichment_report.json`: estatísticas do enriquecimento
 
-#### **Resumo das diferenças**
+### Passo 7: Geração dos testes inteligentes
 
-| Modo         | Inteligência | Velocidade | Dependência de IA | Arquivos gerados             |
-| ------------ | ------------ | ---------- | ----------------- | ---------------------------- |
-| LLM (padrão) | Alta         | Média      | Sim               | analysis_with_llm.json, .md  |
-| Heurístico   | Média        | Alta       | Não               | analysis_heuristic.json, .md |
-
-> **Dica:** Use o modo heurístico para testes rápidos ou quando não quiser depender do modelo LLM. Para auditoria e análise mais profunda, prefira o modo LLM.
-
-### Passo 6: Gerar enriched_endpoints.json
-
-O arquivo `output/ast/enriched_endpoints.json` é gerado pelo script:
+Gera toda a estrutura de testes a partir do `enriched_endpoints.json` e do OpenAPI:
 
 ```bash
-python3 src/ast/auto_enricher.py <openapi.json|yaml> --source <caminho/codigo>
+python3 src/infrastructure/generators/smart_generator.py <caminho/para/openapi.json>
 ```
 
-- `<openapi.json|yaml>`: Caminho para o arquivo OpenAPI (JSON ou YAML) da API.
-- `--output`: (opcional) Nome do arquivo de saída (por padrão, `enriched_endpoints.json` em `output/ast/`).
-- `--source`: (opcional, atualmente ignorado) Caminho para o código-fonte da API.
+Cria em `output/tests/`:
 
-**Arquivos gerados:**
+- `test_api_security.py`: script principal de testes
+- `run_llm_tests.sh`: script de execução automatizada
+- (os hooks são lidos de `src/interfaces/hooks/`)
 
-- `output/ast/enriched_endpoints.json`: Lista de endpoints enriquecidos, com informações detalhadas extraídas do OpenAPI e enriquecidas por regras ou LLM (quando configurado).
-- `output/ast/enrichment_report.json`: Relatório-resumo da etapa de enriquecimento, contendo estatísticas como total de endpoints, quantos foram enriquecidos com LLM e quantos possuem exemplos realistas.
-
-**Para que servem:**
-
-- O `enriched_endpoints.json` é a base para a geração de testes inteligentes, pois contém contexto de negócio, exemplos, regras e cenários de teste para cada endpoint.
-- O `enrichment_report.json` permite auditar e acompanhar a qualidade do enriquecimento realizado, facilitando ajustes e validação do processo.
-
-### Passo 7: Gerar testes inteligentes com smart_generator.py
-
-Gere toda a estrutura de testes automatizados a partir do enriched_endpoints.json (sempre buscado automaticamente em output/ast/enriched_endpoints.json) e do seu arquivo OpenAPI:
-
-```bash
-python3 src/generators/smart_generator.py <caminho/para/openapi.json>
-```
-
-O script irá criar todos os arquivos necessários em `output/tests/`, incluindo:
-
-- test_api_security.py (arquivo principal de testes)
-- hooks/ (hooks de autenticação e manipulação de requests)
-- run_llm_tests.sh (script automatizado para execução dos testes)
-
-### Passo 8: Execute os testes gerados
-
-Para rodar todos os testes automatizados, execute o script:
+### Passo 8: Execução dos testes
 
 ```bash
 output/tests/run_llm_tests.sh
 ```
 
-Esse script prepara o ambiente e executa o Pytest/Schemathesis, rodando:
+O script executa `test_api_security.py` para cada endpoint em paralelo (até 4 simultâneos), rodando os seguintes testes por endpoint:
 
-- **Testes de segurança gerados automaticamente** (test_api_security.py e outros)
-- **Testes stateful** (baseados em máquina de estados, localizados em `src/utils/stateful/`)
+- **test_specific_data**: com payload real do arquivo `output/tests/dados/`
+- **test_basic**: com dados mínimos gerados a partir do schema
+- **test_property_based**: testes baseados em propriedades com Hypothesis
+- **test_multiple_examples**: múltiplos exemplos aleatórios
+- **test_response_schema**: valida a resposta contra o schema OpenAPI
+- **test_endpoint_without_body**: para endpoints GET/DELETE sem body
 
-Os testes stateful, implementados com Hypothesis, simulam fluxos reais de uso da API, como sequências de criação, leitura, atualização e deleção de recursos, além de cenários de autenticação e manipulação de tokens. Eles ajudam a identificar bugs e falhas que só aparecem em interações complexas e sequenciais.
+Após a execução, gere o relatório:
 
-O resultado dos testes é exibido no terminal e também pode ser consultado nos arquivos de log gerados em `output/tests/`.
+```bash
+python3 src/application/reporting/gerar_relatorio_markdown.py
+```
 
-> **Dica:** Para rodar apenas os testes stateful, utilize:
+O relatório é salvo em `output/tests/test_api_llm_summary.md`.
+
+> Para rodar apenas os testes stateful:
 >
 > ```bash
-> pytest src/utils/stateful/
+> pytest src/interfaces/stateful/
 > ```
 
 ## Saídas: Testes e Relatórios
 
-O GTSA gera diversos arquivos e pastas durante o processo de análise, enriquecimento e execução de testes. Abaixo estão as principais saídas e seu propósito:
-
-### output/ast/
-
-- **scan\_\*/all_endpoints.json**: Lista plana de todos os endpoints encontrados no código-fonte.
-- **scan*\*/endpoints*\*.json**: Endpoints extraídos por arquivo ou execução.
-- **scan*\*/report*\*.md**: Relatório em Markdown com tabela de endpoints.
-- **scan\_\*/summary.json**: Resumo da análise estática (quantidade de arquivos, endpoints, erros, etc).
-- **scan\_\*/errors.log**: Log de erros encontrados durante o parsing.
-- **enriched_endpoints.json**: Endpoints enriquecidos com contexto de negócio, exemplos e regras (base para geração de testes inteligentes).
-- **enrichment_report.json**: Estatísticas e resumo do enriquecimento dos endpoints.
+### output/scan\_<data-hora>/
 
 ### output/
 
-- **analysis_with_llm.json**: Resultado da análise de risco e PII usando LLM.
-- **analysis_with_llm_report.md**: Relatório em Markdown da análise LLM.
-- **analysis_heuristic_report.md**: Relatório de análise heurística (sem LLM).
-- **analysis_heuristic_report.json**: Resultado da análise heurística em JSON.
-- **openapi.json / openapi.yaml**: Especificação OpenAPI gerada ou fornecida, usada como base para os testes.
+| Arquivo                       | Descrição                                                     |
+| ----------------------------- | ------------------------------------------------------------- |
+| `regular_endpoints.json`      | Lista completa dos endpoints extraídos pelo parser AST        |
+| `regular_endpoints_report.md` | Relatório em Markdown dos endpoints extraídos pelo parser AST |
+| ...                           | ...                                                           |
+
+### output/analises/analise\_<data-hora>/
+
+| Arquivo                        | Descrição                                                   |
+| ------------------------------ | ----------------------------------------------------------- |
+| `enriched_endpoints.json`      | Endpoints enriquecidos (sempre sobrescrito a cada execução) |
+| `enriched_endpoints_report.md` | Relatório detalhado da análise (sempre sobrescrito)         |
+
+### output/
+
+| Arquivo                        | Descrição                                                               |
+| ------------------------------ | ----------------------------------------------------------------------- |
+| `enriched_endpoints.json`      | Última análise de risco e enriquecimento (gerado por step5_analyzer.py) |
+| `enriched_endpoints_report.md` | Último relatório detalhado da análise (gerado por step5_analyzer.py)    |
+| `enrichment_report.json`       | Estatísticas do enriquecimento (gerado por outros scripts)              |
+| `analysis_with_llm.json`       | Análise LLM mais recente (legado)                                       |
+| `analysis_with_llm_report.md`  | Relatório da análise LLM (legado)                                       |
+| `openapi.json / openapi.yaml`  | Especificação OpenAPI usada como base                                   |
 
 ### output/tests/
 
-- **test_api_security.py**: Arquivo principal de testes gerado automaticamente (Pytest/Schemathesis).
-- **hooks/**: Hooks de autenticação e manipulação de requests para os testes.
-- **run_llm_tests.sh**: Script para execução automatizada dos testes.
+| Arquivo                   | Descrição                               |
+| ------------------------- | --------------------------------------- |
+| `test_api_security.py`    | Script de testes gerado automaticamente |
+| `run_llm_tests.sh`        | Script de execução dos testes           |
+| `test_api_llm.log`        | Log detalhado da execução               |
+| `test_api_llm_summary.md` | Relatório consolidado por endpoint      |
+| `dados/`                  | Payloads de exemplo por endpoint        |
 
-> Todos os arquivos em `output/` podem ser versionados para auditoria.
+> Todos os arquivos em `output/` podem ser versionados para auditoria e rastreabilidade.

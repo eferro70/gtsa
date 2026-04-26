@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 step5_analyzer.py
--------------------
+--------------------
 Script para análise de risco e enriquecimento de endpoints de API utilizando LLM local (Ollama ou Gatiator).
 
 Funcionalidades:
@@ -9,17 +9,19 @@ Funcionalidades:
 - Envia os endpoints para um modelo LLM local para análise de risco, identificação de dados sensíveis (PII), sugestões de segurança e enriquecimento de metadados.
 - Suporta fallback entre backends (Gatiator e Ollama) e prompts customizados.
 - Gera relatórios enriquecidos em JSON e Markdown.
+- Limpa automaticamente o diretório output/analises antes de cada execução (exceto em modo dry-run).
+- Todos os arquivos de saída são gravados diretamente em output/analises/.
 
 Parâmetros de linha de comando:
-  <input_json>   Caminho para o arquivo all_endpoints.json a ser analisado (obrigatório)
-  [opções]       Parâmetros opcionais para modelo, backend, etc.
+    <input_json>   Caminho para o arquivo all_endpoints.json a ser analisado (obrigatório)
+    [opções]       Parâmetros opcionais para modelo, backend, etc.
 
 Exemplo de uso:
-    python3 step5_analyzer.py output/scan_20260425_143917/all_endpoints.json
+        python3 step5_analyzer.py output/scan_20260425_143917/all_endpoints.json
 
 Saídas:
-- output/scan_<timestamp>/enriched_endpoints.json   (endpoints enriquecidos)
-- output/scan_<timestamp>/enrichment_report.json    (relatório detalhado)
+- output/analises/enriched_endpoints.json   (endpoints enriquecidos)
+- output/analises/enriched_endpoints_report.md    (relatório detalhado)
 """
 
 import json
@@ -679,15 +681,21 @@ def main():
         endpoints_path = found
         logger.info(f"🔍 Scan mais recente detectado: {endpoints_path}")
     
+
     # Configuração de saída
     output_dir = Path(args.output_dir).resolve()
     output_dir.mkdir(parents=True, exist_ok=True)
-    
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    session_dir = output_dir / f"analise_{timestamp}"
+
+    # Limpa o diretório analises (exceto dry-run)
     if not args.dry_run:
-        session_dir.mkdir(parents=True, exist_ok=True)
-        logger.info(f"📁 Resultados serão salvos em: {session_dir}")
+        for item in output_dir.iterdir():
+            if item.is_file():
+                item.unlink()
+            elif item.is_dir():
+                import shutil
+                shutil.rmtree(item)
+        logger.info(f"🧹 Diretório limpo: {output_dir}")
+        logger.info(f"📁 Resultados serão salvos em: {output_dir}")
     
     # Configuração do backend
     use_llm = not args.no_llm and args.llm_backend != "none"
@@ -699,8 +707,9 @@ def main():
     else:
         logger.info("🧠 Modo heurística pura (sem LLM)")
     
+
     # Arquivo de saída
-    output_file = session_dir / f"enriched_endpoints_{timestamp}.json"
+    output_file = output_dir / "enriched_endpoints.json"
     
     # Execução da análise
     try:

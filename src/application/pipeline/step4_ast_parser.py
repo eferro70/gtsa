@@ -17,8 +17,8 @@ Exemplo de uso:
     python3 step4_ast_parser.py /caminho/para/projeto
 
 Saídas:
-- <output>/<timestamp>_endpoints.json   (lista de endpoints extraídos)
-- <output>/<timestamp>_relatorio_api.md (relatório em Markdown)
+- <output>/regular_endpoints.json   (lista de endpoints extraídos)
+- <output>/regular_endpoints_report.md (relatório em Markdown)
 """
 
 import re
@@ -283,15 +283,14 @@ def analyze_project(project_path: str, output_dir: str = None):
         except Exception as e:
             print(f"⚠️  Não foi possível remover {f}: {e}")
 
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
 
-    # Salva todos endpoints
-    endpoints_file_name = timestamp + "_endpoints.json"
+    # Prefixo fixo "regular_" nos arquivos de saída
+    endpoints_file_name = "regular_endpoints.json"
     with open(output_path / endpoints_file_name, 'w', encoding='utf-8') as f:
         json.dump(all_endpoints, f, indent=2, ensure_ascii=False)
 
     # Gera relatório Markdown
-    report = f"""# Relatório de Análise de API - {timestamp}
+    report = f"""# Relatório de Análise de API - regular
 
 ## Resumo
 
@@ -315,7 +314,7 @@ def analyze_project(project_path: str, output_dir: str = None):
     for ep in sorted(all_endpoints, key=lambda x: (x['method'], x['path'])):
         report += f"| {ep['method']} | `{ep['path']}` | `{ep['name']}` | {ep['file_path']} | {ep['line_number']} |\n"
 
-    report_file_name = timestamp + "_endpoints_report.md"
+    report_file_name = "regular_endpoints_report.md"
     with open(output_path / report_file_name, 'w', encoding='utf-8') as f:
         f.write(report)
 

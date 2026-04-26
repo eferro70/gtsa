@@ -3,10 +3,10 @@
     { "name": "x-chave-acesso-sistema", "env_var": "CHAVE_ACESSO_SISTEMA" }
   ],
   "role_tokens": {
-    "ADMINISTRADOR": { "env_var": "TOKEN_ADMIN_PRIMEIRO" },
-    "GESTOR": { "env_var": "TOKEN_GESTOR1" },
-    "REQUISITANTE": { "env_var": "TOKEN_REQUISITANTE1" },
-    "INTERESSADO": { "env_var": "TOKEN_INTERESSADO1" }
+    "ADMINISTRADOR": { "env_var": "TOKEN_ADMINISTRADOR" },
+    "GESTOR": { "env_var": "TOKEN_GESTOR" },
+    "REQUISITANTE": { "env_var": "TOKEN_REQUISITANTE" },
+    "INTERESSADO": { "env_var": "TOKEN_INTERESSADO" }
   },
   "default_role": "ADMINISTRADOR",
   "auth_header": "Authorization",

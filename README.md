@@ -15,33 +15,65 @@ O GTSA é uma ferramenta automatizada para análise, geração e execução de t
 ```
 ├── README.md                  # Documentação principal
 ├── requirements.txt           # Dependências Python
+├── pytest.ini                 # Configuração de testes
+├── orquestrador.sh            # Orquestrador de execução
+├── config/                    # Configurações (auth, PII)
+│   ├── auth_config.json
+│   └── pii_patterns.json
 ├── output/                    # Resultados e artefatos gerados
-│   ├── ast/                   # Saída de análise estática (endpoints, relatórios, scans)
-│   └── tests/                 # Testes gerados automaticamente (Pytest/Schemathesis)
-├── src/                       # Código-fonte principal
-│   ├── analyzers/             # Analisadores heurísticos e LLM
-│   │   └── llm_analyzer.py
-│   ├── ast/                   # Parsers e scripts de análise estática
-│   │   ├── auto_enricher.py
-│   │   ├── test_parser.py
-│   │   └── parsers/
-│   │       └── ast_parser_node.py
-│   ├── generators/            # Geradores de testes e artefatos
-│   │   ├── openapi_generator.py
-│   │   └── smart_generator.py
-│   └── utils/                 # Utilitários e payloads de segurança
-│       ├── extrair_roles_krakend.py
-│       ├── security_payloads.py
-│       └── stateful/          # Testes stateful (fluxos)
+│   ├── openapi.json/.yaml     # Especificação OpenAPI
+│   ├── enriched_endpoints.json# Endpoints enriquecidos
+│   ├── analysis_with_llm.json # Análise de risco (LLM)
+│   ├── analysis_with_llm_report.md
+│   ├── enrichment_report.json # Relatório de enriquecimento
+│   ├── analises/              # Execuções e relatórios históricos
+│   ├── scan_*/                # Scans estáticos por execução
+│   └── tests/                 # Testes gerados automaticamente
+│       ├── test_api_security.py
+│       ├── hooks/
+│       ├── run_llm_tests.sh
+│       └── dados/             # Dados de exemplo por endpoint
+└── src/                       # Código-fonte principal
+  ├── application/           # Orquestração de etapas
+  │   ├── pipeline/          # Scripts de cada etapa
+  │   │   ├── step1_scan.py
+  │   │   ├── step2_openapi.py
+  │   │   ├── step3_dados_exemplo.py
+  │   │   ├── step4_ast_parser.py
+  │   │   ├── step5_analyzer.py
+  │   │   ├── step6_enricher.py
+  │   │   └── step7_generator.py
+  │   └── reporting/         # Geração de relatórios
+  │       └── gerar_relatorio_markdown.py
+  ├── domain/                # Payloads, regras e entidades
+  │   └── security_payloads.py
+  ├── infrastructure/        # Implementações técnicas
+  │   ├── generators/        # Scripts de geração
+  │   │   ├── gerar_dados_exemplo.py
+  │   │   ├── node_openapi_generator.py
+  │   │   └── smart_generator.py
+  │   ├── llm/               # Integração com LLM
+  │   │   └── llm_analyzer.py
+  │   ├── parsers/           # Parsers de AST
+  │   │   ├── ast_parser_node.py
+  │   │   └── test_parser.py
+  │   └── interfaces/        # Hooks e interfaces
+  │       └── hooks/
+  │           ├── auth_hooks.py
+  │           └── llm_hooks.py
+  └── interfaces/            # (Reservado para integrações externas)
 ```
 
 **Principais diretórios e funções:**
 
-- **output/**: Resultados gerados (relatórios, endpoints, testes).
-- **src/analyzers/**: Scripts para análise de risco, PII e integração com LLM.
-- **src/ast/**: Ferramentas para análise estática de código TypeScript.
-- **src/generators/**: Geração automática de testes de segurança.
-- **src/utils/**: Funções auxiliares, payloads e lógica de apoio.
+- **config/**: Arquivos de configuração de autenticação e padrões PII.
+- **output/**: Resultados gerados (relatórios, endpoints, testes, exemplos).
+- **src/application/pipeline/**: Scripts de orquestração das etapas do fluxo.
+- **src/infrastructure/generators/**: Scripts de geração de dados, OpenAPI e testes.
+- **src/infrastructure/parsers/**: Parsers de AST e extração de endpoints.
+- **src/infrastructure/llm/**: Scripts de análise com LLM.
+- **src/domain/**: Payloads e regras de negócio.
+- **src/infrastructure/interfaces/hooks/**: Hooks de autenticação e LLM para testes.
 
 ## Instação e Configuração
 

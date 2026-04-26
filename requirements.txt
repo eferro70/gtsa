@@ -1,0 +1,19 @@
+python-dotenv
+# Core dependencies
+tree-sitter>=0.20.0
+tree-sitter-typescript>=0.20.2
+schemathesis>=4.15.2
+python-dotenv>=1.2.2
+openapi>=2.0.0
+jsonschema>=4.26.0
+
+# Optional but recommended
+tree-sitter-languages>=1.10.0   # Alternativa mais fácil (se mudar para ela)
+typing-extensions>=4.0.0        # Suporte a tipos (Python < 3.10)
+
+# Development dependencies (opcional)
+pytest>=7.0.0                   # Para testes
+pytest-cov>=4.0.0               # Cobertura de testes
+black>=23.0.0                   # Formatação de código
+ruff>=0.1.0                     # Linter rápido
+mypy>=1.0.0                     # Type checking

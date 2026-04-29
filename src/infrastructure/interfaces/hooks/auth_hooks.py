@@ -3,7 +3,7 @@ import json
 from dotenv import load_dotenv
 from pathlib import Path
 
-# Busca auth_config.json subindo diretórios a partir do cwd
+# Busca auth_config.json subindo diretórios a partir do cwd e também em config/
 def find_config(filename):
     path = Path.cwd()
     for _ in range(6):  # Sobe até 6 níveis

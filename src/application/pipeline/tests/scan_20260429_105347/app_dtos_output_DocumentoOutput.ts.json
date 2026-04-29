@@ -1,0 +1,25 @@
+{
+  "file": "/home/s231991563/projetos/neosigner/controlador-api/src/app/dtos/output/DocumentoOutput.ts",
+  "relative_path": "app/dtos/output/DocumentoOutput.ts",
+  "analyzed_at": "2026-04-29T10:53:47.931709",
+  "endpoints_found": 0,
+  "endpoints": [],
+  "ast_summary": {
+    "type": "program",
+    "children_count": 4,
+    "byte_range": [
+      0,
+      2199
+    ],
+    "position": {
+      "start": {
+        "line": 0,
+        "column": 0
+      },
+      "end": {
+        "line": 95,
+        "column": 0
+      }
+    }
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "file": "/home/s231991563/projetos/neosigner/controlador-api/src/teste/mocks/ServicoCertificadora.mock.ts",
+  "relative_path": "teste/mocks/ServicoCertificadora.mock.ts",
+  "analyzed_at": "2026-04-29T10:53:47.135444",
+  "endpoints_found": 0,
+  "endpoints": [],
+  "ast_summary": {
+    "type": "program",
+    "children_count": 4,
+    "byte_range": [
+      0,
+      408
+    ],
+    "position": {
+      "start": {
+        "line": 0,
+        "column": 0
+      },
+      "end": {
+        "line": 11,
+        "column": 0
+      }
+    }
+  }
+}

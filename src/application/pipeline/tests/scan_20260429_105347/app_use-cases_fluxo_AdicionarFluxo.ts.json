@@ -1,0 +1,25 @@
+{
+  "file": "/home/s231991563/projetos/neosigner/controlador-api/src/app/use-cases/fluxo/AdicionarFluxo.ts",
+  "relative_path": "app/use-cases/fluxo/AdicionarFluxo.ts",
+  "analyzed_at": "2026-04-29T10:53:48.390751",
+  "endpoints_found": 0,
+  "endpoints": [],
+  "ast_summary": {
+    "type": "program",
+    "children_count": 7,
+    "byte_range": [
+      0,
+      1988
+    ],
+    "position": {
+      "start": {
+        "line": 0,
+        "column": 0
+      },
+      "end": {
+        "line": 63,
+        "column": 0
+      }
+    }
+  }
+}

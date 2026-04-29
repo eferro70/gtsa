@@ -1,0 +1,25 @@
+{
+  "file": "/home/s231991563/projetos/neosigner/controlador-api/src/infra/mappers/conta/ContaDtoMapper.ts",
+  "relative_path": "infra/mappers/conta/ContaDtoMapper.ts",
+  "analyzed_at": "2026-04-29T10:53:47.862190",
+  "endpoints_found": 0,
+  "endpoints": [],
+  "ast_summary": {
+    "type": "program",
+    "children_count": 14,
+    "byte_range": [
+      0,
+      12744
+    ],
+    "position": {
+      "start": {
+        "line": 0,
+        "column": 0
+      },
+      "end": {
+        "line": 429,
+        "column": 0
+      }
+    }
+  }
+}

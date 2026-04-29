@@ -1,0 +1,35 @@
+{
+  "file": "/home/s231991563/projetos/neosigner/controlador-api/src/infra/api/routes/MonitoracaoRoutes.ts",
+  "relative_path": "infra/api/routes/MonitoracaoRoutes.ts",
+  "analyzed_at": "2026-04-29T10:53:47.550526",
+  "endpoints_found": 1,
+  "endpoints": [
+    {
+      "name": "anonymous",
+      "path": "/api/monitoracao/dlqs",
+      "method": "GET",
+      "parameters": [],
+      "file_path": "unknown",
+      "line_number": 87,
+      "context": " *                        outroCampo: \"valor\"\n */\nrouter.get(\"/api/monitoracao/dlqs\", async (req: Request, res: Response) => {\n  await monitoracaoController.handle(req, res);\n});\n\nexport { router as monitoracaoRoutes };"
+    }
+  ],
+  "ast_summary": {
+    "type": "program",
+    "children_count": 7,
+    "byte_range": [
+      0,
+      3510
+    ],
+    "position": {
+      "start": {
+        "line": 0,
+        "column": 0
+      },
+      "end": {
+        "line": 91,
+        "column": 0
+      }
+    }
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "file": "/home/s231991563/projetos/neosigner/controlador-api/src/app/dtos/ReenviarLinkDto.ts",
+  "relative_path": "app/dtos/ReenviarLinkDto.ts",
+  "analyzed_at": "2026-04-29T10:53:47.902624",
+  "endpoints_found": 0,
+  "endpoints": [],
+  "ast_summary": {
+    "type": "program",
+    "children_count": 1,
+    "byte_range": [
+      0,
+      177
+    ],
+    "position": {
+      "start": {
+        "line": 0,
+        "column": 0
+      },
+      "end": {
+        "line": 9,
+        "column": 0
+      }
+    }
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "file": "/home/s231991563/projetos/neosigner/controlador-api/src/infra/mappers/documento/DocumentoServiceMapper.ts",
+  "relative_path": "infra/mappers/documento/DocumentoServiceMapper.ts",
+  "analyzed_at": "2026-04-29T10:53:47.850928",
+  "endpoints_found": 0,
+  "endpoints": [],
+  "ast_summary": {
+    "type": "program",
+    "children_count": 5,
+    "byte_range": [
+      0,
+      2431
+    ],
+    "position": {
+      "start": {
+        "line": 0,
+        "column": 0
+      },
+      "end": {
+        "line": 79,
+        "column": 0
+      }
+    }
+  }
+}

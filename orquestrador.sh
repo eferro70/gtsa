@@ -97,7 +97,6 @@ main() {
         log "💡 Execute primeiro o Passo 4 (Parser AST)"
         exit 1
     fi
-    log "🔍 Scan ativo: $(basename "$SCAN_DIR")"
 
     # Passo 5: Análise de risco (LLM/Heurística)
     run_step 5 "Análise de risco e enriquecimento (LLM)" \

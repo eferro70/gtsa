@@ -1,0 +1,25 @@
+{
+  "file": "/home/s231991563/projetos/neosigner/controlador-api/src/domain/errors/AppError.ts",
+  "relative_path": "domain/errors/AppError.ts",
+  "analyzed_at": "2026-04-29T10:53:47.069269",
+  "endpoints_found": 0,
+  "endpoints": [],
+  "ast_summary": {
+    "type": "program",
+    "children_count": 7,
+    "byte_range": [
+      0,
+      7266
+    ],
+    "position": {
+      "start": {
+        "line": 0,
+        "column": 0
+      },
+      "end": {
+        "line": 207,
+        "column": 0
+      }
+    }
+  }
+}

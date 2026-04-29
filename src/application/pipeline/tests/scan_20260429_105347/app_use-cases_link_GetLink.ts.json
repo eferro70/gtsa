@@ -1,0 +1,25 @@
+{
+  "file": "/home/s231991563/projetos/neosigner/controlador-api/src/app/use-cases/link/GetLink.ts",
+  "relative_path": "app/use-cases/link/GetLink.ts",
+  "analyzed_at": "2026-04-29T10:53:48.499442",
+  "endpoints_found": 0,
+  "endpoints": [],
+  "ast_summary": {
+    "type": "program",
+    "children_count": 6,
+    "byte_range": [
+      0,
+      1191
+    ],
+    "position": {
+      "start": {
+        "line": 0,
+        "column": 0
+      },
+      "end": {
+        "line": 40,
+        "column": 0
+      }
+    }
+  }
+}

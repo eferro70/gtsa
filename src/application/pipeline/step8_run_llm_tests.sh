@@ -1,12 +1,11 @@
 #!/bin/bash
 
-export PYTHONPATH="$(pwd)"
 # Configurações
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 ENRICHED_ENDPOINTS_JSON="$SCRIPT_DIR/tests/enriched_endpoints.json"
-TEST_SCRIPT="$SCRIPT_DIR/tests/test_api_security.py"
+TEST_SCRIPT="$SCRIPT_DIR/test_api_security.py"
 DATA_DIR="$SCRIPT_DIR/dados"
-LOGFILE="$(dirname "$SCRIPT_DIR")/../../test_api_llm.log"
+LOGFILE="$SCRIPT_DIR/test_api_llm.log"
 SUMMARY_FILE="output/test_api_llm_summary.md"
 BASE_URL="http://localhost"
 MAX_PARALLEL=4

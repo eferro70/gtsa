@@ -1,0 +1,25 @@
+{
+  "file": "/home/s231991563/projetos/neosigner/controlador-api/src/infra/api/mappers/presentation/EventoOutputMapper.ts",
+  "relative_path": "infra/api/mappers/presentation/EventoOutputMapper.ts",
+  "analyzed_at": "2026-04-29T12:35:21.221217",
+  "endpoints_found": 0,
+  "endpoints": [],
+  "ast_summary": {
+    "type": "program",
+    "children_count": 4,
+    "byte_range": [
+      0,
+      741
+    ],
+    "position": {
+      "start": {
+        "line": 0,
+        "column": 0
+      },
+      "end": {
+        "line": 24,
+        "column": 0
+      }
+    }
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "file": "/home/s231991563/projetos/neosigner/controlador-api/src/teste/setup.ts",
+  "relative_path": "teste/setup.ts",
+  "analyzed_at": "2026-04-29T12:35:20.625862",
+  "endpoints_found": 0,
+  "endpoints": [],
+  "ast_summary": {
+    "type": "program",
+    "children_count": 29,
+    "byte_range": [
+      0,
+      2722
+    ],
+    "position": {
+      "start": {
+        "line": 0,
+        "column": 0
+      },
+      "end": {
+        "line": 95,
+        "column": 0
+      }
+    }
+  }
+}

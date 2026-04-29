@@ -1,0 +1,25 @@
+{
+  "file": "/home/s231991563/projetos/neosigner/controlador-api/src/app/use-cases/notificador/NotificarClienteCriado.ts",
+  "relative_path": "app/use-cases/notificador/NotificarClienteCriado.ts",
+  "analyzed_at": "2026-04-29T12:35:21.849336",
+  "endpoints_found": 0,
+  "endpoints": [],
+  "ast_summary": {
+    "type": "program",
+    "children_count": 7,
+    "byte_range": [
+      0,
+      1265
+    ],
+    "position": {
+      "start": {
+        "line": 0,
+        "column": 0
+      },
+      "end": {
+        "line": 36,
+        "column": 0
+      }
+    }
+  }
+}

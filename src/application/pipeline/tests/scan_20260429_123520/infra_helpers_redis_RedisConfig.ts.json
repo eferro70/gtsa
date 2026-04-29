@@ -1,0 +1,25 @@
+{
+  "file": "/home/s231991563/projetos/neosigner/controlador-api/src/infra/helpers/redis/RedisConfig.ts",
+  "relative_path": "infra/helpers/redis/RedisConfig.ts",
+  "analyzed_at": "2026-04-29T12:35:20.924182",
+  "endpoints_found": 0,
+  "endpoints": [],
+  "ast_summary": {
+    "type": "program",
+    "children_count": 1,
+    "byte_range": [
+      0,
+      948
+    ],
+    "position": {
+      "start": {
+        "line": 0,
+        "column": 0
+      },
+      "end": {
+        "line": 42,
+        "column": 0
+      }
+    }
+  }
+}

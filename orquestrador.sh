@@ -125,7 +125,7 @@ main() {
     # ────────────────────────────────────────────────────────────────────────
     END_TOTAL=$(date +%s)
     ELAPSED_TOTAL=$((END_TOTAL - START_TOTAL))
-    log "⏱️ Pipeline concluído! Tempo total: ${ELAPSED_TOTAL}s"
+    log "⏱️  Pipeline concluído! Tempo total: ${ELAPSED_TOTAL}s"
     log "📄 Log detalhado salvo em: $LOGFILE"
 }
 

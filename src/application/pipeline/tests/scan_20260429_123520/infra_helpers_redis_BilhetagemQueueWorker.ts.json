@@ -1,0 +1,25 @@
+{
+  "file": "/home/s231991563/projetos/neosigner/controlador-api/src/infra/helpers/redis/BilhetagemQueueWorker.ts",
+  "relative_path": "infra/helpers/redis/BilhetagemQueueWorker.ts",
+  "analyzed_at": "2026-04-29T12:35:20.934902",
+  "endpoints_found": 0,
+  "endpoints": [],
+  "ast_summary": {
+    "type": "program",
+    "children_count": 4,
+    "byte_range": [
+      0,
+      2466
+    ],
+    "position": {
+      "start": {
+        "line": 0,
+        "column": 0
+      },
+      "end": {
+        "line": 87,
+        "column": 0
+      }
+    }
+  }
+}

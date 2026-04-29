@@ -1,0 +1,25 @@
+{
+  "file": "/home/s231991563/projetos/neosigner/controlador-api/src/app/use-cases/documento/AtualizarDocumento.ts",
+  "relative_path": "app/use-cases/documento/AtualizarDocumento.ts",
+  "analyzed_at": "2026-04-29T12:35:22.172426",
+  "endpoints_found": 0,
+  "endpoints": [],
+  "ast_summary": {
+    "type": "program",
+    "children_count": 4,
+    "byte_range": [
+      0,
+      1265
+    ],
+    "position": {
+      "start": {
+        "line": 0,
+        "column": 0
+      },
+      "end": {
+        "line": 49,
+        "column": 0
+      }
+    }
+  }
+}

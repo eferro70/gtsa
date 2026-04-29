@@ -1,0 +1,25 @@
+{
+  "file": "/home/s231991563/projetos/neosigner/controlador-api/src/app/use-cases/autenticacao/AutenticarComLink.ts",
+  "relative_path": "app/use-cases/autenticacao/AutenticarComLink.ts",
+  "analyzed_at": "2026-04-29T12:35:21.836200",
+  "endpoints_found": 0,
+  "endpoints": [],
+  "ast_summary": {
+    "type": "program",
+    "children_count": 15,
+    "byte_range": [
+      0,
+      5124
+    ],
+    "position": {
+      "start": {
+        "line": 0,
+        "column": 0
+      },
+      "end": {
+        "line": 163,
+        "column": 0
+      }
+    }
+  }
+}

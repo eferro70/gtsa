@@ -81,7 +81,7 @@ class LocalLLMAnalyzer:
         for pattern in pii_patterns:
             if pattern in path:
                 pii_fields.append(pattern)
-        
+
         # Detecta autenticação necessária
         auth_required = True
         auth_type = "jwt"
@@ -90,11 +90,11 @@ class LocalLLMAnalyzer:
             auth_type = "none"
         elif 'login' in path or 'auth' in path:
             auth_type = "basic"
-        
+
         # Detecta nível de risco
         risk_level = "baixo"
         risk_reason = "Endpoint sem dados sensíveis aparentes"
-        
+
         if pii_fields:
             risk_level = "alto"
             risk_reason = f"Contém dados PII: {', '.join(pii_fields)}"
@@ -104,16 +104,27 @@ class LocalLLMAnalyzer:
         elif ':id' in path or ':perfil' in path:
             risk_level = "médio"
             risk_reason = "Contém parâmetro de ID (possível BOLA)"
-        
+
         # Detecta possíveis vulnerabilidades
         vulnerabilities = []
+        is_id_uuid = False
+        # Verifica se existe parâmetro id do tipo uuid
+        params = endpoint.get('parameters', [])
+        for param in params:
+            if param.get('in') == 'path' and param.get('name', '').lower() == 'id':
+                schema = param.get('schema', {})
+                fmt = schema.get('format', '').lower()
+                if fmt == 'uuid':
+                    is_id_uuid = True
+        # Marca BOLA sempre que houver :id
         if ':id' in path:
             vulnerabilities.append("bola")
-        if method in ['POST', 'PUT'] and 'auth' not in path:
+        # Só marca injection se NÃO for UUID
+        if (':id' in path and not is_id_uuid) and method in ['POST', 'PUT', 'PATCH'] and 'auth' not in path:
             vulnerabilities.append("injection")
         if not auth_required and method in ['POST', 'PUT', 'DELETE']:
             vulnerabilities.append("broken_auth")
-        
+
         # Calcula score de risco (0-1)
         risk_score = 0.0
         if risk_level == "alto":
@@ -122,7 +133,7 @@ class LocalLLMAnalyzer:
             risk_score = 0.5
         else:
             risk_score = 0.1
-        
+
         return {
             "pii_fields": pii_fields,
             "auth_required": auth_required,

@@ -1,0 +1,25 @@
+{
+  "file": "/home/s231991563/projetos/neosigner/controlador-api/src/domain/value-objects/Uuid.ts",
+  "relative_path": "domain/value-objects/Uuid.ts",
+  "analyzed_at": "2026-04-29T12:35:20.465572",
+  "endpoints_found": 0,
+  "endpoints": [],
+  "ast_summary": {
+    "type": "program",
+    "children_count": 3,
+    "byte_range": [
+      0,
+      1410
+    ],
+    "position": {
+      "start": {
+        "line": 0,
+        "column": 0
+      },
+      "end": {
+        "line": 62,
+        "column": 0
+      }
+    }
+  }
+}

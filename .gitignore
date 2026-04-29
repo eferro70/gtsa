@@ -31,9 +31,9 @@ wheels/
 *~
 
 # Dados gerados para testes
-step8_tests/dados/
-step8_tests/*.json
-step8_tests/*.log
+src/application/pipeline/tests/dados/
+src/application/pipeline/tests/*.json
+src/application/pipeline/tests/*.log
 
 # Outputs do projeto
 output/

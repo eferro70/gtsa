@@ -18,7 +18,7 @@ Exemplo de uso:
 
 Saídas:
 - tests/regular_endpoints.json   (lista de endpoints extraídos)
-- <output>/regular_endpoints_report.md (relatório em Markdown)
+- <output>/api_analyse_report.md (relatório em Markdown)
 """
 
 import re
@@ -316,7 +316,7 @@ def analyze_project(project_path: str, output_dir: str = None):
         report += f"| {ep['method']} | `{ep['path']}` | `{ep['name']}` | {ep['file_path']} | {ep['line_number']} |\n"
 
 
-    report_file_name = "regular_endpoints_report.md"
+    report_file_name = "api_analyse_report.md"
     with open(output_path / report_file_name, 'w', encoding='utf-8') as f:
         f.write(report)
 

@@ -19,7 +19,7 @@ Exemplo de uso:
 
 Saídas:
 - src/application/pipeline/tests/enriched_endpoints.json   (endpoints enriquecidos)
-- output/enriched_endpoints_report.md    (relatório detalhado)
+- output/final_security_report.md    (relatório detalhado)
 """
 
 import json
@@ -422,7 +422,7 @@ def analyze_project_endpoints(endpoints_file: Union[str, Path] = None,
     errors = sum(1 for e in enriched_endpoints if 'error' in e)
     
     # Arquivo MD sempre em output/
-    report_file = output_dir / "enriched_endpoints_report.md"
+    report_file = output_dir / "final_security_report.md"
     generate_llm_report(enriched_endpoints, report_file)
     
     # Prepara resultado

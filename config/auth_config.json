@@ -8,7 +8,7 @@
     "REQUISITANTE": { "env_var": "TOKEN_REQUISITANTE" },
     "INTERESSADO": { "env_var": "TOKEN_INTERESSADO" }
   },
-  "default_role": "ADMINISTRADOR",
+  "default_role": "REQUISITANTE",
   "auth_header": "Authorization",
   "auth_prefix": "Bearer "
 }

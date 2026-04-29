@@ -1,0 +1,25 @@
+{
+  "file": "/home/s231991563/projetos/neosigner/controlador-api/src/app/dtos/autenticacao/OtpDto.ts",
+  "relative_path": "app/dtos/autenticacao/OtpDto.ts",
+  "analyzed_at": "2026-04-29T06:40:41.783997",
+  "endpoints_found": 0,
+  "endpoints": [],
+  "ast_summary": {
+    "type": "program",
+    "children_count": 1,
+    "byte_range": [
+      0,
+      84
+    ],
+    "position": {
+      "start": {
+        "line": 0,
+        "column": 0
+      },
+      "end": {
+        "line": 5,
+        "column": 0
+      }
+    }
+  }
+}

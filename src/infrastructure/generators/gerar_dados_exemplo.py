@@ -329,8 +329,8 @@ Exemplos:
                         help="URL do backend LLM. Se omitido, usa a URL padrão do backend escolhido.")
     parser.add_argument("--llm-model", default=DEFAULT_MODEL,
                         help=f"Modelo LLM a usar. Default: {DEFAULT_MODEL}")
-    parser.add_argument("--output-dir", default="output/tests/dados",
-                        help="Diretório de saída. Default: output/tests/dados")
+    parser.add_argument("--output-dir", default="src/application/pipeline/tests/dados",
+                        help="Diretório de saída. Default: src/application/pipeline/tests/dados")
     parser.add_argument("--only-with-body", action="store_true",
                         help="Gera apenas para endpoints com requestBody")
     parser.add_argument("--no-overwrite", action="store_true",

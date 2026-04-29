@@ -1,0 +1,17 @@
+{
+  "dadosBasicos": {
+    "nome": "Fluxo de Assinatura",
+    "descricao": "Fluxo para assinatura de contratos",
+    "idRequisitante": "6739f533-5bde-486a-a9b4-9af5605b51fb",
+    "idGrupo": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+    "idCliente": "61637e59-fb59-468f-b008-b32f7c8a38fd",
+    "tipoAssinatura": "AVANCADA",
+    "status": "CRIADO",
+    "sequencial": true,
+    "interrompeSeNegativo": false,
+    "biovalid": true,
+    "permiteSumarizacaoDocumentos": false,
+    "dataLimiteResposta": "2026-05-01T23:59:59Z",
+    "prazoAlertaRespostaPendente": 24
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "file": "/home/s231991563/projetos/neosigner/controlador-api/src/app/use-cases/fluxo/AssinarFluxo.ts",
+  "relative_path": "app/use-cases/fluxo/AssinarFluxo.ts",
+  "analyzed_at": "2026-04-29T06:40:41.943594",
+  "endpoints_found": 0,
+  "endpoints": [],
+  "ast_summary": {
+    "type": "program",
+    "children_count": 15,
+    "byte_range": [
+      0,
+      7209
+    ],
+    "position": {
+      "start": {
+        "line": 0,
+        "column": 0
+      },
+      "end": {
+        "line": 221,
+        "column": 0
+      }
+    }
+  }
+}

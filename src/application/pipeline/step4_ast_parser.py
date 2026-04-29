@@ -11,13 +11,13 @@ Funcionalidades:
 
 Parâmetros de linha de comando:
   <caminho_do_projeto>   Caminho para a raiz do projeto Node/TypeScript a ser analisado (obrigatório)
-  [output_dir]           (Opcional) Caminho para salvar os relatórios (padrão: ../../../output)
+    [output_dir]           (Opcional) Caminho para salvar os relatórios (padrão: ../../../src/application/pipeline/tests)
 
 Exemplo de uso:
     python3 step4_ast_parser.py /caminho/para/projeto
 
 Saídas:
-- <output>/regular_endpoints.json   (lista de endpoints extraídos)
+- tests/regular_endpoints.json   (lista de endpoints extraídos)
 - <output>/regular_endpoints_report.md (relatório em Markdown)
 """
 
@@ -264,7 +264,7 @@ def analyze_project(project_path: str, output_dir: str = None):
                     print(f"   ❌ Erro: {e}")
     
     # Gera relatório
-    # Define output_dir para ../../../output se não for passado
+    # Define output_dir para 'output' se não for passado
     if output_dir is None:
         output_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../../output'))
 
@@ -284,12 +284,14 @@ def analyze_project(project_path: str, output_dir: str = None):
             print(f"⚠️  Não foi possível remover {f}: {e}")
 
 
-    # Prefixo fixo "regular_" nos arquivos de saída
+    # Gera regular_endpoints.json sempre em tests
     endpoints_file_name = "regular_endpoints.json"
-    with open(output_path / endpoints_file_name, 'w', encoding='utf-8') as f:
+    tests_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../../src/application/pipeline/tests'))
+    Path(tests_dir).mkdir(exist_ok=True)
+    with open(Path(tests_dir) / endpoints_file_name, 'w', encoding='utf-8') as f:
         json.dump(all_endpoints, f, indent=2, ensure_ascii=False)
 
-    # Gera relatório Markdown
+    # Gera relatório Markdown em output/
     report = f"""# Relatório de Análise de API - regular
 
 ## Resumo
@@ -298,7 +300,6 @@ def analyze_project(project_path: str, output_dir: str = None):
 - **Métodos HTTP:** {', '.join(set(ep['method'] for ep in all_endpoints))}
 
 ## Endpoints por Método
-
 """
     methods_count = {}
     for ep in all_endpoints:
@@ -314,6 +315,7 @@ def analyze_project(project_path: str, output_dir: str = None):
     for ep in sorted(all_endpoints, key=lambda x: (x['method'], x['path'])):
         report += f"| {ep['method']} | `{ep['path']}` | `{ep['name']}` | {ep['file_path']} | {ep['line_number']} |\n"
 
+
     report_file_name = "regular_endpoints_report.md"
     with open(output_path / report_file_name, 'w', encoding='utf-8') as f:
         f.write(report)
@@ -321,7 +323,7 @@ def analyze_project(project_path: str, output_dir: str = None):
     print(f"\n📊 Resumo:")
     print(f"   Total de endpoints: {len(all_endpoints)}")
     print(f"   Relatório gerado: {output_path}/{report_file_name}")
-    print(f"   JSON gerado: {output_path}/{endpoints_file_name}")
+    print(f"   JSON gerado: {tests_dir}/{endpoints_file_name}")
 
     return all_endpoints
 

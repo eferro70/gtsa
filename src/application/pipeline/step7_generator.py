@@ -16,6 +16,7 @@ Uso típico: python3 step7_generator.py <openapi.json>
 
 import json
 import os
+import sys
 import textwrap
 from pathlib import Path
 
@@ -26,21 +27,53 @@ try:
 except ImportError:
     print("⚠️  python-dotenv não instalado. Variáveis do .env não serão carregadas automaticamente.")
 
+
 class SmartSchemathesisGenerator:
     def __init__(self, openapi_file: str):
-        # enriched_endpoints.json sempre em output
-        self.enriched_file = str(Path("output/enriched_endpoints.json").resolve())
-        self.openapi_file = str(Path(openapi_file).resolve())
-        self.output_dir = Path("output/tests").resolve()
-        self.output_dir.mkdir(parents=True, exist_ok=True)
+        # enriched_endpoints.json agora em src/application/pipeline/tests/
+        self.enriched_file = Path("src/application/pipeline/tests/enriched_endpoints.json").resolve()
+        self.openapi_file = Path(openapi_file).resolve()
+        self.output_dir = Path("src/application/pipeline/tests").resolve()
         self.api_base = os.getenv("API_BASE_URL", "http://localhost")
         self.load_data()
     
     def load_data(self):
-        with open(self.enriched_file, 'r', encoding='utf-8') as f:
-            self.endpoints = json.load(f)
-        with open(self.openapi_file, 'r', encoding='utf-8') as f:
-            self.openapi_schema = json.load(f)
+        """Carrega os dados com verificação e logging explícito"""
+        print(f"🔍 Verificando arquivos de entrada...")
+        
+        # Verifica enriched_endpoints.json
+        if not self.enriched_file.exists():
+            raise FileNotFoundError(
+                f"❌ Arquivo não encontrado: {self.enriched_file}\n"
+                f"💡 Execute primeiro: python3 step5_analyzer.py para gerar enriched_endpoints.json"
+            )
+        print(f"✅ enriched_endpoints.json encontrado: {self.enriched_file}")
+        
+        # Verifica openapi.json
+        if not self.openapi_file.exists():
+            raise FileNotFoundError(f"❌ Arquivo não encontrado: {self.openapi_file}")
+        print(f"✅ OpenAPI spec encontrado: {self.openapi_file}")
+        
+        # Carrega enriched_endpoints.json
+        try:
+            with open(self.enriched_file, 'r', encoding='utf-8') as f:
+                self.endpoints = json.load(f)
+            print(f"✅ {len(self.endpoints)} endpoints carregados de enriched_endpoints.json")
+        except json.JSONDecodeError as e:
+            raise ValueError(f"❌ Erro ao parsear enriched_endpoints.json: {e}")
+        except Exception as e:
+            raise RuntimeError(f"❌ Erro ao ler enriched_endpoints.json: {e}")
+        
+        # Carrega openapi.json
+        try:
+            with open(self.openapi_file, 'r', encoding='utf-8') as f:
+                self.openapi_schema = json.load(f)
+            print(f"✅ OpenAPI schema carregado: {self.openapi_schema.get('info', {}).get('title', 'Sem título')}")
+        except json.JSONDecodeError as e:
+            raise ValueError(f"❌ Erro ao parsear OpenAPI: {e}")
+        except Exception as e:
+            raise RuntimeError(f"❌ Erro ao ler OpenAPI: {e}")
+        
         print(f"✅ Dados carregados. Gerando artefatos para: {self.output_dir}")
 
     def generate_auth_hooks(self) -> str:
@@ -51,13 +84,18 @@ class SmartSchemathesisGenerator:
             from dotenv import load_dotenv
             from pathlib import Path
 
-            # Busca auth_config.json subindo diretórios a partir do cwd
+            # Busca auth_config.json subindo diretórios a partir do cwd e também em config/
             def find_config(filename):
                 path = Path.cwd()
                 for _ in range(6):  # Sobe até 6 níveis
+                    # Procura no diretório atual
                     candidate = path / filename
                     if candidate.exists():
                         return candidate
+                    # Procura em config/ no diretório atual
+                    candidate_config = path / 'config' / filename
+                    if candidate_config.exists():
+                        return candidate_config
                     if path.parent == path:
                         break
                     path = path.parent
@@ -137,7 +175,7 @@ class SmartSchemathesisGenerator:
         """).strip()
 
     def generate_smart_test_file(self) -> str:
-        swagger_path = self.openapi_file
+        swagger_path = str(self.openapi_file)
         template = textwrap.dedent("""
         import jsonschema
         import os
@@ -148,7 +186,7 @@ class SmartSchemathesisGenerator:
         import random
         import string
         from pathlib import Path
-        from hooks.llm_hooks import before_call
+        from src.infrastructure.interfaces.hooks.llm_hooks import before_call
         from hypothesis import given, settings, strategies as st, HealthCheck, errors as hyp_errors
 
         try:
@@ -157,6 +195,7 @@ class SmartSchemathesisGenerator:
             requests = None
 
         LOG_FILE = os.environ.get('TEST_LOG_FILE', 'test_api_llm.log')
+        SUMMARY_FILE = os.environ.get('TEST_SUMMARY_FILE', 'test_api_llm_summary.md')
 
         def log_test(message, status="INFO"):
             try:
@@ -395,23 +434,36 @@ class SmartSchemathesisGenerator:
 
 # Configurações
 SCRIPT_DIR="$(cd \"$(dirname \"$0\")\" && pwd)"
-ENRICHED_ENDPOINTS_JSON="$SCRIPT_DIR/../enriched_endpoints.json"
+ENRICHED_ENDPOINTS_JSON="$SCRIPT_DIR/tests/enriched_endpoints.json"
 TEST_SCRIPT="$SCRIPT_DIR/test_api_security.py"
 DATA_DIR="$SCRIPT_DIR/dados"
 LOGFILE="$SCRIPT_DIR/test_api_llm.log"
-SUMMARY_FILE="$SCRIPT_DIR/test_api_llm_summary.md"
+SUMMARY_FILE="output/test_api_llm_summary.md"
 BASE_URL="{api_base}"
 MAX_PARALLEL=4
 
 export USE_LLM_DATA=true
 export TEST_LOG_FILE="$LOGFILE"
+export TEST_SUMMARY_FILE="$SUMMARY_FILE"
 mkdir -p "$DATA_DIR"
 # Remove o arquivo de log anterior, se existir
 if [ -f "$LOGFILE" ]; then
     rm "$LOGFILE"
 fi
+# Remove o arquivo de summary anterior, se existir
+if [ -f "$SUMMARY_FILE" ]; then
+    rm "$SUMMARY_FILE"
+fi
 # Adiciona data e hora da execução no início do log
 echo "Execução iniciada em: $(date '+%Y-%m-%d %H:%M:%S')" > "$LOGFILE"
+echo "# Relatório de Testes da API" > "$SUMMARY_FILE"
+echo "" >> "$SUMMARY_FILE"
+echo "**Data da execução:** $(date '+%Y-%m-%d %H:%M:%S')" >> "$SUMMARY_FILE"
+echo "" >> "$SUMMARY_FILE"
+echo "## Resultados" >> "$SUMMARY_FILE"
+echo "" >> "$SUMMARY_FILE"
+echo "| Endpoint | Método | Role | Status |" >> "$SUMMARY_FILE"
+echo "|----------|--------|------|--------|" >> "$SUMMARY_FILE"
 
 if [ ! -f "$ENRICHED_ENDPOINTS_JSON" ]; then
     echo "Arquivo enriched_endpoints.json não encontrado em $ENRICHED_ENDPOINTS_JSON"
@@ -424,6 +476,7 @@ echo "Arquivo de endpoints: $ENRICHED_ENDPOINTS_JSON"
 echo "Script de teste: $TEST_SCRIPT"
 echo "Base URL: $BASE_URL"
 echo "Log: $LOGFILE"
+echo "Summary: $SUMMARY_FILE"
 echo "====================================="
 
 # Função para obter token do .env
@@ -458,10 +511,13 @@ run_test() {
     local exit_code=$?
     if [ $exit_code -eq 0 ]; then
         echo "✅ $method $endpoint (role: $role)" >> "$LOGFILE"
+        echo "| $endpoint | $method | $role | ✅ Sucesso |" >> "$SUMMARY_FILE"
     elif [ $exit_code -eq 124 ]; then
         echo "❌ $method $endpoint (role: $role) [timeout após ${TIMEOUT}s]" >> "$LOGFILE"
+        echo "| $endpoint | $method | $role | ⏱️ Timeout |" >> "$SUMMARY_FILE"
     else
         echo "❌ $method $endpoint (role: $role) [exit $exit_code]" >> "$LOGFILE"
+        echo "| $endpoint | $method | $role | ❌ Falha (exit $exit_code) |" >> "$SUMMARY_FILE"
     fi
     return $exit_code
 }
@@ -513,59 +569,143 @@ for pid in "${PIDS[@]}"; do
     fi
 done
 
+echo "" >> "$SUMMARY_FILE"
+echo "## Resumo" >> "$SUMMARY_FILE"
+echo "" >> "$SUMMARY_FILE"
+echo "- **Total de testes:** $COUNT" >> "$SUMMARY_FILE"
+echo "- **✅ Sucessos:** $SUCCESS" >> "$SUMMARY_FILE"
+echo "- **❌ Falhas:** $FAIL" >> "$SUMMARY_FILE"
+echo ""
+
 echo "====================================="
 echo "Testes concluídos : $COUNT"
 echo "✅ Sucesso        : $SUCCESS"
 echo "❌ Falha          : $FAIL"
 echo "Veja o log em: $LOGFILE"
+echo "Veja o resumo em: $SUMMARY_FILE"
                 """).strip().replace("{api_base}", self.api_base)
+
+    def _write_file_safely(self, file_path: Path, content: str, description: str) -> bool:
+        """Escreve arquivo com verificação pós-escrita e logging"""
+        try:
+            file_path.parent.mkdir(parents=True, exist_ok=True)
+            file_path.write_text(content, encoding='utf-8')
+            
+            # Verificação pós-escrita
+            if file_path.exists() and file_path.stat().st_size > 0:
+                print(f"✅ {description}: {file_path}")
+                return True
+            else:
+                print(f"❌ Falha ao escrever {description}: arquivo vazio ou não criado")
+                return False
+        except PermissionError:
+            print(f"❌ Permissão negada para escrever {description}: {file_path}")
+            return False
+        except Exception as e:
+            print(f"❌ Erro ao escrever {description}: {e}")
+            return False
 
     def generate(self):
         """
         Gera a estrutura de arquivos para os testes do Schemathesis.
         """
+        print(f"🔧 Iniciando geração de artefatos...")
+        
         # Define diretórios de saída
-        tests_dir = Path("output/tests")
+        tests_dir = Path("src/application/pipeline/tests")
         hooks_dir = Path("src/infrastructure/interfaces/hooks")
+        pipeline_dir = Path("src/application/pipeline")
 
         # Cria a estrutura de pastas
-        tests_dir.mkdir(parents=True, exist_ok=True)
-        hooks_dir.mkdir(parents=True, exist_ok=True)
+        for d in [tests_dir, hooks_dir, pipeline_dir]:
+            d.mkdir(parents=True, exist_ok=True)
+            print(f"📁 Diretório verificado: {d}")
 
-        # 1. GERAÇÃO DO __init__.py (CORREÇÃO DO IMPORT ERROR)
-        # Este arquivo deve exportar apenas o before_call para o Schemathesis
+        # Cria o diretório dados dentro de tests
+        data_dir = tests_dir / "dados"
+        data_dir.mkdir(parents=True, exist_ok=True)
+
+        # Contador de sucessos
+        success_count = 0
+        total_files = 5
+
+        # 1. GERAÇÃO DO __init__.py
         init_content = "from .llm_hooks import before_call\n"
-        (hooks_dir / "__init__.py").write_text(init_content, encoding='utf-8')
+        if self._write_file_safely(hooks_dir / "__init__.py", init_content, "Hooks __init__.py"):
+            success_count += 1
 
         # 2. GERAÇÃO DO auth_hooks.py
-        # Utiliza o método generate_auth_hooks que removemos o auth_handler
         auth_content = self.generate_auth_hooks()
-        (hooks_dir / "auth_hooks.py").write_text(auth_content, encoding='utf-8')
+        if self._write_file_safely(hooks_dir / "auth_hooks.py", auth_content, "auth_hooks.py"):
+            success_count += 1
 
         # 3. GERAÇÃO DO llm_hooks.py
-        # Garante que importa apenas apply_auth
         llm_hooks_content = self.generate_llm_hooks()
-        (hooks_dir / "llm_hooks.py").write_text(llm_hooks_content, encoding='utf-8')
+        if self._write_file_safely(hooks_dir / "llm_hooks.py", llm_hooks_content, "llm_hooks.py"):
+            success_count += 1
 
         # 4. GERAÇÃO DO test_api_security.py
-        # O arquivo principal de teste que o Pytest irá executar
         test_file_content = self.generate_smart_test_file()
-        (tests_dir / "test_api_security.py").write_text(test_file_content, encoding='utf-8')
+        if self._write_file_safely(tests_dir / "test_api_security.py", test_file_content, "test_api_security.py"):
+            success_count += 1
 
-        # 5. GERAÇÃO DO run_llm_tests.sh
+        # 5. GERAÇÃO DO step8_run_llm_tests.sh em pipeline/
         runner_content = self.generate_runner()
-        (tests_dir / "run_llm_tests.sh").write_text(runner_content, encoding='utf-8')
-        os.chmod(tests_dir / "run_llm_tests.sh", 0o755)
+        runner_path = pipeline_dir / "step8_run_llm_tests.sh"
+        if self._write_file_safely(runner_path, runner_content, "step8_run_llm_tests.sh"):
+            os.chmod(runner_path, 0o755)
+            print(f"🔐 Permissão de execução definida para runner")
+            success_count += 1
 
-        print(f"✅ Estrutura de testes gerada com sucesso em {tests_dir}")
-        print("📝 Arquivo de teste Python: output/tests/test_api_security.py")
-        print("📝 Runner Bash: output/tests/run_llm_tests.sh")
+        # Resumo final
+        print(f"\n{'='*60}")
+        if success_count == total_files:
+            print(f"✅ Estrutura de testes gerada COM SUCESSO ({success_count}/{total_files} arquivos)")
+        else:
+            print(f"⚠️  Geração PARCIAL: {success_count}/{total_files} arquivos criados")
+            print("💡 Verifique as mensagens de erro acima para corrigir")
+        print(f"{'='*60}")
+        
+        print("📝 Arquivo de teste Python: src/application/pipeline/tests/test_api_security.py")
+        print("📝 Runner Bash: src/application/pipeline/step8_run_llm_tests.sh")
+        print("📝 Diretório de dados: src/application/pipeline/tests/dados/")
+        print("📝 Arquivo de summary: output/test_api_llm_summary.md")
         print("📝 Hooks Python: src/infrastructure/interfaces/hooks/__init__.py, auth_hooks.py, llm_hooks.py")
+        print("\n⚠️  Importante: Certifique-se de que o arquivo enriched_endpoints.json esteja em:")
+        print("   src/application/pipeline/tests/enriched_endpoints.json")
+        
+        # Verificação final dos arquivos críticos
+        critical_files = [
+            tests_dir / "test_api_security.py",
+            pipeline_dir / "step8_run_llm_tests.sh",
+            hooks_dir / "llm_hooks.py"
+        ]
+        missing = [f for f in critical_files if not f.exists() or f.stat().st_size == 0]
+        if missing:
+            print(f"\n❌ ALERTA: Arquivos críticos não foram gerados corretamente:")
+            for f in missing:
+                print(f"   - {f}")
+            return False
+        return True
+
 
 if __name__ == "__main__":
     import sys
+    
     if len(sys.argv) < 2:
-        print("Uso: python smart_generator.py <openapi.json>")
-    else:
+        print("Uso: python3 step7_generator.py <openapi.json> [opções]")
+        print("Exemplo: python3 step7_generator.py output/spec.json --llm-backend ollama")
+        sys.exit(1)
+    
+    try:
         generator = SmartSchemathesisGenerator(sys.argv[1])
-        generator.generate()
+        success = generator.generate()
+        sys.exit(0 if success else 1)
+    except FileNotFoundError as e:
+        print(f"❌ Erro: {e}")
+        sys.exit(1)
+    except Exception as e:
+        print(f"❌ Erro inesperado: {e}")
+        import traceback
+        traceback.print_exc()
+        sys.exit(1)

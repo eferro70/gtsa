@@ -1,0 +1,14 @@
+{
+  "_path_params": {
+    "perfil": "INTERESSADO"
+  },
+  "idCliente": "b1c2d3e4-f5a6-7890-bcde-fa1234567890",
+  "nome": "João da Silva",
+  "email": "joao@empresa.com",
+  "perfil": {
+    "grupos": [
+      "c1a2b3c4-d5e6-7890-abcd-1234567890ef",
+      "d4e5f6a7-b8c9-0123-abcd-4567890fedcb"
+    ]
+  }
+}

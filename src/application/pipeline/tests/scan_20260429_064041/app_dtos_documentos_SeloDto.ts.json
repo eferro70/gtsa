@@ -1,0 +1,25 @@
+{
+  "file": "/home/s231991563/projetos/neosigner/controlador-api/src/app/dtos/documentos/SeloDto.ts",
+  "relative_path": "app/dtos/documentos/SeloDto.ts",
+  "analyzed_at": "2026-04-29T06:40:41.798039",
+  "endpoints_found": 0,
+  "endpoints": [],
+  "ast_summary": {
+    "type": "program",
+    "children_count": 1,
+    "byte_range": [
+      0,
+      168
+    ],
+    "position": {
+      "start": {
+        "line": 0,
+        "column": 0
+      },
+      "end": {
+        "line": 9,
+        "column": 0
+      }
+    }
+  }
+}

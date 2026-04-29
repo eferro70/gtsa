@@ -1,0 +1,25 @@
+{
+  "file": "/home/s231991563/projetos/neosigner/controlador-api/src/app/use-cases/sumario/PdfGenerator.ts",
+  "relative_path": "app/use-cases/sumario/PdfGenerator.ts",
+  "analyzed_at": "2026-04-29T06:40:42.012322",
+  "endpoints_found": 0,
+  "endpoints": [],
+  "ast_summary": {
+    "type": "program",
+    "children_count": 27,
+    "byte_range": [
+      0,
+      24759
+    ],
+    "position": {
+      "start": {
+        "line": 0,
+        "column": 0
+      },
+      "end": {
+        "line": 824,
+        "column": 0
+      }
+    }
+  }
+}

@@ -1,0 +1,1089 @@
+[
+  {
+    "path": "/api/v1/authentication-options",
+    "method": "GET",
+    "summary": "Gera opções de autenticação WebAuthn (FIDO2)",
+    "description": null,
+    "business_context": {
+      "domain": "unknown"
+    },
+    "realistic_examples": {
+      "valid_request": null,
+      "valid_response": null
+    },
+    "roles": []
+  },
+  {
+    "path": "/api/v1/verify-registration",
+    "method": "POST",
+    "summary": "Verifica resposta de registro WebAuthn (FIDO2)",
+    "description": null,
+    "business_context": {
+      "domain": "unknown"
+    },
+    "realistic_examples": {
+      "valid_request": null,
+      "valid_response": null
+    },
+    "roles": []
+  },
+  {
+    "path": "/api/v1/verify-authentication",
+    "method": "POST",
+    "summary": "Verifica resposta de autenticação WebAuthn (FIDO2)",
+    "description": null,
+    "business_context": {
+      "domain": "unknown"
+    },
+    "realistic_examples": {
+      "valid_request": null,
+      "valid_response": null
+    },
+    "roles": []
+  },
+  {
+    "path": "/api/v1/login-sistema",
+    "method": "PUT",
+    "summary": "Autenticação de usuário do tipo sistema",
+    "description": null,
+    "business_context": {
+      "domain": "unknown"
+    },
+    "realistic_examples": {
+      "valid_request": null,
+      "valid_response": null
+    },
+    "roles": []
+  },
+  {
+    "path": "/api/v1/listar-contas/{email}",
+    "method": "GET",
+    "summary": "Lista as contas de um usuário pelo e-mail",
+    "description": null,
+    "business_context": {
+      "domain": "unknown"
+    },
+    "realistic_examples": {
+      "valid_request": null,
+      "valid_response": null
+    },
+    "roles": []
+  },
+  {
+    "path": "/api/v1/confirmacao-conta/{idConta}",
+    "method": "GET",
+    "summary": "Retorna os dados da conta que será logada",
+    "description": null,
+    "business_context": {
+      "domain": "unknown"
+    },
+    "realistic_examples": {
+      "valid_request": null,
+      "valid_response": null
+    },
+    "roles": []
+  },
+  {
+    "path": "/api/v1/enviar-otp",
+    "method": "PATCH",
+    "summary": "Gera e envia código OTP para autenticação",
+    "description": null,
+    "business_context": {
+      "domain": "unknown"
+    },
+    "realistic_examples": {
+      "valid_request": null,
+      "valid_response": null
+    },
+    "roles": []
+  },
+  {
+    "path": "/api/v1/verificar-otp",
+    "method": "PATCH",
+    "summary": "Verifica o código OTP e autentica o usuário",
+    "description": null,
+    "business_context": {
+      "domain": "unknown"
+    },
+    "realistic_examples": {
+      "valid_request": null,
+      "valid_response": null
+    },
+    "roles": []
+  },
+  {
+    "path": "/api/v1/token",
+    "method": "PUT",
+    "summary": "Gera um novo token de longa duração para o usuário autenticado",
+    "description": null,
+    "business_context": {
+      "domain": "unknown"
+    },
+    "realistic_examples": {
+      "valid_request": null,
+      "valid_response": null
+    },
+    "roles": []
+  },
+  {
+    "path": "/api/v1/link",
+    "method": "PATCH",
+    "summary": "Autentica o usuário via link enviado por e-mail",
+    "description": null,
+    "business_context": {
+      "domain": "unknown"
+    },
+    "realistic_examples": {
+      "valid_request": null,
+      "valid_response": null
+    },
+    "roles": []
+  },
+  {
+    "path": "/api/v1/autenticar-certificado",
+    "method": "GET",
+    "summary": "Autentica usuário via certificado digital",
+    "description": "Realiza a autenticação de um usuário utilizando certificado digital ICP-Brasil.",
+    "business_context": {
+      "domain": "unknown"
+    },
+    "realistic_examples": {
+      "valid_request": null,
+      "valid_response": null
+    },
+    "roles": []
+  },
+  {
+    "path": "/api/v1/verificar-certificado",
+    "method": "PATCH",
+    "summary": "Converte token de onboarding em cookie de sessão",
+    "description": "Recebe o JWT temporário no header `Authorization: Bearer <token>` e\npersiste o cookie HTTP-only de autenticação.\n",
+    "business_context": {
+      "domain": "unknown"
+    },
+    "realistic_examples": {
+      "valid_request": null,
+      "valid_response": null
+    },
+    "roles": []
+  },
+  {
+    "path": "/api/v1/verificar-certificado-nuvem",
+    "method": "PATCH",
+    "summary": "Verifica certificado digital em nuvem e retorna contas e token",
+    "description": "Realiza a verificação do certificado digital em nuvem, retornando as contas associadas ao usuário e um token JWT temporário para seleção de perfil.\n",
+    "business_context": {
+      "domain": "unknown"
+    },
+    "realistic_examples": {
+      "valid_request": null,
+      "valid_response": null
+    },
+    "roles": []
+  },
+  {
+    "path": "/api/v1/logout",
+    "method": "PUT",
+    "summary": "Realiza logout do usuário",
+    "description": "Remove o cookie de autenticação e encerra a sessão do usuário.",
+    "business_context": {
+      "domain": "unknown"
+    },
+    "realistic_examples": {
+      "valid_request": null,
+      "valid_response": null
+    },
+    "roles": []
+  },
+  {
+    "path": "/api/v1/clientes",
+    "method": "GET",
+    "summary": "Lista todos os clientes",
+    "description": null,
+    "business_context": {
+      "domain": "unknown"
+    },
+    "realistic_examples": {
+      "valid_request": null,
+      "valid_response": null
+    },
+    "roles": [
+      "ADMINISTRADOR"
+    ]
+  },
+  {
+    "path": "/api/v1/clientes",
+    "method": "POST",
+    "summary": "Cria um novo cliente",
+    "description": null,
+    "business_context": {
+      "domain": "unknown"
+    },
+    "realistic_examples": {
+      "valid_request": null,
+      "valid_response": null
+    },
+    "roles": [
+      "PAV",
+      "ADMINISTRADOR"
+    ]
+  },
+  {
+    "path": "/api/v1/clientes/{id}",
+    "method": "PUT",
+    "summary": "Altera os dados de um cliente",
+    "description": null,
+    "business_context": {
+      "domain": "unknown"
+    },
+    "realistic_examples": {
+      "valid_request": null,
+      "valid_response": null
+    },
+    "roles": [
+      "ADMINISTRADOR"
+    ]
+  },
+  {
+    "path": "/api/v1/clientes/{id}",
+    "method": "GET",
+    "summary": "Busca um cliente pelo ID",
+    "description": null,
+    "business_context": {
+      "domain": "unknown"
+    },
+    "realistic_examples": {
+      "valid_request": null,
+      "valid_response": null
+    },
+    "roles": [
+      "ADMINISTRADOR"
+    ]
+  },
+  {
+    "path": "/api/v1/contas/perfil/{perfil}",
+    "method": "POST",
+    "summary": "Cria uma nova conta para um perfil específico",
+    "description": null,
+    "business_context": {
+      "domain": "unknown"
+    },
+    "realistic_examples": {
+      "valid_request": null,
+      "valid_response": null
+    },
+    "roles": [
+      "GESTOR",
+      "ADMINISTRADOR"
+    ]
+  },
+  {
+    "path": "/api/v1/contas/perfil/{perfil}",
+    "method": "GET",
+    "summary": "Lista contas de um perfil específico",
+    "description": null,
+    "business_context": {
+      "domain": "unknown"
+    },
+    "realistic_examples": {
+      "valid_request": null,
+      "valid_response": null
+    },
+    "roles": [
+      "ADMINISTRADOR",
+      "GESTOR",
+      "REQUISITANTE"
+    ]
+  },
+  {
+    "path": "/api/v1/contas/perfil/{perfil}/{id}",
+    "method": "PUT",
+    "summary": "Altera uma conta existente para um perfil específico",
+    "description": null,
+    "business_context": {
+      "domain": "unknown"
+    },
+    "realistic_examples": {
+      "valid_request": null,
+      "valid_response": null
+    },
+    "roles": [
+      "GESTOR",
+      "ADMINISTRADOR"
+    ]
+  },
+  {
+    "path": "/api/v1/contas/id/{id}",
+    "method": "GET",
+    "summary": "Busca conta pelo ID",
+    "description": null,
+    "business_context": {
+      "domain": "unknown"
+    },
+    "realistic_examples": {
+      "valid_request": null,
+      "valid_response": null
+    },
+    "roles": [
+      "ADMINISTRADOR",
+      "GESTOR",
+      "REQUISITANTE"
+    ]
+  },
+  {
+    "path": "/api/v1/contas",
+    "method": "GET",
+    "summary": "Pesquisa contas com filtros",
+    "description": null,
+    "business_context": {
+      "domain": "unknown"
+    },
+    "realistic_examples": {
+      "valid_request": null,
+      "valid_response": null
+    },
+    "roles": [
+      "ADMINISTRADOR",
+      "GESTOR",
+      "REQUISITANTE"
+    ]
+  },
+  {
+    "path": "/api/v1/contas/sumario",
+    "method": "GET",
+    "summary": "Retorna o sumário das contas",
+    "description": null,
+    "business_context": {
+      "domain": "unknown"
+    },
+    "realistic_examples": {
+      "valid_request": null,
+      "valid_response": null
+    },
+    "roles": [
+      "ADMINISTRADOR",
+      "GESTOR",
+      "REQUISITANTE"
+    ]
+  },
+  {
+    "path": "/api/v1/contas/codigo/{codigo}",
+    "method": "GET",
+    "summary": "Busca pessoa por código da conta",
+    "description": null,
+    "business_context": {
+      "domain": "unknown"
+    },
+    "realistic_examples": {
+      "valid_request": null,
+      "valid_response": null
+    },
+    "roles": [
+      "ADMINISTRADOR",
+      "GESTOR",
+      "REQUISITANTE"
+    ]
+  },
+  {
+    "path": "/api/v1/contas/reenviar-credenciais-sistema",
+    "method": "PATCH",
+    "summary": "Reenvia as credenciais do sistema para a conta informada",
+    "description": null,
+    "business_context": {
+      "domain": "unknown"
+    },
+    "realistic_examples": {
+      "valid_request": null,
+      "valid_response": null
+    },
+    "roles": [
+      "GESTOR",
+      "ADMINISTRADOR"
+    ]
+  },
+  {
+    "path": "/api/v1/notificar",
+    "method": "PATCH",
+    "summary": "Processa notificações agendadas",
+    "description": "Executa as notificações habilitadas na variável de ambiente `TIPOS_DE_ALERTAS`.",
+    "business_context": {
+      "domain": "unknown"
+    },
+    "realistic_examples": {
+      "valid_request": null,
+      "valid_response": null
+    },
+    "roles": []
+  },
+  {
+    "path": "/api/v1/fluxos/finalizar",
+    "method": "PATCH",
+    "summary": "Finaliza fluxos automaticamente",
+    "description": "Finaliza fluxos elegíveis e dispara os processamentos de encerramento.",
+    "business_context": {
+      "domain": "unknown"
+    },
+    "realistic_examples": {
+      "valid_request": null,
+      "valid_response": null
+    },
+    "roles": []
+  },
+  {
+    "path": "/api/v1/fluxos/arquivar",
+    "method": "PATCH",
+    "summary": "Arquiva fluxos automaticamente",
+    "description": "Arquiva fluxos que atendem aos critérios de arquivamento automático.",
+    "business_context": {
+      "domain": "unknown"
+    },
+    "realistic_examples": {
+      "valid_request": null,
+      "valid_response": null
+    },
+    "roles": []
+  },
+  {
+    "path": "/api/v1/getlink",
+    "method": "GET",
+    "summary": "Gera e retorna um link de autenticação (apenas para testes e2e)",
+    "description": null,
+    "business_context": {
+      "domain": "unknown"
+    },
+    "realistic_examples": {
+      "valid_request": null,
+      "valid_response": null
+    },
+    "roles": []
+  },
+  {
+    "path": "/api/v1/documentos",
+    "method": "POST",
+    "summary": "Adiciona um documento ao fluxo",
+    "description": null,
+    "business_context": {
+      "domain": "unknown"
+    },
+    "realistic_examples": {
+      "valid_request": null,
+      "valid_response": null
+    },
+    "roles": [
+      "REQUISITANTE"
+    ]
+  },
+  {
+    "path": "/api/v1/documentos/{id}",
+    "method": "DELETE",
+    "summary": "Remove um documento",
+    "description": null,
+    "business_context": {
+      "domain": "unknown"
+    },
+    "realistic_examples": {
+      "valid_request": null,
+      "valid_response": null
+    },
+    "roles": [
+      "REQUISITANTE"
+    ]
+  },
+  {
+    "path": "/api/v1/fluxos",
+    "method": "POST",
+    "summary": "Cria um fluxo",
+    "description": null,
+    "business_context": {
+      "domain": "unknown"
+    },
+    "realistic_examples": {
+      "valid_request": null,
+      "valid_response": null
+    },
+    "roles": [
+      "REQUISITANTE"
+    ]
+  },
+  {
+    "path": "/api/v1/fluxos",
+    "method": "GET",
+    "summary": "Lista fluxos do requisitante",
+    "description": null,
+    "business_context": {
+      "domain": "unknown"
+    },
+    "realistic_examples": {
+      "valid_request": null,
+      "valid_response": null
+    },
+    "roles": [
+      "REQUISITANTE"
+    ]
+  },
+  {
+    "path": "/api/v1/fluxos/adicionar",
+    "method": "POST",
+    "summary": "Cria um fluxo completo para usuario sistema",
+    "description": null,
+    "business_context": {
+      "domain": "unknown"
+    },
+    "realistic_examples": {
+      "valid_request": null,
+      "valid_response": null
+    },
+    "roles": [
+      "REQUISITANTE"
+    ]
+  },
+  {
+    "path": "/api/v1/fluxos/{id}",
+    "method": "PUT",
+    "summary": "Atualiza um fluxo",
+    "description": null,
+    "business_context": {
+      "domain": "unknown"
+    },
+    "realistic_examples": {
+      "valid_request": null,
+      "valid_response": null
+    },
+    "roles": [
+      "REQUISITANTE"
+    ]
+  },
+  {
+    "path": "/api/v1/fluxo/{id}",
+    "method": "DELETE",
+    "summary": "Exclui um fluxo",
+    "description": null,
+    "business_context": {
+      "domain": "unknown"
+    },
+    "realistic_examples": {
+      "valid_request": null,
+      "valid_response": null
+    },
+    "roles": [
+      "REQUISITANTE"
+    ]
+  },
+  {
+    "path": "/api/v1/fluxo/{id}",
+    "method": "GET",
+    "summary": "Busca um fluxo por ID",
+    "description": null,
+    "business_context": {
+      "domain": "unknown"
+    },
+    "realistic_examples": {
+      "valid_request": null,
+      "valid_response": null
+    },
+    "roles": [
+      "REQUISITANTE"
+    ]
+  },
+  {
+    "path": "/api/v1/fluxos/{id}/iniciar",
+    "method": "PATCH",
+    "summary": "Inicia um fluxo",
+    "description": null,
+    "business_context": {
+      "domain": "unknown"
+    },
+    "realistic_examples": {
+      "valid_request": null,
+      "valid_response": null
+    },
+    "roles": [
+      "REQUISITANTE"
+    ]
+  },
+  {
+    "path": "/api/v1/fluxos/{id}/finalizar",
+    "method": "PATCH",
+    "summary": "Finaliza um fluxo",
+    "description": null,
+    "business_context": {
+      "domain": "unknown"
+    },
+    "realistic_examples": {
+      "valid_request": null,
+      "valid_response": null
+    },
+    "roles": [
+      "REQUISITANTE"
+    ]
+  },
+  {
+    "path": "/api/v1/fluxos/{id}/cancelar",
+    "method": "PATCH",
+    "summary": "Cancela um fluxo",
+    "description": null,
+    "business_context": {
+      "domain": "unknown"
+    },
+    "realistic_examples": {
+      "valid_request": null,
+      "valid_response": null
+    },
+    "roles": [
+      "REQUISITANTE"
+    ]
+  },
+  {
+    "path": "/api/v1/fluxos/{id}/arquivar",
+    "method": "PATCH",
+    "summary": "Arquiva um fluxo",
+    "description": null,
+    "business_context": {
+      "domain": "unknown"
+    },
+    "realistic_examples": {
+      "valid_request": null,
+      "valid_response": null
+    },
+    "roles": [
+      "REQUISITANTE"
+    ]
+  },
+  {
+    "path": "/api/v1/fluxos/{id}/hashes-documentos/{algoritmo}",
+    "method": "GET",
+    "summary": "Busca hashes dos documentos de um fluxo",
+    "description": null,
+    "business_context": {
+      "domain": "unknown"
+    },
+    "realistic_examples": {
+      "valid_request": null,
+      "valid_response": null
+    },
+    "roles": [
+      "INTERESSADO"
+    ]
+  },
+  {
+    "path": "/api/v1/fluxos/arquivados",
+    "method": "GET",
+    "summary": "Lista fluxos arquivados",
+    "description": null,
+    "business_context": {
+      "domain": "unknown"
+    },
+    "realistic_examples": {
+      "valid_request": null,
+      "valid_response": null
+    },
+    "roles": [
+      "REQUISITANTE"
+    ]
+  },
+  {
+    "path": "/api/v1/fluxos/{id}/interessados",
+    "method": "GET",
+    "summary": "Lista interessados de um fluxo",
+    "description": null,
+    "business_context": {
+      "domain": "unknown"
+    },
+    "realistic_examples": {
+      "valid_request": null,
+      "valid_response": null
+    },
+    "roles": [
+      "REQUISITANTE",
+      "INTERESSADO"
+    ]
+  },
+  {
+    "path": "/api/v1/resposta/{id}",
+    "method": "GET",
+    "summary": "Busca um fluxo para o interessado",
+    "description": null,
+    "business_context": {
+      "domain": "unknown"
+    },
+    "realistic_examples": {
+      "valid_request": null,
+      "valid_response": null
+    },
+    "roles": [
+      "INTERESSADO"
+    ]
+  },
+  {
+    "path": "/api/v1/fluxos-interessado",
+    "method": "GET",
+    "summary": "Lista fluxos do interessado",
+    "description": null,
+    "business_context": {
+      "domain": "unknown"
+    },
+    "realistic_examples": {
+      "valid_request": null,
+      "valid_response": null
+    },
+    "roles": [
+      "INTERESSADO"
+    ]
+  },
+  {
+    "path": "/api/v1/fluxos/{id}/sumario",
+    "method": "GET",
+    "summary": "Busca o sumario de um fluxo",
+    "description": null,
+    "business_context": {
+      "domain": "unknown"
+    },
+    "realistic_examples": {
+      "valid_request": null,
+      "valid_response": null
+    },
+    "roles": [
+      "REQUISITANTE"
+    ]
+  },
+  {
+    "path": "/api/v1/grupos",
+    "method": "POST",
+    "summary": "Cria um novo grupo",
+    "description": null,
+    "business_context": {
+      "domain": "unknown"
+    },
+    "realistic_examples": {
+      "valid_request": null,
+      "valid_response": null
+    },
+    "roles": [
+      "ADMINISTRADOR",
+      "GESTOR"
+    ]
+  },
+  {
+    "path": "/api/v1/grupos",
+    "method": "GET",
+    "summary": "Lista grupos com filtros opcionais",
+    "description": null,
+    "business_context": {
+      "domain": "unknown"
+    },
+    "realistic_examples": {
+      "valid_request": null,
+      "valid_response": null
+    },
+    "roles": [
+      "ADMINISTRADOR",
+      "GESTOR",
+      "REQUISITANTE"
+    ]
+  },
+  {
+    "path": "/api/v1/grupos/{id}",
+    "method": "PUT",
+    "summary": "Altera os dados de um grupo",
+    "description": null,
+    "business_context": {
+      "domain": "unknown"
+    },
+    "realistic_examples": {
+      "valid_request": null,
+      "valid_response": null
+    },
+    "roles": [
+      "ADMINISTRADOR",
+      "GESTOR"
+    ]
+  },
+  {
+    "path": "/api/v1/grupos/id/{id}",
+    "method": "GET",
+    "summary": "Busca um grupo pelo ID",
+    "description": null,
+    "business_context": {
+      "domain": "unknown"
+    },
+    "realistic_examples": {
+      "valid_request": null,
+      "valid_response": null
+    },
+    "roles": [
+      "ADMINISTRADOR",
+      "GESTOR",
+      "REQUISITANTE"
+    ]
+  },
+  {
+    "path": "/api/v1/grupos-requisitante",
+    "method": "GET",
+    "summary": "Lista grupos onde o usuário é requisitante",
+    "description": null,
+    "business_context": {
+      "domain": "unknown"
+    },
+    "realistic_examples": {
+      "valid_request": null,
+      "valid_response": null
+    },
+    "roles": [
+      "REQUISITANTE"
+    ]
+  },
+  {
+    "path": "/api/v1/grupos-gestor-mais-requisitante",
+    "method": "GET",
+    "summary": "Lista grupos onde o usuário é gestor ou requisitante",
+    "description": null,
+    "business_context": {
+      "domain": "unknown"
+    },
+    "realistic_examples": {
+      "valid_request": null,
+      "valid_response": null
+    },
+    "roles": [
+      "ADMINISTRADOR",
+      "GESTOR"
+    ]
+  },
+  {
+    "path": "/api/v1/controlador/hello",
+    "method": "GET",
+    "summary": "Endpoint de verificação de saúde (health check)",
+    "description": "Retorna o status de saúde da API Controlador, sessão do cliente e monitoramento das filas internas.",
+    "business_context": {
+      "domain": "unknown"
+    },
+    "realistic_examples": {
+      "valid_request": null,
+      "valid_response": null
+    },
+    "roles": []
+  },
+  {
+    "path": "/api/v1/controlador/meu-ip",
+    "method": "GET",
+    "summary": "Retorna informações de IP e geolocalização do cliente",
+    "description": "Retorna o IP, geolocalização e user-agent do cliente que fez a requisição.",
+    "business_context": {
+      "domain": "unknown"
+    },
+    "realistic_examples": {
+      "valid_request": null,
+      "valid_response": null
+    },
+    "roles": []
+  },
+  {
+    "path": "/api/v1/reenviar-links",
+    "method": "PATCH",
+    "summary": "Reenvia links para os interessados de um fluxo",
+    "description": null,
+    "business_context": {
+      "domain": "unknown"
+    },
+    "realistic_examples": {
+      "valid_request": null,
+      "valid_response": null
+    },
+    "roles": [
+      "REQUISITANTE"
+    ]
+  },
+  {
+    "path": "/api/v1/fluxos/{id}/rejeitar",
+    "method": "PATCH",
+    "summary": "Registra rejeicao de um fluxo por interessado",
+    "description": null,
+    "business_context": {
+      "domain": "unknown"
+    },
+    "realistic_examples": {
+      "valid_request": null,
+      "valid_response": null
+    },
+    "roles": [
+      "INTERESSADO"
+    ]
+  },
+  {
+    "path": "/api/v1/fluxos/{id}/assinar",
+    "method": "PATCH",
+    "summary": "Assina um fluxo com certificado Neosigner",
+    "description": null,
+    "business_context": {
+      "domain": "unknown"
+    },
+    "realistic_examples": {
+      "valid_request": null,
+      "valid_response": null
+    },
+    "roles": [
+      "INTERESSADO"
+    ]
+  },
+  {
+    "path": "/api/v1/fluxos/{id}/revisar",
+    "method": "PATCH",
+    "summary": "Registra revisao de um fluxo",
+    "description": null,
+    "business_context": {
+      "domain": "unknown"
+    },
+    "realistic_examples": {
+      "valid_request": null,
+      "valid_response": null
+    },
+    "roles": [
+      "INTERESSADO"
+    ]
+  },
+  {
+    "path": "/api/v1/fluxos/{id}/revisao",
+    "method": "PATCH",
+    "summary": "Salva parecer de revisao sem concluir fluxo",
+    "description": null,
+    "business_context": {
+      "domain": "unknown"
+    },
+    "realistic_examples": {
+      "valid_request": null,
+      "valid_response": null
+    },
+    "roles": [
+      "INTERESSADO"
+    ]
+  },
+  {
+    "path": "/api/v1/fluxos/{id}/assinar-serpro-id",
+    "method": "PATCH",
+    "summary": "Assina fluxo via Serpro ID",
+    "description": null,
+    "business_context": {
+      "domain": "unknown"
+    },
+    "realistic_examples": {
+      "valid_request": null,
+      "valid_response": null
+    },
+    "roles": [
+      "INTERESSADO"
+    ]
+  },
+  {
+    "path": "/api/v1/fluxos/{id}/assinar-bird-id",
+    "method": "PATCH",
+    "summary": "Assina fluxo via Bird ID",
+    "description": null,
+    "business_context": {
+      "domain": "unknown"
+    },
+    "realistic_examples": {
+      "valid_request": null,
+      "valid_response": null
+    },
+    "roles": [
+      "INTERESSADO"
+    ]
+  },
+  {
+    "path": "/api/v1/fluxos/{id}/assinar-safe-id",
+    "method": "PATCH",
+    "summary": "Assina fluxo via Safe ID",
+    "description": null,
+    "business_context": {
+      "domain": "unknown"
+    },
+    "realistic_examples": {
+      "valid_request": null,
+      "valid_response": null
+    },
+    "roles": [
+      "INTERESSADO"
+    ]
+  },
+  {
+    "path": "/api/v1/fluxos/{id}/assinar-vidaas",
+    "method": "PATCH",
+    "summary": "Assina fluxo via Vidaas",
+    "description": null,
+    "business_context": {
+      "domain": "unknown"
+    },
+    "realistic_examples": {
+      "valid_request": null,
+      "valid_response": null
+    },
+    "roles": [
+      "INTERESSADO"
+    ]
+  },
+  {
+    "path": "/api/v1/fluxos/{id}/assinar-ds-cloud",
+    "method": "PATCH",
+    "summary": "Assina fluxo via DS Cloud",
+    "description": null,
+    "business_context": {
+      "domain": "unknown"
+    },
+    "realistic_examples": {
+      "valid_request": null,
+      "valid_response": null
+    },
+    "roles": [
+      "INTERESSADO"
+    ]
+  },
+  {
+    "path": "/api/v1/fluxos/{id}/assinar-syn-id",
+    "method": "PATCH",
+    "summary": "Assina fluxo via Syn ID",
+    "description": null,
+    "business_context": {
+      "domain": "unknown"
+    },
+    "realistic_examples": {
+      "valid_request": null,
+      "valid_response": null
+    },
+    "roles": [
+      "INTERESSADO"
+    ]
+  },
+  {
+    "path": "/api/v1/fluxos/{id}/assinar-desktop/{algoritmo}",
+    "method": "PATCH",
+    "summary": "Assina fluxo com documentos assinados no desktop",
+    "description": null,
+    "business_context": {
+      "domain": "unknown"
+    },
+    "realistic_examples": {
+      "valid_request": null,
+      "valid_response": null
+    },
+    "roles": [
+      "INTERESSADO"
+    ]
+  },
+  {
+    "path": "/api/v1/webhook/validar/{idRequisitante}",
+    "method": "GET",
+    "summary": "Valida um webhook",
+    "description": "Valida um webhook com base no ID do requisitante.",
+    "business_context": {
+      "domain": "unknown"
+    },
+    "realistic_examples": {
+      "valid_request": null,
+      "valid_response": null
+    },
+    "roles": [
+      "GESTOR",
+      "ADMINISTRADOR"
+    ]
+  }
+]

@@ -1,0 +1,20 @@
+{
+  "_path_params": {
+    "id": "00000000-0000-0000-0000-000000000001"
+  },
+  "nome": "Grupo de Assinatura",
+  "descricao": "Grupo responsável por assinaturas de contratos.",
+  "ativo": true,
+  "gestores": [
+    "6739f533-5bde-486a-a9b4-9af5605b51fb"
+  ],
+  "requisitantes": [
+    "b1c2d3e4-f5a6-7890-bcde-fa1234567890"
+  ],
+  "preferencias": {
+    "tipoAssinatura": {
+      "permiteAlteracao": true,
+      "tipo": "QUALIFICADA"
+    }
+  }
+}

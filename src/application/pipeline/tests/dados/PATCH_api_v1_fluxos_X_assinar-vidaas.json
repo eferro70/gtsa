@@ -1,0 +1,8 @@
+{
+  "_path_params": {
+    "id": "00000000-0000-0000-0000-000000000001"
+  },
+  "code": "vidaas-xyz",
+  "codeVerifier": "verifier-vidaas",
+  "redirect": "https://callback.vidaas"
+}

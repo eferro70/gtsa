@@ -1,0 +1,25 @@
+{
+  "file": "/home/s231991563/projetos/neosigner/controlador-api/src/infra/mappers/cliente/ClientePersistenceMapper.ts",
+  "relative_path": "infra/mappers/cliente/ClientePersistenceMapper.ts",
+  "analyzed_at": "2026-04-29T06:40:41.679321",
+  "endpoints_found": 0,
+  "endpoints": [],
+  "ast_summary": {
+    "type": "program",
+    "children_count": 4,
+    "byte_range": [
+      0,
+      1507
+    ],
+    "position": {
+      "start": {
+        "line": 0,
+        "column": 0
+      },
+      "end": {
+        "line": 50,
+        "column": 0
+      }
+    }
+  }
+}

@@ -7,9 +7,14 @@ from pathlib import Path
 def find_config(filename):
     path = Path.cwd()
     for _ in range(6):  # Sobe até 6 níveis
+        # Procura no diretório atual
         candidate = path / filename
         if candidate.exists():
             return candidate
+        # Procura em config/ no diretório atual
+        candidate_config = path / 'config' / filename
+        if candidate_config.exists():
+            return candidate_config
         if path.parent == path:
             break
         path = path.parent

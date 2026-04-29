@@ -182,8 +182,8 @@ def load_input(path: Path):
         return json.load(f)
 
 
-def generate_report(schema: Dict, output_dir: Path):
-    report_path = output_dir / "openapi.json-report.md"
+def generate_report(schema: Dict, reports_dir: Path):
+    report_path = reports_dir / "openapi.json-report.md"
 
     total_paths = len(schema["paths"])
     total_ops = sum(len(v) for v in schema["paths"].values())
@@ -205,11 +205,11 @@ def main():
     parser.add_argument("--prefix", default=None, help="Prefixo externo dos endpoints (ex: /api/v1)")
 
     args = parser.parse_args()
-    output_dir = Path("output")
+    reports_dir = Path("output")
 
     # Busca automática do arquivo all_endpoints.json mais recente
-    ast_dir = Path("output")
-    scan_dirs = sorted([d for d in ast_dir.glob("scan_*") if d.is_dir()], reverse=True)
+    scan_root = Path("src/application/pipeline/tests")
+    scan_dirs = sorted([d for d in scan_root.glob("scan_*") if d.is_dir()], reverse=True)
     input_path = None
     for d in scan_dirs:
         candidate = d / "all_endpoints.json"
@@ -217,7 +217,7 @@ def main():
             input_path = candidate
             break
     if not input_path:
-        print("❌ Nenhum arquivo all_endpoints.json encontrado em output/ast/scan_*/")
+        print("❌ Nenhum arquivo all_endpoints.json encontrado em src/application/pipeline/tests/scan_*/")
         exit(1)
 
     print(f"ℹ️ Usando arquivo de entrada: {input_path}")
@@ -226,8 +226,8 @@ def main():
     # Prioridade: argumento CLI > .env > default
     generator = OpenAPIGenerator(endpoints, args.title, args.version, prefix=args.prefix)
     schema = generator.generate()
-    json_path = generator.save(output_dir)
-    report_path = generate_report(schema, output_dir)
+    json_path = generator.save(reports_dir)
+    report_path = generate_report(schema, reports_dir)
 
     print(f"✔ OpenAPI gerado em: {json_path}")
     print(f"✔ Relatório gerado em: {report_path}")

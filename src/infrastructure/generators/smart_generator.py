@@ -7,9 +7,9 @@ from pathlib import Path
 class SmartSchemathesisGenerator:
     def __init__(self, openapi_file: str):
         # enriched_endpoints.json sempre em output/ast
-        self.enriched_file = str(Path("output/ast/enriched_endpoints.json").resolve())
+            self.enriched_file = str(Path("src/application/pipeline/tests/enriched_endpoints.json").resolve())
         self.openapi_file = str(Path(openapi_file).resolve())
-        self.output_dir = Path("output/tests").resolve()
+            self.output_dir = Path("src/application/pipeline/tests").resolve()
         self.output_dir.mkdir(parents=True, exist_ok=True)
         self.load_data()
     

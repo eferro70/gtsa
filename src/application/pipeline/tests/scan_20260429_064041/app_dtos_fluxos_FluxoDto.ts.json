@@ -1,0 +1,25 @@
+{
+  "file": "/home/s231991563/projetos/neosigner/controlador-api/src/app/dtos/fluxos/FluxoDto.ts",
+  "relative_path": "app/dtos/fluxos/FluxoDto.ts",
+  "analyzed_at": "2026-04-29T06:40:41.796786",
+  "endpoints_found": 0,
+  "endpoints": [],
+  "ast_summary": {
+    "type": "program",
+    "children_count": 7,
+    "byte_range": [
+      0,
+      784
+    ],
+    "position": {
+      "start": {
+        "line": 0,
+        "column": 0
+      },
+      "end": {
+        "line": 33,
+        "column": 0
+      }
+    }
+  }
+}

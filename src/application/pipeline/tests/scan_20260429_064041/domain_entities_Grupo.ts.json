@@ -1,0 +1,25 @@
+{
+  "file": "/home/s231991563/projetos/neosigner/controlador-api/src/domain/entities/Grupo.ts",
+  "relative_path": "domain/entities/Grupo.ts",
+  "analyzed_at": "2026-04-29T06:40:41.065657",
+  "endpoints_found": 0,
+  "endpoints": [],
+  "ast_summary": {
+    "type": "program",
+    "children_count": 5,
+    "byte_range": [
+      0,
+      798
+    ],
+    "position": {
+      "start": {
+        "line": 0,
+        "column": 0
+      },
+      "end": {
+        "line": 34,
+        "column": 0
+      }
+    }
+  }
+}

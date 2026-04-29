@@ -1,0 +1,25 @@
+{
+  "file": "/home/s231991563/projetos/neosigner/controlador-api/src/infra/api/routes/__tests__/fluxos/FinalizarFluxosEmLote.test.ts",
+  "relative_path": "infra/api/routes/__tests__/fluxos/FinalizarFluxosEmLote.test.ts",
+  "analyzed_at": "2026-04-29T06:40:41.644544",
+  "endpoints_found": 0,
+  "endpoints": [],
+  "ast_summary": {
+    "type": "program",
+    "children_count": 15,
+    "byte_range": [
+      0,
+      2853
+    ],
+    "position": {
+      "start": {
+        "line": 0,
+        "column": 0
+      },
+      "end": {
+        "line": 96,
+        "column": 0
+      }
+    }
+  }
+}

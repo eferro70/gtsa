@@ -1,0 +1,25 @@
+{
+  "file": "/home/s231991563/projetos/neosigner/controlador-api/src/infra/adapters/providers/WhatsappTemplates.ts",
+  "relative_path": "infra/adapters/providers/WhatsappTemplates.ts",
+  "analyzed_at": "2026-04-29T06:40:41.208563",
+  "endpoints_found": 0,
+  "endpoints": [],
+  "ast_summary": {
+    "type": "program",
+    "children_count": 4,
+    "byte_range": [
+      0,
+      1590
+    ],
+    "position": {
+      "start": {
+        "line": 0,
+        "column": 0
+      },
+      "end": {
+        "line": 53,
+        "column": 0
+      }
+    }
+  }
+}

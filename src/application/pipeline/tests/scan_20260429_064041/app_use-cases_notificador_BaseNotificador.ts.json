@@ -1,0 +1,25 @@
+{
+  "file": "/home/s231991563/projetos/neosigner/controlador-api/src/app/use-cases/notificador/BaseNotificador.ts",
+  "relative_path": "app/use-cases/notificador/BaseNotificador.ts",
+  "analyzed_at": "2026-04-29T06:40:41.861278",
+  "endpoints_found": 0,
+  "endpoints": [],
+  "ast_summary": {
+    "type": "program",
+    "children_count": 10,
+    "byte_range": [
+      0,
+      3053
+    ],
+    "position": {
+      "start": {
+        "line": 0,
+        "column": 0
+      },
+      "end": {
+        "line": 115,
+        "column": 0
+      }
+    }
+  }
+}

@@ -1,0 +1,71 @@
+{
+  "file": "/home/s231991563/projetos/neosigner/controlador-api/src/infra/api/routes/ClienteRoutes.ts",
+  "relative_path": "infra/api/routes/ClienteRoutes.ts",
+  "analyzed_at": "2026-04-29T06:40:41.485152",
+  "endpoints_found": 5,
+  "endpoints": [
+    {
+      "name": "anonymous",
+      "path": "/api/clientes/:id",
+      "method": "GET",
+      "parameters": [],
+      "file_path": "unknown",
+      "line_number": 13,
+      "context": "router.use(ClientInfoMiddleware.handle);\n\nrouter.get(\"/api/clientes/:id\", async (req: Request, res: Response) => {\n  await buscarClienteController.execute(req, res);\n});\n\n/**"
+    },
+    {
+      "name": "anonymous",
+      "path": "/api/clientes",
+      "method": "GET",
+      "parameters": [],
+      "file_path": "unknown",
+      "line_number": 98,
+      "context": " *         $ref: '#/components/responses/UnauthorizedError'\n */\nrouter.get(\"/api/clientes\", async (req: Request, res: Response) => {\n  await listarClientesController.execute(req, res);\n});\n\n/**"
+    },
+    {
+      "name": "anonymous",
+      "path": "/api/clientes",
+      "method": "POST",
+      "parameters": [],
+      "file_path": "unknown",
+      "line_number": 127,
+      "context": " *         description: Internal Server Error\n */\nrouter.post(\"/api/clientes\", async (req: Request, res: Response) => {\n  await criarClienteController.execute(req, res);\n});\n\n/**"
+    },
+    {
+      "name": "anonymous",
+      "path": "/api/clientes/:id",
+      "method": "PUT",
+      "parameters": [],
+      "file_path": "unknown",
+      "line_number": 164,
+      "context": " *         $ref: '#/components/responses/UnprocessableEntityError'\n */\nrouter.put(\"/api/clientes/:id\", async (req: Request, res: Response) => {\n  await alterarClienteController.execute(req, res);\n});\n\n/**"
+    },
+    {
+      "name": "anonymous",
+      "path": "/api/clientes/:id",
+      "method": "GET",
+      "parameters": [],
+      "file_path": "unknown",
+      "line_number": 197,
+      "context": " *         $ref: '#/components/responses/UnprocessableEntityError'\n */\nrouter.get(\"/api/clientes/:id\", async (req: Request, res: Response) => {\n  await buscarClienteController.execute(req, res);\n});\n\nexport { router as clienteRoutes };"
+    }
+  ],
+  "ast_summary": {
+    "type": "program",
+    "children_count": 15,
+    "byte_range": [
+      0,
+      5616
+    ],
+    "position": {
+      "start": {
+        "line": 0,
+        "column": 0
+      },
+      "end": {
+        "line": 201,
+        "column": 0
+      }
+    }
+  }
+}

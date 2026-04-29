@@ -1,0 +1,19 @@
+{
+  "contratante": {
+    "tipoCliente": "TRIBUNAL",
+    "nome": "Tribunal de Justiça",
+    "identificador": "12345678000199",
+    "biovalid": true,
+    "aceitaWhatsapp": false,
+    "tecnicosProducao": [
+      {
+        "nome": "Técnico 1",
+        "email": "tecnico1@empresa.com",
+        "telefone": "+5511999999999",
+        "paisIso3": "BRA",
+        "cpf": "12345678901"
+      }
+    ],
+    "estrangeiro": false
+  }
+}

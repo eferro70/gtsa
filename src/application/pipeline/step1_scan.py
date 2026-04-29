@@ -59,8 +59,8 @@ def main():
     # ---------------------------------------------------------
     # ✅ LÓGICA SOLICITADA (Preservada integralmente)
     # ---------------------------------------------------------
-    # Cria diretório de output em ../../../output
-    base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../../output'))
+    # Cria diretório de output em ../../../tests
+    base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../../src/application/pipeline/tests'))
     if os.path.exists(base_dir):
         # Limpa apenas subdiretórios scan_* dentro de output
         for item in os.listdir(base_dir):

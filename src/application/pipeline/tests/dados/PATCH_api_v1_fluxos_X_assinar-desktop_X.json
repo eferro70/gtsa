@@ -1,0 +1,16 @@
+{
+  "_path_params": {
+    "id": "00000000-0000-0000-0000-000000000001",
+    "algoritmo": "exemplo_algoritmo"
+  },
+  "documentos": [
+    {
+      "nome": "doc1.pdf",
+      "hash": "abc123"
+    },
+    {
+      "nome": "doc2.pdf",
+      "hash": "def456"
+    }
+  ]
+}

@@ -1,0 +1,25 @@
+{
+  "file": "/home/s231991563/projetos/neosigner/controlador-api/src/app/dtos/notificador/FluxoRejeitadoNotificacaoDto.ts",
+  "relative_path": "app/dtos/notificador/FluxoRejeitadoNotificacaoDto.ts",
+  "analyzed_at": "2026-04-29T06:40:41.792039",
+  "endpoints_found": 0,
+  "endpoints": [],
+  "ast_summary": {
+    "type": "program",
+    "children_count": 3,
+    "byte_range": [
+      0,
+      377
+    ],
+    "position": {
+      "start": {
+        "line": 0,
+        "column": 0
+      },
+      "end": {
+        "line": 12,
+        "column": 0
+      }
+    }
+  }
+}

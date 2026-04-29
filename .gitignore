@@ -30,6 +30,11 @@ wheels/
 *.swo
 *~
 
+# Dados gerados para testes
+step8_tests/dados/
+step8_tests/*.json
+step8_tests/*.log
+
 # Outputs do projeto
 output/
 llm_analyzer.log

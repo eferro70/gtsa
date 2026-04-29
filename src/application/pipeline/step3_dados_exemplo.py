@@ -4,7 +4,7 @@ gerar_dados_exemplo.py
 Gera output/tests/dados/{METHOD}_{endpoint}.json para cada endpoint do openapi.json.
 
 Prioridade para o body gerado:
-    1. `example` inline no requestBody                → usa diretamente, SEM LLM
+    1. `example` inline no requestBody               → usa diretamente, SEM LLM
     2. `examples` (mapa) no requestBody              → pega o primeiro valor, SEM LLM
     3. `example` no componente $ref do schema        → usa diretamente, SEM LLM
     4. Fallback: gera via LLM (gatiator ou ollama)
@@ -27,6 +27,7 @@ import time
 import argparse
 from pathlib import Path
 from copy import deepcopy
+import json
 
 # Carrega variáveis do .env automaticamente
 try:
@@ -236,6 +237,34 @@ def parse_llm_json(raw: str) -> dict:
     raw = re.sub(r"\s*```$", "", raw)
     return json.loads(raw)
 
+# ─── Filtro de campos extras ────────────────────────────────────────────────
+def filter_fields_by_schema(data, schema):
+    """
+    Remove campos de 'data' que não estão definidos em 'schema'.
+    Funciona recursivamente para objetos aninhados e arrays.
+    """
+    if schema is None:
+        return data
+    # Trata arrays
+    if schema.get("type") == "array" and "items" in schema:
+        if isinstance(data, list):
+            return [filter_fields_by_schema(item, schema["items"]) for item in data]
+        else:
+            return data
+    # Trata objetos
+    if schema.get("type") == "object" and "properties" in schema and isinstance(data, dict):
+        props = schema["properties"]
+        filtered = {}
+        for key in props:
+            if key in data:
+                filtered[key] = filter_fields_by_schema(data[key], props[key])
+        return filtered
+    # Para tipos básicos, retorna o valor se for do tipo esperado
+    if schema.get("type") in ("string", "integer", "number", "boolean"):
+        return data
+    # Se não reconhecido, retorna como está
+    return data
+
 
 # ─── Backend LLM (Gatiator ou Ollama) ───────────────────────────────────────
 import requests
@@ -317,8 +346,8 @@ Exemplos:
                         help="URL do backend LLM. Se omitido, usa a URL padrão do backend escolhido.")
     parser.add_argument("--llm-model", default=DEFAULT_MODEL,
                         help=f"Modelo LLM a usar. Default: {DEFAULT_MODEL}")
-    parser.add_argument("--output-dir", default="output/tests/dados",
-                        help="Diretório de saída. Default: output/tests/dados")
+    parser.add_argument("--output-dir", default="src/application/pipeline/tests/dados",
+                        help="Diretório de saída. Default: src/application/pipeline/tests/dados")
     parser.add_argument("--only-with-body", action="store_true",
                         help="Gera apenas para endpoints com requestBody")
     parser.add_argument("--no-overwrite", action="store_true",
@@ -400,10 +429,14 @@ Exemplos:
                     errors += 1
                     continue
 
+
             # ── Monta e persiste ──────────────────────────────────────────────
             result = {}
             if path_params:
                 result["_path_params"] = path_params
+            # Filtra campos extras do body conforme o schema resolvido
+            if used_llm:
+                body = filter_fields_by_schema(body, schema)
             result.update(body)
 
             with open(out_file, "w", encoding="utf-8") as f:

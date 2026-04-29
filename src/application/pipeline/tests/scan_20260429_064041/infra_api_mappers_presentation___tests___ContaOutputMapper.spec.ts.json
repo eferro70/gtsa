@@ -1,0 +1,25 @@
+{
+  "file": "/home/s231991563/projetos/neosigner/controlador-api/src/infra/api/mappers/presentation/__tests__/ContaOutputMapper.spec.ts",
+  "relative_path": "infra/api/mappers/presentation/__tests__/ContaOutputMapper.spec.ts",
+  "analyzed_at": "2026-04-29T06:40:41.463716",
+  "endpoints_found": 0,
+  "endpoints": [],
+  "ast_summary": {
+    "type": "program",
+    "children_count": 4,
+    "byte_range": [
+      0,
+      19636
+    ],
+    "position": {
+      "start": {
+        "line": 0,
+        "column": 0
+      },
+      "end": {
+        "line": 636,
+        "column": 0
+      }
+    }
+  }
+}

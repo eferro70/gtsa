@@ -1,0 +1,53 @@
+{
+  "file": "/home/s231991563/projetos/neosigner/controlador-api/src/infra/api/routes/CronRoutes.ts",
+  "relative_path": "infra/api/routes/CronRoutes.ts",
+  "analyzed_at": "2026-04-29T06:40:41.490181",
+  "endpoints_found": 3,
+  "endpoints": [
+    {
+      "name": "anonymous",
+      "path": "/api/notificar",
+      "method": "PATCH",
+      "parameters": [],
+      "file_path": "unknown",
+      "line_number": 36,
+      "context": " *         description: Erro ao processar variável de ambiente ou execução das notificações\n */\nrouter.patch(\"/api/notificar\", (req: Request, res: Response) => {\n  notificacoesAgendadasController.execute(req, res);\n});\n\n/**"
+    },
+    {
+      "name": "anonymous",
+      "path": "/api/fluxos/finalizar",
+      "method": "PATCH",
+      "parameters": [],
+      "file_path": "unknown",
+      "line_number": 64,
+      "context": " *         description: Internal Server Error\n */\nrouter.patch(\"/api/fluxos/finalizar\", (req: Request, res: Response) => {\n  finalizarFluxosController.execute(req, res);\n});\n\n/**"
+    },
+    {
+      "name": "anonymous",
+      "path": "/api/fluxos/arquivar",
+      "method": "PATCH",
+      "parameters": [],
+      "file_path": "unknown",
+      "line_number": 87,
+      "context": " *         description: Internal Server Error\n */\nrouter.patch(\"/api/fluxos/arquivar\", (req: Request, res: Response) => {\n  arquivarFluxosController.execute(req, res);\n});\n\nexport { router as cronRoutes };"
+    }
+  ],
+  "ast_summary": {
+    "type": "program",
+    "children_count": 10,
+    "byte_range": [
+      0,
+      2710
+    ],
+    "position": {
+      "start": {
+        "line": 0,
+        "column": 0
+      },
+      "end": {
+        "line": 91,
+        "column": 0
+      }
+    }
+  }
+}

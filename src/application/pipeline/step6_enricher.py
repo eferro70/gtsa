@@ -38,7 +38,7 @@ class AutoEnricher:
         output_dir = Path("output")
         output_dir.mkdir(parents=True, exist_ok=True)
 
-        output_path = output_dir / "enriched_endpoints.json"
+        output_path = Path("src/application/pipeline/tests/enriched_endpoints.json")
 
         with open(output_path, "w", encoding="utf-8") as f:
             json.dump(enriched_endpoints, f, indent=2, ensure_ascii=False)
@@ -172,23 +172,12 @@ class AutoEnricher:
         return enriched
 
     def _generate_report(self, enriched_endpoints, output_path):
-        report = {
-            "total_endpoints": len(enriched_endpoints),
-            "output_file": str(output_path),
-        }
-
-        report_path = Path("output") / "enrichment_report.json"
-
-        with open(report_path, "w", encoding="utf-8") as f:
-            json.dump(report, f, indent=2, ensure_ascii=False)
-
         print("\n📊 Relatório de Enriquecimento:")
-        print(f"   Total endpoints: {report['total_endpoints']}")
+        print(f"   Total endpoints enriquecidos: {len(enriched_endpoints)}")
         print(f"   Arquivo gerado: {output_path}")
-        print(f"   Relatório: {report_path}")
         print("\n" + "="*72)
         print(f"   ⚠️  ATENÇÃO! REVISE {output_path} PARA CADA ENDPOINT")
-        print("          Certifique-se e de que 'roles' e 'realistic_examples' ")
+        print("          Certifique-se de que 'roles' e 'realistic_examples' ")
         print("        estão corretos e completos para evitar erros nos testes.")
         print("="*72 + "\n")
 

@@ -9,8 +9,6 @@ Funcionalidades:
 - Envia os endpoints para um modelo LLM local para análise de risco, identificação de dados sensíveis (PII), sugestões de segurança e enriquecimento de metadados.
 - Suporta fallback entre backends (Gatiator e Ollama) e prompts customizados.
 - Gera relatórios enriquecidos em JSON e Markdown.
-- Limpa automaticamente o diretório output/analises antes de cada execução (exceto em modo dry-run).
-- Todos os arquivos de saída são gravados diretamente em output/analises/.
 
 Parâmetros de linha de comando:
     <input_json>   Caminho para o arquivo all_endpoints.json a ser analisado (obrigatório)
@@ -20,8 +18,8 @@ Exemplo de uso:
         python3 step5_analyzer.py output/scan_20260425_143917/all_endpoints.json
 
 Saídas:
-- output/analises/enriched_endpoints.json   (endpoints enriquecidos)
-- output/analises/enriched_endpoints_report.md    (relatório detalhado)
+- src/application/pipeline/tests/enriched_endpoints.json   (endpoints enriquecidos)
+- output/enriched_endpoints_report.md    (relatório detalhado)
 """
 
 import json
@@ -352,7 +350,7 @@ def analyze_project_endpoints(endpoints_file: Union[str, Path] = None,
     Args:
         endpoints_file: Caminho para o arquivo all_endpoints.json (opcional se endpoints fornecido)
         endpoints: Lista de endpoints diretamente (opcional)
-        output_file: Caminho para salvar resultados (opcional)
+        output_file: Caminho para salvar resultados JSON (opcional, padrão: src/application/pipeline/tests/enriched_endpoints.json)
         model: Modelo LLM a usar
         use_llm: Se False, usa apenas análise heurística
         backend: Backend LLM ("gatiator", "ollama", "none")
@@ -402,19 +400,19 @@ def analyze_project_endpoints(endpoints_file: Union[str, Path] = None,
     elapsed_time = perf_counter() - start_time
     print(f"\n⏱️ Tempo de análise: {elapsed_time:.2f} segundos")
     
-    # Define diretório de saída
-    if output_file:
-        output_path = Path(output_file)
-        output_dir = output_path.parent
-        output_filename = output_path
-    else:
-        output_dir = Path("output")
-        output_filename = output_dir / "enriched_endpoints.json"
+    # Define diretórios fixos de saída conforme solicitado
+    tests_dir = Path("src/application/pipeline/tests")
+    output_dir = Path("output")
     
+    # Garante que os diretórios existam
+    tests_dir.mkdir(parents=True, exist_ok=True)
     output_dir.mkdir(parents=True, exist_ok=True)
     
-    # Salva resultados
-    with open(output_filename, 'w', encoding='utf-8') as f:
+    # Arquivo JSON sempre em src/application/pipeline/tests/
+    json_output_file = tests_dir / "enriched_endpoints.json"
+    
+    # Salva resultados JSON
+    with open(json_output_file, 'w', encoding='utf-8') as f:
         json.dump(enriched_endpoints, f, indent=2, ensure_ascii=False)
     
     # Gera estatísticas
@@ -423,8 +421,8 @@ def analyze_project_endpoints(endpoints_file: Union[str, Path] = None,
     low_risk = sum(1 for e in enriched_endpoints if e.get('risk_level') == 'baixo')
     errors = sum(1 for e in enriched_endpoints if 'error' in e)
     
-    # Gera relatório
-    report_file = output_dir / f"{output_filename.stem}_report.md"
+    # Arquivo MD sempre em output/
+    report_file = output_dir / "enriched_endpoints_report.md"
     generate_llm_report(enriched_endpoints, report_file)
     
     # Prepara resultado
@@ -444,11 +442,11 @@ def analyze_project_endpoints(endpoints_file: Union[str, Path] = None,
     }
     
     if logger:
-        logger.info(f"💾 Resultados salvos em: {output_filename}")
-        logger.info(f"📊 Relatório salvo em: {report_file}")
+        logger.info(f"💾 Resultados JSON salvos em: {json_output_file}")
+        logger.info(f"📊 Relatório MD salvo em: {report_file}")
     else:
-        print(f"💾 Resultados salvos em: {output_filename}")
-        print(f"📊 Relatório salvo em: {report_file}")
+        print(f"💾 Resultados JSON salvos em: {json_output_file}")
+        print(f"📊 Relatório MD salvo em: {report_file}")
     
     return result
 
@@ -500,8 +498,7 @@ def generate_llm_report(endpoints: List[Dict], output_file: Path):
         "bola": "BOLA - Broken Object Level Authorization",
         "broken_auth": "Broken Authentication",
         "injection": "Injection (SQL/NoSQL/Command)",
-        "bfla": "BFLA - Broken Function Level Authorization",
-        "xss": "Cross-Site Scripting"
+        "bfla": "BFLA - Broken Function Level Authorization"
     }
     
     for vuln, count in sorted(vuln_count.items(), key=lambda x: x[1], reverse=True):
@@ -641,11 +638,6 @@ def main():
         help="URL customizada do backend LLM (sobrepõe padrões)"
     )
     parser.add_argument(
-        "--output-dir",
-        default="output/analises",
-        help="Diretório de saída para os resultados"
-    )
-    parser.add_argument(
         "--risk-threshold",
         type=float,
         default=0.7,
@@ -655,11 +647,6 @@ def main():
         "--no-llm",
         action="store_true",
         help="Desabilita LLM e usa apenas heurística"
-    )
-    parser.add_argument(
-        "--dry-run",
-        action="store_true",
-        help="Modo dry-run: analisa mas não grava arquivos de saída"
     )
     
     args = parser.parse_args()
@@ -681,22 +668,6 @@ def main():
         endpoints_path = found
         logger.info(f"🔍 Scan mais recente detectado: {endpoints_path}")
     
-
-    # Configuração de saída
-    output_dir = Path(args.output_dir).resolve()
-    output_dir.mkdir(parents=True, exist_ok=True)
-
-    # Limpa o diretório analises (exceto dry-run)
-    if not args.dry_run:
-        for item in output_dir.iterdir():
-            if item.is_file():
-                item.unlink()
-            elif item.is_dir():
-                import shutil
-                shutil.rmtree(item)
-        logger.info(f"🧹 Diretório limpo: {output_dir}")
-        logger.info(f"📁 Resultados serão salvos em: {output_dir}")
-    
     # Configuração do backend
     use_llm = not args.no_llm and args.llm_backend != "none"
     
@@ -707,15 +678,10 @@ def main():
     else:
         logger.info("🧠 Modo heurística pura (sem LLM)")
     
-
-    # Arquivo de saída
-    output_file = output_dir / "enriched_endpoints.json"
-    
     # Execução da análise
     try:
         results = analyze_project_endpoints(
             endpoints_file=endpoints_path,
-            output_file=str(output_file) if not args.dry_run else None,
             model=args.llm_model,
             use_llm=use_llm,
             backend=args.llm_backend if use_llm else "none",
@@ -746,9 +712,6 @@ def main():
                 print(f"   • {ep.get('method', '')} {ep.get('path', '')} | Risco: {ep.get('risk_level', '?')} (score: {score:.2f})")
             if len(results["high_risk_endpoints"]) > 5:
                 print(f"   ... e mais {len(results['high_risk_endpoints']) - 5}")
-        
-        if args.dry_run:
-            print("\n💡 Modo --dry-run: nenhum arquivo foi gravado")
             
     except Exception as e:
         logger.exception(f"❌ Erro crítico durante a análise: {e}")

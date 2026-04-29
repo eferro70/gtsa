@@ -1,0 +1,541 @@
+[
+  {
+    "file": "app.ts",
+    "method": "USE",
+    "path": "/swagger/custom",
+    "handler": "anonymous",
+    "parameters": []
+  },
+  {
+    "file": "app.ts",
+    "method": "USE",
+    "path": "/swagger/specs",
+    "handler": "anonymous",
+    "parameters": []
+  },
+  {
+    "file": "app.ts",
+    "method": "USE",
+    "path": "/swagger/scripts",
+    "handler": "anonymous",
+    "parameters": []
+  },
+  {
+    "file": "app.ts",
+    "method": "USE",
+    "path": "/swagger",
+    "handler": "anonymous",
+    "parameters": []
+  },
+  {
+    "file": "app.ts",
+    "method": "GET",
+    "path": "/metrics",
+    "handler": "anonymous",
+    "parameters": []
+  },
+  {
+    "file": "infra/api/routes/HelloRoutes.ts",
+    "method": "GET",
+    "path": "/api/controlador/hello",
+    "handler": "anonymous",
+    "parameters": []
+  },
+  {
+    "file": "infra/api/routes/HelloRoutes.ts",
+    "method": "GET",
+    "path": "/api/controlador/meu-ip",
+    "handler": "anonymous",
+    "parameters": []
+  },
+  {
+    "file": "infra/api/routes/ContaRoutes.ts",
+    "method": "POST",
+    "path": "/api/contas/perfil/:perfil",
+    "handler": "anonymous",
+    "parameters": []
+  },
+  {
+    "file": "infra/api/routes/ContaRoutes.ts",
+    "method": "PUT",
+    "path": "/api/contas/perfil/:perfil/:id",
+    "handler": "anonymous",
+    "parameters": []
+  },
+  {
+    "file": "infra/api/routes/ContaRoutes.ts",
+    "method": "GET",
+    "path": "/api/contas/perfil/:perfil",
+    "handler": "anonymous",
+    "parameters": []
+  },
+  {
+    "file": "infra/api/routes/ContaRoutes.ts",
+    "method": "GET",
+    "path": "/api/contas/id/:id",
+    "handler": "anonymous",
+    "parameters": []
+  },
+  {
+    "file": "infra/api/routes/ContaRoutes.ts",
+    "method": "GET",
+    "path": "/api/contas",
+    "handler": "anonymous",
+    "parameters": []
+  },
+  {
+    "file": "infra/api/routes/ContaRoutes.ts",
+    "method": "GET",
+    "path": "/api/contas/sumario",
+    "handler": "anonymous",
+    "parameters": []
+  },
+  {
+    "file": "infra/api/routes/ContaRoutes.ts",
+    "method": "GET",
+    "path": "/api/contas/codigo/:codigo",
+    "handler": "anonymous",
+    "parameters": []
+  },
+  {
+    "file": "infra/api/routes/ContaRoutes.ts",
+    "method": "PATCH",
+    "path": "/api/contas/reenviar-credenciais-sistema",
+    "handler": "anonymous",
+    "parameters": []
+  },
+  {
+    "file": "infra/api/routes/LinkRoutes.ts",
+    "method": "PATCH",
+    "path": "/api/reenviar-links",
+    "handler": "anonymous",
+    "parameters": []
+  },
+  {
+    "file": "infra/api/routes/DocumentoRoutes.ts",
+    "method": "POST",
+    "path": "/api/documentos",
+    "handler": "anonymous",
+    "parameters": []
+  },
+  {
+    "file": "infra/api/routes/DocumentoRoutes.ts",
+    "method": "DELETE",
+    "path": "/api/documentos/:id",
+    "handler": "anonymous",
+    "parameters": []
+  },
+  {
+    "file": "infra/api/routes/WebhookRoutes.ts",
+    "method": "GET",
+    "path": "/api/webhook/validar/:idRequisitante",
+    "handler": "anonymous",
+    "parameters": []
+  },
+  {
+    "file": "infra/api/routes/FluxoRoutes.ts",
+    "method": "POST",
+    "path": "/api/fluxos",
+    "handler": "anonymous",
+    "parameters": []
+  },
+  {
+    "file": "infra/api/routes/FluxoRoutes.ts",
+    "method": "POST",
+    "path": "/api/fluxos/adicionar",
+    "handler": "anonymous",
+    "parameters": []
+  },
+  {
+    "file": "infra/api/routes/FluxoRoutes.ts",
+    "method": "PUT",
+    "path": "/api/fluxos/:id",
+    "handler": "anonymous",
+    "parameters": []
+  },
+  {
+    "file": "infra/api/routes/FluxoRoutes.ts",
+    "method": "DELETE",
+    "path": "/api/fluxo/:id",
+    "handler": "anonymous",
+    "parameters": []
+  },
+  {
+    "file": "infra/api/routes/FluxoRoutes.ts",
+    "method": "PATCH",
+    "path": "/api/fluxos/:id/iniciar",
+    "handler": "anonymous",
+    "parameters": []
+  },
+  {
+    "file": "infra/api/routes/FluxoRoutes.ts",
+    "method": "PATCH",
+    "path": "/api/fluxos/:id/finalizar",
+    "handler": "anonymous",
+    "parameters": []
+  },
+  {
+    "file": "infra/api/routes/FluxoRoutes.ts",
+    "method": "PATCH",
+    "path": "/api/fluxos/:id/cancelar",
+    "handler": "anonymous",
+    "parameters": []
+  },
+  {
+    "file": "infra/api/routes/FluxoRoutes.ts",
+    "method": "PATCH",
+    "path": "/api/fluxos/:id/arquivar",
+    "handler": "anonymous",
+    "parameters": []
+  },
+  {
+    "file": "infra/api/routes/FluxoRoutes.ts",
+    "method": "GET",
+    "path": "/api/fluxos",
+    "handler": "anonymous",
+    "parameters": []
+  },
+  {
+    "file": "infra/api/routes/FluxoRoutes.ts",
+    "method": "GET",
+    "path": "/api/fluxo/:id",
+    "handler": "anonymous",
+    "parameters": []
+  },
+  {
+    "file": "infra/api/routes/FluxoRoutes.ts",
+    "method": "GET",
+    "path": "/api/fluxos/:id/hashes-documentos/:algoritmo",
+    "handler": "anonymous",
+    "parameters": []
+  },
+  {
+    "file": "infra/api/routes/FluxoRoutes.ts",
+    "method": "GET",
+    "path": "/api/fluxos/arquivados",
+    "handler": "anonymous",
+    "parameters": []
+  },
+  {
+    "file": "infra/api/routes/FluxoRoutes.ts",
+    "method": "GET",
+    "path": "/api/fluxos/:id/interessados",
+    "handler": "anonymous",
+    "parameters": []
+  },
+  {
+    "file": "infra/api/routes/FluxoRoutes.ts",
+    "method": "GET",
+    "path": "/api/resposta/:id",
+    "handler": "anonymous",
+    "parameters": []
+  },
+  {
+    "file": "infra/api/routes/FluxoRoutes.ts",
+    "method": "GET",
+    "path": "/api/fluxos-interessado",
+    "handler": "anonymous",
+    "parameters": []
+  },
+  {
+    "file": "infra/api/routes/FluxoRoutes.ts",
+    "method": "GET",
+    "path": "/api/fluxos/:id/sumario",
+    "handler": "anonymous",
+    "parameters": []
+  },
+  {
+    "file": "infra/api/routes/MonitoracaoRoutes.ts",
+    "method": "GET",
+    "path": "/api/monitoracao/dlqs",
+    "handler": "anonymous",
+    "parameters": []
+  },
+  {
+    "file": "infra/api/routes/ResponderFluxoRoutes.ts",
+    "method": "PATCH",
+    "path": "/api/fluxos/:id/rejeitar",
+    "handler": "anonymous",
+    "parameters": []
+  },
+  {
+    "file": "infra/api/routes/ResponderFluxoRoutes.ts",
+    "method": "PATCH",
+    "path": "/api/fluxos/:id/assinar",
+    "handler": "anonymous",
+    "parameters": []
+  },
+  {
+    "file": "infra/api/routes/ResponderFluxoRoutes.ts",
+    "method": "PATCH",
+    "path": "/api/fluxos/:id/revisar",
+    "handler": "anonymous",
+    "parameters": []
+  },
+  {
+    "file": "infra/api/routes/ResponderFluxoRoutes.ts",
+    "method": "PATCH",
+    "path": "/api/fluxos/:id/revisao",
+    "handler": "anonymous",
+    "parameters": []
+  },
+  {
+    "file": "infra/api/routes/ResponderFluxoRoutes.ts",
+    "method": "PATCH",
+    "path": "/api/fluxos/:id/assinar-serpro-id",
+    "handler": "anonymous",
+    "parameters": []
+  },
+  {
+    "file": "infra/api/routes/ResponderFluxoRoutes.ts",
+    "method": "PATCH",
+    "path": "/api/fluxos/:id/assinar-bird-id",
+    "handler": "anonymous",
+    "parameters": []
+  },
+  {
+    "file": "infra/api/routes/ResponderFluxoRoutes.ts",
+    "method": "PATCH",
+    "path": "/api/fluxos/:id/assinar-safe-id",
+    "handler": "anonymous",
+    "parameters": []
+  },
+  {
+    "file": "infra/api/routes/ResponderFluxoRoutes.ts",
+    "method": "PATCH",
+    "path": "/api/fluxos/:id/assinar-vidaas",
+    "handler": "anonymous",
+    "parameters": []
+  },
+  {
+    "file": "infra/api/routes/ResponderFluxoRoutes.ts",
+    "method": "PATCH",
+    "path": "/api/fluxos/:id/assinar-ds-cloud",
+    "handler": "anonymous",
+    "parameters": []
+  },
+  {
+    "file": "infra/api/routes/ResponderFluxoRoutes.ts",
+    "method": "PATCH",
+    "path": "/api/fluxos/:id/assinar-syn-id",
+    "handler": "anonymous",
+    "parameters": []
+  },
+  {
+    "file": "infra/api/routes/ResponderFluxoRoutes.ts",
+    "method": "PATCH",
+    "path": "/api/fluxos/:id/assinar-desktop/:algoritmo",
+    "handler": "anonymous",
+    "parameters": []
+  },
+  {
+    "file": "infra/api/routes/DevelopRoutes.ts",
+    "method": "GET",
+    "path": "/api/getlink",
+    "handler": "anonymous",
+    "parameters": []
+  },
+  {
+    "file": "infra/api/routes/ClienteRoutes.ts",
+    "method": "GET",
+    "path": "/api/clientes/:id",
+    "handler": "anonymous",
+    "parameters": []
+  },
+  {
+    "file": "infra/api/routes/ClienteRoutes.ts",
+    "method": "GET",
+    "path": "/api/clientes",
+    "handler": "anonymous",
+    "parameters": []
+  },
+  {
+    "file": "infra/api/routes/ClienteRoutes.ts",
+    "method": "POST",
+    "path": "/api/clientes",
+    "handler": "anonymous",
+    "parameters": []
+  },
+  {
+    "file": "infra/api/routes/ClienteRoutes.ts",
+    "method": "PUT",
+    "path": "/api/clientes/:id",
+    "handler": "anonymous",
+    "parameters": []
+  },
+  {
+    "file": "infra/api/routes/ClienteRoutes.ts",
+    "method": "GET",
+    "path": "/api/clientes/:id",
+    "handler": "anonymous",
+    "parameters": []
+  },
+  {
+    "file": "infra/api/routes/AutenticationsRoutes.ts",
+    "method": "GET",
+    "path": "/api/authentication-options",
+    "handler": "anonymous",
+    "parameters": []
+  },
+  {
+    "file": "infra/api/routes/AutenticationsRoutes.ts",
+    "method": "POST",
+    "path": "/api/verify-registration",
+    "handler": "anonymous",
+    "parameters": []
+  },
+  {
+    "file": "infra/api/routes/AutenticationsRoutes.ts",
+    "method": "POST",
+    "path": "/api/verify-authentication",
+    "handler": "anonymous",
+    "parameters": []
+  },
+  {
+    "file": "infra/api/routes/AutenticationsRoutes.ts",
+    "method": "PUT",
+    "path": "/api/login-sistema",
+    "handler": "anonymous",
+    "parameters": []
+  },
+  {
+    "file": "infra/api/routes/AutenticationsRoutes.ts",
+    "method": "GET",
+    "path": "/api/listar-contas/:email",
+    "handler": "anonymous",
+    "parameters": []
+  },
+  {
+    "file": "infra/api/routes/AutenticationsRoutes.ts",
+    "method": "GET",
+    "path": "/api/confirmacao-conta/:idConta",
+    "handler": "anonymous",
+    "parameters": []
+  },
+  {
+    "file": "infra/api/routes/AutenticationsRoutes.ts",
+    "method": "PATCH",
+    "path": "/api/enviar-otp",
+    "handler": "anonymous",
+    "parameters": []
+  },
+  {
+    "file": "infra/api/routes/AutenticationsRoutes.ts",
+    "method": "PATCH",
+    "path": "/api/verificar-otp",
+    "handler": "anonymous",
+    "parameters": []
+  },
+  {
+    "file": "infra/api/routes/AutenticationsRoutes.ts",
+    "method": "PUT",
+    "path": "/api/token",
+    "handler": "anonymous",
+    "parameters": []
+  },
+  {
+    "file": "infra/api/routes/AutenticationsRoutes.ts",
+    "method": "PATCH",
+    "path": "/api/link",
+    "handler": "anonymous",
+    "parameters": []
+  },
+  {
+    "file": "infra/api/routes/AutenticationsRoutes.ts",
+    "method": "GET",
+    "path": "/api/autenticar-certificado",
+    "handler": "anonymous",
+    "parameters": []
+  },
+  {
+    "file": "infra/api/routes/AutenticationsRoutes.ts",
+    "method": "PATCH",
+    "path": "/api/verificar-certificado",
+    "handler": "anonymous",
+    "parameters": []
+  },
+  {
+    "file": "infra/api/routes/AutenticationsRoutes.ts",
+    "method": "PATCH",
+    "path": "/api/verificar-certificado-nuvem",
+    "handler": "anonymous",
+    "parameters": []
+  },
+  {
+    "file": "infra/api/routes/AutenticationsRoutes.ts",
+    "method": "PUT",
+    "path": "/api/logout",
+    "handler": "anonymous",
+    "parameters": []
+  },
+  {
+    "file": "infra/api/routes/AutenticationsRoutes.ts",
+    "method": "GET",
+    "path": "/api/confirmacao-interessado/:email/:idConta",
+    "handler": "anonymous",
+    "parameters": []
+  },
+  {
+    "file": "infra/api/routes/GrupoRoutes.ts",
+    "method": "POST",
+    "path": "/api/grupos",
+    "handler": "anonymous",
+    "parameters": []
+  },
+  {
+    "file": "infra/api/routes/GrupoRoutes.ts",
+    "method": "PUT",
+    "path": "/api/grupos/:id",
+    "handler": "anonymous",
+    "parameters": []
+  },
+  {
+    "file": "infra/api/routes/GrupoRoutes.ts",
+    "method": "GET",
+    "path": "/api/grupos/id/:id",
+    "handler": "anonymous",
+    "parameters": []
+  },
+  {
+    "file": "infra/api/routes/GrupoRoutes.ts",
+    "method": "GET",
+    "path": "/api/grupos",
+    "handler": "anonymous",
+    "parameters": []
+  },
+  {
+    "file": "infra/api/routes/GrupoRoutes.ts",
+    "method": "GET",
+    "path": "/api/grupos-requisitante",
+    "handler": "anonymous",
+    "parameters": []
+  },
+  {
+    "file": "infra/api/routes/GrupoRoutes.ts",
+    "method": "GET",
+    "path": "/api/grupos-gestor-mais-requisitante",
+    "handler": "anonymous",
+    "parameters": []
+  },
+  {
+    "file": "infra/api/routes/CronRoutes.ts",
+    "method": "PATCH",
+    "path": "/api/notificar",
+    "handler": "anonymous",
+    "parameters": []
+  },
+  {
+    "file": "infra/api/routes/CronRoutes.ts",
+    "method": "PATCH",
+    "path": "/api/fluxos/finalizar",
+    "handler": "anonymous",
+    "parameters": []
+  },
+  {
+    "file": "infra/api/routes/CronRoutes.ts",
+    "method": "PATCH",
+    "path": "/api/fluxos/arquivar",
+    "handler": "anonymous",
+    "parameters": []
+  }
+]

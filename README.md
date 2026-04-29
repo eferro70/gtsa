@@ -14,67 +14,105 @@ O GTSA é uma ferramenta automatizada para análise, geração e execução de t
 
 ```
 gtsa/
-├── README.md                        # Documentação principal
-├── requirements.txt                 # Dependências Python
-├── pytest.ini                       # Configuração de testes
-├── orquestrador.sh                  # Orquestrador da pipeline completa
-├── config/                          # Configurações declarativas
-│   ├── auth_config.json             # Regras de autenticação e tokens por role
-│   └── pii_patterns.json            # Padrões de campos PII
-├── output/                          # Artefatos gerados pela pipeline
-│   ├── openapi.json / openapi.yaml  # Especificação OpenAPI
-│   ├── enriched_endpoints.json      # Endpoints enriquecidos (base dos testes)
-│   ├── enrichment_report.json       # Relatório do enriquecimento
-│   ├── analysis_with_llm.json       # Análise de risco via LLM
-│   ├── analysis_with_llm_report.md  # Relatório da análise LLM
-│   ├── analises/                    # Resultados de análise de risco e enriquecimento (sempre sobrescritos)
-│   ├── scan_<data-hora>/            # Resultados do scan estático por execução
-│   │   ├── all_endpoints.json
-│   │   ├── REPORT.md
-│   │   └── summary.json
-│   └── tests/                       # Testes gerados automaticamente
-│       ├── test_api_security.py
-│       ├── run_llm_tests.sh
-│       ├── test_api_llm.log
-│       ├── test_api_llm_summary.md
-│       └── dados/                   # Payloads de exemplo por endpoint
-└── src/                             # Código-fonte principal
-    ├── application/
-    │   ├── pipeline/                # Um módulo por etapa da pipeline
-    │   │   ├── step1_scan.py
-    │   │   ├── step2_openapi.py
-    │   │   ├── step3_dados_exemplo.py
-    │   │   ├── step4_ast_parser.py
-    │   │   ├── step5_analyzer.py
-    │   │   ├── step6_enricher.py
-    │   │   └── step7_generator.py
-    │   └── reporting/
-    │       └── gerar_relatorio_markdown.py
-    ├── domain/
-    │   └── security_payloads.py     # Payloads e regras de segurança
-    ├── infrastructure/
-    │   ├── generators/
-    │   │   ├── gerar_dados_exemplo.py
-    │   │   ├── node_openapi_generator.py
-    │   │   └── smart_generator.py
-    │   ├── llm/
-    │   │   └── llm_analyzer.py
-    │   └── parsers/
-    │       ├── ast_parser_node.py
-    │       └── test_parser.py
-    └── interfaces/
-        ├── hooks/                   # Hooks de autenticação para os testes
-        │   ├── auth_hooks.py
-        │   └── llm_hooks.py
-        └── stateful/                # Testes stateful baseados em Hypothesis
-            ├── api_state_machine.py
-            └── test_stateful_api.py
+├── README.md
+├── requirements.txt
+├── pytest.ini
+├── orquestrador.sh
+├── config/
+│   ├── auth_config.json
+│   └── pii_patterns.json
+├── output/
+│   ├── analises/
+│   ├── analysis_with_llm_report.md
+│   ├── openapi.json
+│   └── openapi.yaml
+└── src/
+  ├── application/
+  │   ├── pipeline/
+  │   │   ├── step1_scan.py
+  │   │   ├── step2_openapi.py
+  │   │   ├── step3_dados_exemplo.py
+  │   │   ├── step4_ast_parser.py
+  │   │   ├── step5_analyzer.py
+  │   │   ├── step6_enricher.py
+  │   │   ├── step7_generator.py
+  │   │   └── step8_tests/
+  │   │       ├── dados/
+  │   │       ├── regular_endpoints.json
+  │   │       ├── regular_endpoints_report.md
+  │   │       ├── run_llm_tests.sh
+  │   │       ├── scan_<data-hora>/
+  │   │       ├── test_api_llm.log
+  │   │       └── test_api_security.py
+  │   └── reporting/
+  │       └── gerar_relatorio_markdown.py
+   ├── domain/
+   ├── infrastructure/
+   │   ├── generators/
+   │   ├── llm/
+   │   └── parsers/
+   └── interfaces/
+      ├── hooks/
+      └── stateful/
 ```
+
+### Destino dos Artefatos Gerados
+
+- **output/openapi.json** e **output/openapi.yaml**: Especificação OpenAPI usada como base.
+
+Todos os demais artefatos gerados (JSONs, relatórios, diretórios scan\_\*, dados de teste, etc.) ficam em:
+
+- **src/application/pipeline/step8_tests/**: Diretório principal de artefatos gerados pela pipeline.
+  - **regular_endpoints.json**: Lista completa dos endpoints extraídos pelo parser AST.
+  - **regular_endpoints_report.md**: Relatório em Markdown dos endpoints extraídos.
+  - **scan\_<data-hora>/**: Resultados do scan estático por execução.
+    - **all_endpoints.json**: Lista plana de todos os endpoints encontrados.
+    - **REPORT.md**: Relatório em Markdown com tabela de endpoints.
+    - **summary.json**: Resumo da análise (arquivos, endpoints, erros).
+  - **dados/**: Payloads de exemplo por endpoint.
+  - **test_api_security.py**: Script principal de testes.
+  - **run_llm_tests.sh**: Script de execução automatizada.
+  - **test_api_llm.log**: Log detalhado da execução dos testes.
+  - **test_api_llm_summary.md**: Relatório consolidado por endpoint.
+
+## Fluxo de Execução e Geração dos Artefatos
+
+1. **Scan estático do projeto**
+
+- Executa step1_scan.py
+- Saída: `src/application/pipeline/step8_tests/scan_<data-hora>/all_endpoints.json`, `REPORT.md`, `summary.json`
+
+2. **Parser AST detalhado**
+
+- Executa step4_ast_parser.py
+- Saída: `src/application/pipeline/step8_tests/regular_endpoints.json`, `regular_endpoints_report.md`
+
+3. **Análise de risco e enriquecimento**
+
+- Executa step5_analyzer.py
+- Saída: `src/application/pipeline/step8_tests/scan_<data-hora>/enriched_endpoints.json`, `enrichment_report.json` (se aplicável)
+
+4. **Geração dos testes inteligentes**
+
+- Executa step7_generator.py
+- Saída: `src/application/pipeline/step8_tests/test_api_security.py`, `dados/`
+
+5. **Execução dos testes**
+
+- Executa `src/application/pipeline/step8_tests/run_llm_tests.sh`
+- Saída: `src/application/pipeline/step8_tests/test_api_llm.log`
+
+6. **Geração do relatório final**
+
+- Executa gerar_relatorio_markdown.py
+- Saída: `src/application/pipeline/step8_tests/test_api_llm_summary.md`
+
+> Apenas openapi.json (e openapi.yaml) permanecem em `output/`. Todos os demais artefatos são gerados em `src/application/pipeline/step8_tests/` e subpastas.
 
 **Principais diretórios e funções:**
 
 - **config/**: Configurações declarativas de autenticação e padrões PII. Devem ser adaptados para cada API testada.
-- **output/**: Todos os artefatos gerados pela pipeline. Podem ser versionados para auditoria.
+- **output/**: Apenas openapi.json (e openapi.yaml) permanecem aqui.
 - **src/application/pipeline/**: Scripts de orquestração de cada etapa da pipeline (steps 1–7).
 - **src/application/reporting/**: Geração do relatório Markdown a partir do log de testes.
 - **src/infrastructure/generators/**: Geração de dados de exemplo, OpenAPI e testes inteligentes.
@@ -154,7 +192,7 @@ python3 src/infrastructure/parsers/test_parser.py -i <caminho/para/o/projeto>
 ```
 
 - Percorre todos os arquivos `.ts` e `.tsx`, ignorando testes e `node_modules`.
-- Gera um diretório `output/scan_<data-hora>/` com:
+- Gera um diretório `src/application/pipeline/step8_tests/scan_<data-hora>/` com:
   - `all_endpoints.json`: lista plana de todos os endpoints encontrados
   - `REPORT.md`: relatório em Markdown com tabela de endpoints
   - `summary.json`: resumo da análise (arquivos, endpoints, erros)
@@ -199,7 +237,7 @@ Extrai endpoints com contexto detalhado (handler, parâmetros, autenticação):
 python3 src/application/pipeline/step4_ast_parser.py <caminho/para/o/projeto>
 ```
 
-Gera em `output/`:
+Gera em `src/application/pipeline/step8_tests/`:
 
 - `regular_endpoints.json`: lista completa dos endpoints extraídos (sempre sobrescrito)
 - `regular_endpoints_report.md`: relatório em Markdown (sempre sobrescrito)
@@ -211,7 +249,7 @@ Analisa os endpoints para identificar riscos, dados sensíveis (PII) e possívei
 #### Execução (LLM ou heurística)
 
 ```bash
-python3 src/application/pipeline/step5_analyzer.py output/scan_<data-hora>/all_endpoints.json [opções]
+python3 src/application/pipeline/step5_analyzer.py src/application/pipeline/step8_tests/scan_<data-hora>/all_endpoints.json [opções]
 ```
 
 Principais opções:
@@ -222,9 +260,9 @@ Principais opções:
 - `--no-llm` — Usa apenas heurística, sem IA
 - `--dry-run` — Executa sem gravar arquivos de saída
 
-**O script limpa automaticamente o diretório `output/analises/` antes de cada execução (exceto se usar `--dry-run`). Todos os arquivos de saída são gravados diretamente em `output/analises/`.**
+Todos os arquivos de saída são gravados diretamente em `src/application/pipeline/step8_tests/scan_<data-hora>/`.
 
-Saídas geradas em `output/analises/`:
+Saídas geradas:
 
 - `enriched_endpoints.json`: endpoints enriquecidos com análise de risco, PII, vulnerabilidades e contexto de negócio
 - `enriched_endpoints_report.md`: relatório detalhado em Markdown
@@ -242,7 +280,7 @@ Gera o `enriched_endpoints.json` que serve de base para a geração de testes in
 python3 src/infrastructure/parsers/ast_parser_node.py <openapi.json|yaml> --source <caminho/codigo>
 ```
 
-Gera em `output/`:
+Gera em `src/application/pipeline/step8_tests/scan_<data-hora>/`:
 
 - `enriched_endpoints.json`: endpoints com contexto de negócio, exemplos e regras
 - `enrichment_report.json`: estatísticas do enriquecimento
@@ -255,7 +293,7 @@ Gera toda a estrutura de testes a partir do `enriched_endpoints.json` e do OpenA
 python3 src/infrastructure/generators/smart_generator.py <caminho/para/openapi.json>
 ```
 
-Cria em `output/tests/`:
+Cria em `src/application/pipeline/step8_tests/`:
 
 - `test_api_security.py`: script principal de testes
 - `run_llm_tests.sh`: script de execução automatizada
@@ -264,7 +302,7 @@ Cria em `output/tests/`:
 ### Passo 8: Execução dos testes
 
 ```bash
-output/tests/run_llm_tests.sh
+src/application/pipeline/step8_tests/run_llm_tests.sh
 ```
 
 O script executa `test_api_security.py` para cada endpoint em paralelo (até 4 simultâneos), rodando os seguintes testes por endpoint:
@@ -282,7 +320,7 @@ Após a execução, gere o relatório:
 python3 src/application/reporting/gerar_relatorio_markdown.py
 ```
 
-O relatório é salvo em `output/tests/test_api_llm_summary.md`.
+O relatório é salvo em `src/application/pipeline/step8_tests/test_api_llm_summary.md`.
 
 > Para rodar apenas os testes stateful:
 >
@@ -292,42 +330,35 @@ O relatório é salvo em `output/tests/test_api_llm_summary.md`.
 
 ## Saídas: Testes e Relatórios
 
-### output/scan\_<data-hora>/
+### src/application/pipeline/step8*tests/scan*<data-hora>/
+
+| Arquivo                      | Descrição                                                   |
+| ---------------------------- | ----------------------------------------------------------- |
+| all_endpoints.json           | Lista plana de todos os endpoints encontrados               |
+| REPORT.md                    | Relatório em Markdown com tabela de endpoints               |
+| summary.json                 | Resumo da análise (arquivos, endpoints, erros)              |
+| enriched_endpoints.json      | Endpoints enriquecidos (sempre sobrescrito a cada execução) |
+| enriched_endpoints_report.md | Relatório detalhado da análise (sempre sobrescrito)         |
+| enrichment_report.json       | Estatísticas do enriquecimento (se gerado)                  |
+
+### src/application/pipeline/step8_tests/
+
+| Arquivo                     | Descrição                                                     |
+| --------------------------- | ------------------------------------------------------------- |
+| regular_endpoints.json      | Lista completa dos endpoints extraídos pelo parser AST        |
+| regular_endpoints_report.md | Relatório em Markdown dos endpoints extraídos pelo parser AST |
+| test_api_security.py        | Script de testes gerado automaticamente                       |
+| run_llm_tests.sh            | Script de execução dos testes                                 |
+| test_api_llm.log            | Log detalhado da execução                                     |
+| test_api_llm_summary.md     | Relatório consolidado por endpoint                            |
+| dados/                      | Payloads de exemplo por endpoint                              |
+| scan\_<data-hora>/          | Resultados do scan estático por execução                      |
 
 ### output/
 
-| Arquivo                       | Descrição                                                     |
-| ----------------------------- | ------------------------------------------------------------- |
-| `regular_endpoints.json`      | Lista completa dos endpoints extraídos pelo parser AST        |
-| `regular_endpoints_report.md` | Relatório em Markdown dos endpoints extraídos pelo parser AST |
-| ...                           | ...                                                           |
+| Arquivo      | Descrição                                |
+| ------------ | ---------------------------------------- |
+| openapi.json | Especificação OpenAPI usada como base    |
+| openapi.yaml | (Opcional) Especificação OpenAPI em YAML |
 
-### output/analises/analise\_<data-hora>/
-
-| Arquivo                        | Descrição                                                   |
-| ------------------------------ | ----------------------------------------------------------- |
-| `enriched_endpoints.json`      | Endpoints enriquecidos (sempre sobrescrito a cada execução) |
-| `enriched_endpoints_report.md` | Relatório detalhado da análise (sempre sobrescrito)         |
-
-### output/
-
-| Arquivo                        | Descrição                                                               |
-| ------------------------------ | ----------------------------------------------------------------------- |
-| `enriched_endpoints.json`      | Última análise de risco e enriquecimento (gerado por step5_analyzer.py) |
-| `enriched_endpoints_report.md` | Último relatório detalhado da análise (gerado por step5_analyzer.py)    |
-| `enrichment_report.json`       | Estatísticas do enriquecimento (gerado por outros scripts)              |
-| `analysis_with_llm.json`       | Análise LLM mais recente (legado)                                       |
-| `analysis_with_llm_report.md`  | Relatório da análise LLM (legado)                                       |
-| `openapi.json / openapi.yaml`  | Especificação OpenAPI usada como base                                   |
-
-### output/tests/
-
-| Arquivo                   | Descrição                               |
-| ------------------------- | --------------------------------------- |
-| `test_api_security.py`    | Script de testes gerado automaticamente |
-| `run_llm_tests.sh`        | Script de execução dos testes           |
-| `test_api_llm.log`        | Log detalhado da execução               |
-| `test_api_llm_summary.md` | Relatório consolidado por endpoint      |
-| `dados/`                  | Payloads de exemplo por endpoint        |
-
-> Todos os arquivos em `output/` podem ser versionados para auditoria e rastreabilidade.
+> Apenas openapi.json (e openapi.yaml) permanecem em output/. Todos os demais artefatos são gerados em src/application/pipeline/step8_tests/ e subpastas.

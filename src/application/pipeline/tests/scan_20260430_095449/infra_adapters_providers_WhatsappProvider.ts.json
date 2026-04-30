@@ -1,0 +1,25 @@
+{
+  "file": "/home/s231991563/projetos/neosigner/controlador-api/src/infra/adapters/providers/WhatsappProvider.ts",
+  "relative_path": "infra/adapters/providers/WhatsappProvider.ts",
+  "analyzed_at": "2026-04-30T09:54:50.270092",
+  "endpoints_found": 0,
+  "endpoints": [],
+  "ast_summary": {
+    "type": "program",
+    "children_count": 7,
+    "byte_range": [
+      0,
+      4073
+    ],
+    "position": {
+      "start": {
+        "line": 0,
+        "column": 0
+      },
+      "end": {
+        "line": 135,
+        "column": 0
+      }
+    }
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "file": "/home/s231991563/projetos/neosigner/controlador-api/src/infra/api/controllers/fluxos/__tests__/FluxoUtils.spec.ts",
+  "relative_path": "infra/api/controllers/fluxos/__tests__/FluxoUtils.spec.ts",
+  "analyzed_at": "2026-04-30T09:54:50.799287",
+  "endpoints_found": 0,
+  "endpoints": [],
+  "ast_summary": {
+    "type": "program",
+    "children_count": 15,
+    "byte_range": [
+      0,
+      6695
+    ],
+    "position": {
+      "start": {
+        "line": 0,
+        "column": 0
+      },
+      "end": {
+        "line": 192,
+        "column": 0
+      }
+    }
+  }
+}

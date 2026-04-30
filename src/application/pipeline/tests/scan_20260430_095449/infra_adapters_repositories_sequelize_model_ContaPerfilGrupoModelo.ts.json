@@ -1,0 +1,25 @@
+{
+  "file": "/home/s231991563/projetos/neosigner/controlador-api/src/infra/adapters/repositories/sequelize/model/ContaPerfilGrupoModelo.ts",
+  "relative_path": "infra/adapters/repositories/sequelize/model/ContaPerfilGrupoModelo.ts",
+  "analyzed_at": "2026-04-30T09:54:50.469292",
+  "endpoints_found": 0,
+  "endpoints": [],
+  "ast_summary": {
+    "type": "program",
+    "children_count": 4,
+    "byte_range": [
+      0,
+      784
+    ],
+    "position": {
+      "start": {
+        "line": 0,
+        "column": 0
+      },
+      "end": {
+        "line": 33,
+        "column": 0
+      }
+    }
+  }
+}

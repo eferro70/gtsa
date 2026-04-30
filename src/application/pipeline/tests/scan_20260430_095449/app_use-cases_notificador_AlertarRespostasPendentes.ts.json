@@ -1,0 +1,25 @@
+{
+  "file": "/home/s231991563/projetos/neosigner/controlador-api/src/app/use-cases/notificador/AlertarRespostasPendentes.ts",
+  "relative_path": "app/use-cases/notificador/AlertarRespostasPendentes.ts",
+  "analyzed_at": "2026-04-30T09:54:51.947403",
+  "endpoints_found": 0,
+  "endpoints": [],
+  "ast_summary": {
+    "type": "program",
+    "children_count": 14,
+    "byte_range": [
+      0,
+      4102
+    ],
+    "position": {
+      "start": {
+        "line": 0,
+        "column": 0
+      },
+      "end": {
+        "line": 129,
+        "column": 0
+      }
+    }
+  }
+}

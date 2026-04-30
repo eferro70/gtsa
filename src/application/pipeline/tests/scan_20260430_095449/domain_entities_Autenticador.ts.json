@@ -1,0 +1,25 @@
+{
+  "file": "/home/s231991563/projetos/neosigner/controlador-api/src/domain/entities/Autenticador.ts",
+  "relative_path": "domain/entities/Autenticador.ts",
+  "analyzed_at": "2026-04-30T09:54:49.962064",
+  "endpoints_found": 0,
+  "endpoints": [],
+  "ast_summary": {
+    "type": "program",
+    "children_count": 3,
+    "byte_range": [
+      0,
+      1036
+    ],
+    "position": {
+      "start": {
+        "line": 0,
+        "column": 0
+      },
+      "end": {
+        "line": 33,
+        "column": 0
+      }
+    }
+  }
+}

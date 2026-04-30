@@ -1,0 +1,25 @@
+{
+  "file": "/home/s231991563/projetos/neosigner/controlador-api/src/app/ports/services/IServicoCertificadoDigital.ts",
+  "relative_path": "app/ports/services/IServicoCertificadoDigital.ts",
+  "analyzed_at": "2026-04-30T09:54:51.810007",
+  "endpoints_found": 0,
+  "endpoints": [],
+  "ast_summary": {
+    "type": "program",
+    "children_count": 3,
+    "byte_range": [
+      0,
+      2703
+    ],
+    "position": {
+      "start": {
+        "line": 0,
+        "column": 0
+      },
+      "end": {
+        "line": 98,
+        "column": 0
+      }
+    }
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "file": "/home/s231991563/projetos/neosigner/controlador-api/src/app/use-cases/documento/index.ts",
+  "relative_path": "app/use-cases/documento/index.ts",
+  "analyzed_at": "2026-04-30T09:54:52.310662",
+  "endpoints_found": 0,
+  "endpoints": [],
+  "ast_summary": {
+    "type": "program",
+    "children_count": 16,
+    "byte_range": [
+      0,
+      1177
+    ],
+    "position": {
+      "start": {
+        "line": 0,
+        "column": 0
+      },
+      "end": {
+        "line": 35,
+        "column": 0
+      }
+    }
+  }
+}

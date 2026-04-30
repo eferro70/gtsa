@@ -1,0 +1,25 @@
+{
+  "file": "/home/s231991563/projetos/neosigner/controlador-api/src/app/ports/repositorios/IChavesRepositorio.ts",
+  "relative_path": "app/ports/repositorios/IChavesRepositorio.ts",
+  "analyzed_at": "2026-04-30T09:54:51.820027",
+  "endpoints_found": 0,
+  "endpoints": [],
+  "ast_summary": {
+    "type": "program",
+    "children_count": 1,
+    "byte_range": [
+      0,
+      116
+    ],
+    "position": {
+      "start": {
+        "line": 0,
+        "column": 0
+      },
+      "end": {
+        "line": 4,
+        "column": 0
+      }
+    }
+  }
+}

@@ -1,0 +1,98 @@
+{
+  "file": "/home/s231991563/projetos/neosigner/controlador-api/src/infra/api/routes/ContaRoutes.ts",
+  "relative_path": "infra/api/routes/ContaRoutes.ts",
+  "analyzed_at": "2026-04-30T09:54:50.909834",
+  "endpoints_found": 8,
+  "endpoints": [
+    {
+      "name": "anonymous",
+      "path": "/api/contas/perfil/:perfil",
+      "method": "POST",
+      "parameters": [],
+      "file_path": "unknown",
+      "line_number": 69,
+      "context": " *         description: Erro interno do servidor\n */\nrouter.post(\n  \"/api/contas/perfil/:perfil\",\n  async (req: Request, res: Response) => {\n    await criarContaController.execute(req, res);\n  },\n);\n\n/**"
+    },
+    {
+      "name": "anonymous",
+      "path": "/api/contas/perfil/:perfil/:id",
+      "method": "PUT",
+      "parameters": [],
+      "file_path": "unknown",
+      "line_number": 137,
+      "context": " *         description: Erro interno do servidor\n */\nrouter.put(\n  \"/api/contas/perfil/:perfil/:id\",\n  async (req: Request, res: Response) => {\n    await alterarContaController.execute(req, res);\n  },\n);\n\n/**"
+    },
+    {
+      "name": "anonymous",
+      "path": "/api/contas/perfil/:perfil",
+      "method": "GET",
+      "parameters": [],
+      "file_path": "unknown",
+      "line_number": 184,
+      "context": " *         description: Erro interno do servidor\n */\nrouter.get(\n  \"/api/contas/perfil/:perfil\",\n  async (req: Request, res: Response) => {\n    await listarContasPorPerfilController.execute(req, res);\n  },\n);\n\n/**"
+    },
+    {
+      "name": "anonymous",
+      "path": "/api/contas/id/:id",
+      "method": "GET",
+      "parameters": [],
+      "file_path": "unknown",
+      "line_number": 229,
+      "context": " *         description: Erro interno do servidor\n */\nrouter.get(\"/api/contas/id/:id\", async (req: Request, res: Response) => {\n  await buscarContaController.execute(req, res);\n});\n\n/**"
+    },
+    {
+      "name": "anonymous",
+      "path": "/api/contas",
+      "method": "GET",
+      "parameters": [],
+      "file_path": "unknown",
+      "line_number": 282,
+      "context": " *         description: Erro interno do servidor\n */\nrouter.get(\"/api/contas\", async (req: Request, res: Response) => {\n  await pesquisarContasController.execute(req, res);\n});\n\n/**"
+    },
+    {
+      "name": "anonymous",
+      "path": "/api/contas/sumario",
+      "method": "GET",
+      "parameters": [],
+      "file_path": "unknown",
+      "line_number": 315,
+      "context": " *         description: Erro interno do servidor\n */\nrouter.get(\"/api/contas/sumario\", async (req: Request, res: Response) => {\n  await pesquisarContasSumarioController.execute(req, res);\n});\n\n/**"
+    },
+    {
+      "name": "anonymous",
+      "path": "/api/contas/codigo/:codigo",
+      "method": "GET",
+      "parameters": [],
+      "file_path": "unknown",
+      "line_number": 356,
+      "context": " *         description: Erro interno do servidor\n */\nrouter.get(\n  \"/api/contas/codigo/:codigo\",\n  async (req: Request, res: Response) => {\n    await buscarPessoaController.execute(req, res);\n  },\n);\n\n/**"
+    },
+    {
+      "name": "anonymous",
+      "path": "/api/contas/reenviar-credenciais-sistema",
+      "method": "PATCH",
+      "parameters": [],
+      "file_path": "unknown",
+      "line_number": 393,
+      "context": " *         description: Erro interno do servidor\n */\nrouter.patch(\n  \"/api/contas/reenviar-credenciais-sistema\",\n  async (req: Request, res: Response) => {\n    await reenviarCredenciaisSistemaController.execute(req, res);\n  },\n);\n\nexport { router as contaRoutes };"
+    }
+  ],
+  "ast_summary": {
+    "type": "program",
+    "children_count": 22,
+    "byte_range": [
+      0,
+      14104
+    ],
+    "position": {
+      "start": {
+        "line": 0,
+        "column": 0
+      },
+      "end": {
+        "line": 400,
+        "column": 0
+      }
+    }
+  }
+}

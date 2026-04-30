@@ -1,0 +1,25 @@
+{
+  "file": "/home/s231991563/projetos/neosigner/controlador-api/src/app/use-cases/documento/__tests__/BuscarDocumentos.spec.ts",
+  "relative_path": "app/use-cases/documento/__tests__/BuscarDocumentos.spec.ts",
+  "analyzed_at": "2026-04-30T09:54:52.380741",
+  "endpoints_found": 0,
+  "endpoints": [],
+  "ast_summary": {
+    "type": "program",
+    "children_count": 11,
+    "byte_range": [
+      0,
+      10797
+    ],
+    "position": {
+      "start": {
+        "line": 0,
+        "column": 0
+      },
+      "end": {
+        "line": 352,
+        "column": 0
+      }
+    }
+  }
+}

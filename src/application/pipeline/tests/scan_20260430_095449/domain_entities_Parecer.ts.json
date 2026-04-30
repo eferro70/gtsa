@@ -1,0 +1,25 @@
+{
+  "file": "/home/s231991563/projetos/neosigner/controlador-api/src/domain/entities/Parecer.ts",
+  "relative_path": "domain/entities/Parecer.ts",
+  "analyzed_at": "2026-04-30T09:54:49.955156",
+  "endpoints_found": 0,
+  "endpoints": [],
+  "ast_summary": {
+    "type": "program",
+    "children_count": 1,
+    "byte_range": [
+      0,
+      374
+    ],
+    "position": {
+      "start": {
+        "line": 0,
+        "column": 0
+      },
+      "end": {
+        "line": 20,
+        "column": 0
+      }
+    }
+  }
+}

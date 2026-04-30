@@ -12,7 +12,7 @@ OPENAPI_JSON="$API_SOURCE/swagger/specs/openapi.json"
 LOGFILE="orquestrador.log"
 REPORTS_DIR="output"
 SCAN_DIR=src/application/pipeline/tests/scan_20260428_160549
-LLM_MODEL="codellama:7b"
+LLM_MODEL="gemma"
 
 # Limpa log anterior para garantir execução limpa
 > "$LOGFILE"
@@ -82,9 +82,9 @@ main() {
     # run_step 2 "Geração automática da especificação OpenAPI" \
     #     python3 src/application/pipeline/step2_openapi.py
 
-    # Passo 3: Dados de exemplo (opcional)
-    # run_step 3 "Geração de dados de exemplo para testes" \
-    #     python3 src/application/pipeline/step3_dados_exemplo.py "$OPENAPI_JSON" --only-with-body --llm-backend ollama --llm-model "$LLM_MODEL"
+    # Passo 3: [LLM] Dados de exemplo (opcional)
+    run_step 3 "[LLM] Geração de dados de exemplo para testes" \
+        python3 src/application/pipeline/step3_dados_exemplo.py "$OPENAPI_JSON" --only-with-body --llm-backend ollama --llm-model "$LLM_MODEL"
 
     # Passo 4: Parser AST
     run_step 4 "Parser AST (extração de endpoints)" \
@@ -98,8 +98,8 @@ main() {
         exit 1
     fi
 
-    # Passo 5: Análise de risco (LLM/Heurística)
-    run_step 5 "Análise de risco e enriquecimento (LLM)" \
+    # Passo 5: [LLM] Análise de risco (Heurística)
+    run_step 5 "[LLM] Análise de risco e enriquecimento" \
         python3 src/application/pipeline/step5_analyzer.py "$SCAN_DIR/all_endpoints.json" \
         --llm-backend ollama --llm-model "$LLM_MODEL"
 
@@ -112,8 +112,8 @@ main() {
     run_step 7 "Gerar testes inteligentes" \
         python3 src/application/pipeline/step7_generator.py "$OPENAPI_JSON" 
 
-    # Passo 8: Execução dos testes
-    run_step 8 "Executar testes gerados" \
+    # Passo 8: [LLM] Execução dos testes
+    run_step 8 "[LLM] Executar testes gerados" \
         bash src/application/pipeline/step8_run_llm_tests.sh --llm-backend ollama --llm-model "$LLM_MODEL"
 
     # Passo 9: Relatório

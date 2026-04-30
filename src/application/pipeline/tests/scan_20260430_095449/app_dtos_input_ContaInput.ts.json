@@ -1,0 +1,25 @@
+{
+  "file": "/home/s231991563/projetos/neosigner/controlador-api/src/app/dtos/input/ContaInput.ts",
+  "relative_path": "app/dtos/input/ContaInput.ts",
+  "analyzed_at": "2026-04-30T09:54:51.687057",
+  "endpoints_found": 0,
+  "endpoints": [],
+  "ast_summary": {
+    "type": "program",
+    "children_count": 17,
+    "byte_range": [
+      0,
+      8370
+    ],
+    "position": {
+      "start": {
+        "line": 0,
+        "column": 0
+      },
+      "end": {
+        "line": 314,
+        "column": 0
+      }
+    }
+  }
+}

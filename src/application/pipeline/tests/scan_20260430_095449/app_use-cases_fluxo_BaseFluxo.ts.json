@@ -1,0 +1,25 @@
+{
+  "file": "/home/s231991563/projetos/neosigner/controlador-api/src/app/use-cases/fluxo/BaseFluxo.ts",
+  "relative_path": "app/use-cases/fluxo/BaseFluxo.ts",
+  "analyzed_at": "2026-04-30T09:54:52.084444",
+  "endpoints_found": 0,
+  "endpoints": [],
+  "ast_summary": {
+    "type": "program",
+    "children_count": 20,
+    "byte_range": [
+      0,
+      11598
+    ],
+    "position": {
+      "start": {
+        "line": 0,
+        "column": 0
+      },
+      "end": {
+        "line": 389,
+        "column": 0
+      }
+    }
+  }
+}

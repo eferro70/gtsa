@@ -1,0 +1,25 @@
+{
+  "file": "/home/s231991563/projetos/neosigner/controlador-api/src/app/dtos/autenticacao/AutenticadorDto.ts",
+  "relative_path": "app/dtos/autenticacao/AutenticadorDto.ts",
+  "analyzed_at": "2026-04-30T09:54:51.753671",
+  "endpoints_found": 0,
+  "endpoints": [],
+  "ast_summary": {
+    "type": "program",
+    "children_count": 6,
+    "byte_range": [
+      0,
+      1576
+    ],
+    "position": {
+      "start": {
+        "line": 0,
+        "column": 0
+      },
+      "end": {
+        "line": 56,
+        "column": 0
+      }
+    }
+  }
+}

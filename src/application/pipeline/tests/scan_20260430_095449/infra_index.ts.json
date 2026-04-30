@@ -1,0 +1,25 @@
+{
+  "file": "/home/s231991563/projetos/neosigner/controlador-api/src/infra/index.ts",
+  "relative_path": "infra/index.ts",
+  "analyzed_at": "2026-04-30T09:54:50.071663",
+  "endpoints_found": 0,
+  "endpoints": [],
+  "ast_summary": {
+    "type": "program",
+    "children_count": 15,
+    "byte_range": [
+      0,
+      796
+    ],
+    "position": {
+      "start": {
+        "line": 0,
+        "column": 0
+      },
+      "end": {
+        "line": 15,
+        "column": 0
+      }
+    }
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "file": "/home/s231991563/projetos/neosigner/controlador-api/src/domain/entities/BaseEntidade.ts",
+  "relative_path": "domain/entities/BaseEntidade.ts",
+  "analyzed_at": "2026-04-30T09:54:49.948873",
+  "endpoints_found": 0,
+  "endpoints": [],
+  "ast_summary": {
+    "type": "program",
+    "children_count": 3,
+    "byte_range": [
+      0,
+      1554
+    ],
+    "position": {
+      "start": {
+        "line": 0,
+        "column": 0
+      },
+      "end": {
+        "line": 43,
+        "column": 0
+      }
+    }
+  }
+}

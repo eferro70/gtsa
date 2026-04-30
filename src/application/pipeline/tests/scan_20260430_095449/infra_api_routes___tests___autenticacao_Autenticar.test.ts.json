@@ -1,0 +1,25 @@
+{
+  "file": "/home/s231991563/projetos/neosigner/controlador-api/src/infra/api/routes/__tests__/autenticacao/Autenticar.test.ts",
+  "relative_path": "infra/api/routes/__tests__/autenticacao/Autenticar.test.ts",
+  "analyzed_at": "2026-04-30T09:54:50.968544",
+  "endpoints_found": 0,
+  "endpoints": [],
+  "ast_summary": {
+    "type": "program",
+    "children_count": 10,
+    "byte_range": [
+      0,
+      4628
+    ],
+    "position": {
+      "start": {
+        "line": 0,
+        "column": 0
+      },
+      "end": {
+        "line": 131,
+        "column": 0
+      }
+    }
+  }
+}

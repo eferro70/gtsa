@@ -31,9 +31,7 @@ wheels/
 *~
 
 # Dados gerados para testes
-src/application/pipeline/tests/dados/
-src/application/pipeline/tests/*.json
-src/application/pipeline/tests/*.log
+src/application/pipeline/tests/
 
 # Outputs do projeto
 output/

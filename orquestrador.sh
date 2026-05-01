@@ -100,25 +100,19 @@ main() {
 
     # Passo 5: [LLM] Análise de risco (Heurística)
     run_step 5 "[LLM] Análise de risco e enriquecimento" \
-        python3 src/application/pipeline/step5_analyzer.py "$SCAN_DIR/all_endpoints.json" \
-        --llm-backend ollama --llm-model "$LLM_MODEL"
+        python3 src/application/pipeline/step5_analyzer_and_enricher.py "$SCAN_DIR/all_endpoints.json" --openapi docs/openapi.yaml --llm-backend ollama
 
-    # Passo 6: Enricher
-    run_step 6 "Gerar enriched_endpoints.json" \
-        python3 src/application/pipeline/step6_enricher.py "$OPENAPI_JSON" \
-        --source "$API_SOURCE"
+    # Passo 6: Gerador de testes
+    run_step 6 "Gerar testes inteligentes" \
+        python3 src/application/pipeline/step6_generator.py "$OPENAPI_JSON" 
 
-    # Passo 7: Gerador de testes
-    run_step 7 "Gerar testes inteligentes" \
-        python3 src/application/pipeline/step7_generator.py "$OPENAPI_JSON" 
+    # Passo 7: [LLM] Execução dos testes
+    run_step 7 "[LLM] Executar testes gerados" \
+        bash src/application/pipeline/step7_run_llm_tests.sh --llm-backend ollama --llm-model "$LLM_MODEL"
 
-    # Passo 8: [LLM] Execução dos testes
-    run_step 8 "[LLM] Executar testes gerados" \
-        bash src/application/pipeline/step8_run_llm_tests.sh --llm-backend ollama --llm-model "$LLM_MODEL"
-
-    # Passo 9: Relatório
-    run_step 9 "Gerar relatório de testes" \
-        python3 src/application/pipeline/step9_gerar_relatorio_markdown.py
+    # Passo 8: Relatório
+    run_step 8 "Gerar relatório de testes" \
+        python3 src/application/pipeline/step8_gerar_relatorio_markdown.py
 
     # ────────────────────────────────────────────────────────────────────────
     # 📊 FINALIZAÇÃO

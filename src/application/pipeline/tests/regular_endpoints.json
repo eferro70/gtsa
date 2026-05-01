@@ -267,7 +267,7 @@
     "parameters": [],
     "file_path": "infra/api/routes/FluxoRoutes.ts",
     "line_number": 490,
-    "context": " *         description: Internal Server Error\n */\nrouter.get(\n  \"/api/fluxos/:id/hashes-documentos/:algoritmo\",\n  async (req: Request, res: Response) => {\n    await buscarHashesFluxoControler.execute(req, res);\n  },\n);\n\n/**"
+    "context": " *         description: Internal Server Error\n */\nrouter.get(\n  \"/api/fluxos/:id/hashes-documentos/:algoritmo\",\n  async (req: Request, res: Response) => {\n    await buscarHashesFluxoController.execute(req, res);\n  },\n);\n\n/**"
   },
   {
     "name": "anonymous",
@@ -329,7 +329,7 @@
     "method": "PATCH",
     "parameters": [],
     "file_path": "infra/api/routes/ResponderFluxoRoutes.ts",
-    "line_number": 75,
+    "line_number": 76,
     "context": " *         description: Internal Server Error\n */\nrouter.patch(\n  \"/api/fluxos/:id/rejeitar\",\n  async (req: Request, res: Response) => {\n    await rejeitarFluxoController.execute(req, res);\n  },\n);\n\n/**"
   },
   {
@@ -338,7 +338,7 @@
     "method": "PATCH",
     "parameters": [],
     "file_path": "infra/api/routes/ResponderFluxoRoutes.ts",
-    "line_number": 133,
+    "line_number": 134,
     "context": " *         description: Internal Server Error\n */\nrouter.patch(\"/api/fluxos/:id/assinar\", async (req: Request, res: Response) => {\n  await assinarFluxoController.execute(req, res);\n});\n\n/**"
   },
   {
@@ -347,7 +347,7 @@
     "method": "PATCH",
     "parameters": [],
     "file_path": "infra/api/routes/ResponderFluxoRoutes.ts",
-    "line_number": 188,
+    "line_number": 189,
     "context": " *         description: Internal Server Error\n */\nrouter.patch(\"/api/fluxos/:id/revisar\", async (req: Request, res: Response) => {\n  await revisarFluxoController.execute(req, res);\n});\n\n/**"
   },
   {
@@ -356,7 +356,7 @@
     "method": "PATCH",
     "parameters": [],
     "file_path": "infra/api/routes/ResponderFluxoRoutes.ts",
-    "line_number": 240,
+    "line_number": 241,
     "context": " *         description: Internal Server Error\n */\nrouter.patch(\"/api/fluxos/:id/revisao\", async (req: Request, res: Response) => {\n  await salvarRevisaoFluxoController.execute(req, res);\n});\n\n/**"
   },
   {
@@ -365,7 +365,7 @@
     "method": "PATCH",
     "parameters": [],
     "file_path": "infra/api/routes/ResponderFluxoRoutes.ts",
-    "line_number": 297,
+    "line_number": 298,
     "context": " *         description: Internal Server Error\n */\nrouter.patch(\n  \"/api/fluxos/:id/assinar-serpro-id\",\n  async (req: Request, res: Response) => {\n    await assinarFluxoSerproIdController.execute(req, res);\n  },\n);\n\n/**"
   },
   {
@@ -374,7 +374,7 @@
     "method": "PATCH",
     "parameters": [],
     "file_path": "infra/api/routes/ResponderFluxoRoutes.ts",
-    "line_number": 357,
+    "line_number": 358,
     "context": " *         description: Internal Server Error\n */\nrouter.patch(\n  \"/api/fluxos/:id/assinar-bird-id\",\n  async (req: Request, res: Response) => {\n    await assinarFluxoBirdIdController.execute(req, res);\n  },\n);\n\n/**"
   },
   {
@@ -383,7 +383,7 @@
     "method": "PATCH",
     "parameters": [],
     "file_path": "infra/api/routes/ResponderFluxoRoutes.ts",
-    "line_number": 417,
+    "line_number": 418,
     "context": " *         description: Internal Server Error\n */\nrouter.patch(\n  \"/api/fluxos/:id/assinar-safe-id\",\n  async (req: Request, res: Response) => {\n    await assinarFluxoSafeIdController.execute(req, res);\n  },\n);\n\n/**"
   },
   {
@@ -392,7 +392,7 @@
     "method": "PATCH",
     "parameters": [],
     "file_path": "infra/api/routes/ResponderFluxoRoutes.ts",
-    "line_number": 477,
+    "line_number": 478,
     "context": " *         description: Internal Server Error\n */\nrouter.patch(\n  \"/api/fluxos/:id/assinar-vidaas\",\n  async (req: Request, res: Response) => {\n    await assinarFluxoVidaasController.execute(req, res);\n  },\n);\n\n/**"
   },
   {
@@ -401,7 +401,7 @@
     "method": "PATCH",
     "parameters": [],
     "file_path": "infra/api/routes/ResponderFluxoRoutes.ts",
-    "line_number": 537,
+    "line_number": 538,
     "context": " *         description: Internal Server Error\n */\nrouter.patch(\n  \"/api/fluxos/:id/assinar-ds-cloud\",\n  async (req: Request, res: Response) => {\n    await assinarFluxoDsCloudController.execute(req, res);\n  },\n);\n\n/**"
   },
   {
@@ -410,8 +410,17 @@
     "method": "PATCH",
     "parameters": [],
     "file_path": "infra/api/routes/ResponderFluxoRoutes.ts",
-    "line_number": 597,
+    "line_number": 598,
     "context": " *         description: Internal Server Error\n */\nrouter.patch(\n  \"/api/fluxos/:id/assinar-syn-id\",\n  async (req: Request, res: Response) => {\n    await assinarFluxoSynIdController.execute(req, res);\n  },\n);\n\n/**"
+  },
+  {
+    "name": "anonymous",
+    "path": "/api/fluxos/:id/assinar-certisign",
+    "method": "PATCH",
+    "parameters": [],
+    "file_path": "infra/api/routes/ResponderFluxoRoutes.ts",
+    "line_number": 658,
+    "context": " *         description: Internal Server Error\n */\nrouter.patch(\n  \"/api/fluxos/:id/assinar-certisign\",\n  async (req: Request, res: Response) => {\n    await assinarFluxoCertisignController.execute(req, res);\n  },\n);\n\n/**"
   },
   {
     "name": "anonymous",
@@ -419,7 +428,7 @@
     "method": "PATCH",
     "parameters": [],
     "file_path": "infra/api/routes/ResponderFluxoRoutes.ts",
-    "line_number": 661,
+    "line_number": 722,
     "context": " *         description: Internal Server Error\n */\nrouter.patch(\n  \"/api/fluxos/:id/assinar-desktop/:algoritmo\",\n  async (req: Request, res: Response) => {\n    await assinarFluxoDesktopController.execute(req, res);\n  },\n);\n\nexport { router as responderFluxosRoutes };"
   },
   {

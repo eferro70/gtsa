@@ -3,15 +3,13 @@ import json
 from dotenv import load_dotenv
 from pathlib import Path
 
-# Busca auth_config.json subindo diretórios a partir do cwd e também em config/
+# Busca auth_config.json subindo diretórios
 def find_config(filename):
     path = Path.cwd()
-    for _ in range(6):  # Sobe até 6 níveis
-        # Procura no diretório atual
+    for _ in range(6):
         candidate = path / filename
         if candidate.exists():
             return candidate
-        # Procura em config/ no diretório atual
         candidate_config = path / 'config' / filename
         if candidate_config.exists():
             return candidate_config
@@ -24,7 +22,7 @@ config_path = find_config('auth_config.json')
 with open(config_path, 'r', encoding='utf-8') as f:
     AUTH_CONFIG = json.load(f)
 
-# Busca .env subindo diretórios a partir do cwd
+# Busca .env
 def find_env(filename):
     path = Path.cwd()
     for _ in range(6):
@@ -43,10 +41,10 @@ if env_path:
 def get_env_value(var):
     val = os.getenv(var)
     if val is None:
-        print(f"[!] Variável de ambiente '{{var}}' não encontrada no .env")
+        print(f"[!] Variável de ambiente '{var}' não encontrada no .env")
     return val
 
-def apply_auth(case):
+def apply_auth(case, role=None):
     if case.headers is None:
         case.headers = {}
 
@@ -62,14 +60,17 @@ def apply_auth(case):
         elif value:
             case.headers[header_name] = value
 
-    # Token de role (opcional)
+    # Token baseado na role
     role_tokens = AUTH_CONFIG.get("role_tokens", {})
-    default_role = AUTH_CONFIG.get("default_role")
-    if default_role and default_role in role_tokens:
-        token_env = role_tokens[default_role].get("env_var")
-        token_value = role_tokens[default_role].get("value")
+    target_role = role or AUTH_CONFIG.get("default_role")
+
+    if target_role and target_role in role_tokens:
+        token_env = role_tokens[target_role].get("env_var")
+        token_value = role_tokens[target_role].get("value")
         token = get_env_value(token_env) if token_env else token_value
         if token:
             auth_header = AUTH_CONFIG.get("auth_header", "Authorization")
             prefix = AUTH_CONFIG.get("auth_prefix", "Bearer ")
             case.headers[auth_header] = f"{prefix}{token.strip()}"
+
+    return case.headers.get(auth_header) is not None

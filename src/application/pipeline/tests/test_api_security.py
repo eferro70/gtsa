@@ -7,6 +7,7 @@ import yaml
 import random
 import string
 import re
+import time
 from pathlib import Path
 from src.infrastructure.interfaces.hooks.llm_hooks import before_call
 from hypothesis import given, settings, HealthCheck, strategies as st
@@ -18,6 +19,7 @@ except ImportError:
 
 LOG_FILE = os.environ.get('TEST_LOG_FILE', 'test_api_llm.log')
 SUMMARY_FILE = os.environ.get('TEST_SUMMARY_FILE', 'test_api_llm_summary.md')
+HTTP_CALL_COUNT = 0
 
 def log_test(message, status="INFO"):
     try:
@@ -74,6 +76,8 @@ def find_operation(spec, endpoint, method):
     return None, None
 
 def make_request(method, endpoint, headers, data=None, base_url="http://localhost", timeout=10, verify_ssl=False):
+    global HTTP_CALL_COUNT
+    HTTP_CALL_COUNT += 1
     url = f"{base_url.rstrip('/')}{endpoint}"
     if requests is None:
         raise RuntimeError("requests não instalado")
@@ -140,20 +144,32 @@ def check_pii_leakage(response_text, endpoint_pii):
     return True
 
 def run_test(name, fn, critical=False):
+    global HTTP_CALL_COUNT
+    start = time.perf_counter()
+    calls_before = HTTP_CALL_COUNT
     try:
         fn()
         if critical:
             log_test(f"✅ {name} (CRÍTICO) passou", "SUCCESS")
         else:
             log_test(f"✅ {name} passou", "SUCCESS")
+        elapsed_ms = int((time.perf_counter() - start) * 1000)
+        calls_used = HTTP_CALL_COUNT - calls_before
+        log_test(f"test_metric name={name} http_calls={calls_used} duration_ms={elapsed_ms}", "METRIC")
         return True
     except AssertionError as e:
         severity = "CRITICAL" if critical else "ERROR"
         log_test(f"❌ {name} falhou: {e}", severity)
+        elapsed_ms = int((time.perf_counter() - start) * 1000)
+        calls_used = HTTP_CALL_COUNT - calls_before
+        log_test(f"test_metric name={name} http_calls={calls_used} duration_ms={elapsed_ms}", "METRIC")
         return False
     except Exception as e:
         severity = "CRITICAL" if critical else "ERROR"
         log_test(f"❌ {name} erro inesperado: {e}", severity)
+        elapsed_ms = int((time.perf_counter() - start) * 1000)
+        calls_used = HTTP_CALL_COUNT - calls_before
+        log_test(f"test_metric name={name} http_calls={calls_used} duration_ms={elapsed_ms}", "METRIC")
         return False
 
 def main():
@@ -164,6 +180,7 @@ def main():
     parser.add_argument('--max-examples', type=int, default=5)
     parser.add_argument('--no-generated', action='store_true')
     parser.add_argument('--token', help='Token JWT explícito')
+    parser.add_argument('--role', default='-', help='Role usada no teste')
     parser.add_argument('--base-url', default='http://localhost:8080')
     parser.add_argument('--skip-pii-check', action='store_true', help='Pular verificação de PII')
     parser.add_argument('--security-context', help='JSON com contexto de segurança')
@@ -180,6 +197,7 @@ def main():
     vulnerabilities = security_context.get('vulnerabilities', [])
     pii_fields = security_context.get('pii_fields', [])
     is_critical = risk_level == 'alto' or 'critical' in str(vulnerabilities).lower()
+    endpoint_start = time.perf_counter()
 
     log_test(f"▶️ Iniciando testes para {args.method} {args.endpoint}")
     log_test(f"   🔒 Contexto: Risco={risk_level}, Vulns={vulnerabilities}, PII={pii_fields}")
@@ -302,6 +320,8 @@ def main():
 
     # Teste property-based (Hypothesis)
     if request_schema and not args.no_generated and args.max_examples > 0:
+        hyp_start = time.perf_counter()
+        hyp_calls_before = HTTP_CALL_COUNT
         try:
             @settings(max_examples=args.max_examples, suppress_health_check=[HealthCheck.too_slow])
             @given(data=st.builds(lambda: generate_data_from_schema(request_schema, avoid_pii=True)))
@@ -311,9 +331,15 @@ def main():
             _hyp_test()
             passed += 1
             log_test(f"✅ test_property_based concluído com {args.max_examples} exemplos")
+            hyp_elapsed_ms = int((time.perf_counter() - hyp_start) * 1000)
+            hyp_calls = HTTP_CALL_COUNT - hyp_calls_before
+            log_test(f"test_metric name=test_property_based http_calls={hyp_calls} duration_ms={hyp_elapsed_ms}", "METRIC")
         except Exception as e:
             log_test(f"❌ test_property_based falhou: {e}", "ERROR")
             failed += 1
+            hyp_elapsed_ms = int((time.perf_counter() - hyp_start) * 1000)
+            hyp_calls = HTTP_CALL_COUNT - hyp_calls_before
+            log_test(f"test_metric name=test_property_based http_calls={hyp_calls} duration_ms={hyp_elapsed_ms}", "METRIC")
 
     # Teste de schema de resposta
     if operation:
@@ -356,7 +382,13 @@ def main():
             else:
                 failed += 1
 
+    total_elapsed_ms = int((time.perf_counter() - endpoint_start) * 1000)
     log_test(f"📊 Resultados para {args.method} {args.endpoint}: {passed} passaram, {failed} falharam")
+    log_test(
+        f"endpoint_summary method={args.method} path={args.endpoint} role={args.role or '-'} "
+        f"passed={passed} failed={failed} http_calls={HTTP_CALL_COUNT} duration_ms={total_elapsed_ms}",
+        "METRIC",
+    )
     sys.exit(1 if failed > 0 else 0)
 
 if __name__ == "__main__":

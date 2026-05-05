@@ -54,6 +54,11 @@ RE_RESULTS_LINE = re.compile(
     rf"📊\s+Resultados para\s+{HTTP_METHOD_PATTERN}\s+(\S+):\s*(\d+)\s+passaram,\s*(\d+)\s+falharam"
 )
 
+# [METRIC] endpoint_summary method=GET path=/api/foo role=REQ passed=3 failed=0 http_calls=5 duration_ms=120
+RE_ENDPOINT_METRIC = re.compile(
+    rf"endpoint_summary\s+method={HTTP_METHOD_PATTERN}\s+path=(\S+)\s+role=(\S*)\s+passed=(\d+)\s+failed=(\d+)\s+http_calls=(\d+)\s+duration_ms=(\d+)"
+)
+
 endpoints = defaultdict(lambda: {
     "status": "",
     "tests": set(),
@@ -61,6 +66,8 @@ endpoints = defaultdict(lambda: {
     "path": "",
     "role": "",
     "has_coverage": False,
+    "http_calls": 0,
+    "duration_ms": 0,
 })
 
 tracked_tests = set()
@@ -146,6 +153,20 @@ def parse_log():
             endpoints[key]["method"] = method
             endpoints[key]["path"] = path
             endpoints[key]["status"] = "✅" if int(failed) == 0 else "❌"
+            continue
+
+        # Métricas reais por endpoint
+        m = RE_ENDPOINT_METRIC.search(line)
+        if m:
+            method, path, role, passed, failed, http_calls, duration_ms = m.groups()
+            key = f"{method} {path}"
+            endpoints[key]["method"] = method
+            endpoints[key]["path"] = path
+            if role and role != "-":
+                endpoints[key]["role"] = role
+            endpoints[key]["http_calls"] += int(http_calls)
+            endpoints[key]["duration_ms"] += int(duration_ms)
+            endpoints[key]["status"] = "✅" if int(failed) == 0 else "❌"
 
 
 def write_summary():
@@ -173,6 +194,9 @@ def write_summary():
     success_count = sum(1 for i in endpoints.values() if i["status"] == "✅")
     fail_count    = sum(1 for i in endpoints.values() if i["status"] == "❌")
     total_tests   = sum(len(i["tests"]) for i in endpoints.values())
+    total_http_calls = sum(i["http_calls"] for i in endpoints.values())
+    total_duration_ms = sum(i["duration_ms"] for i in endpoints.values())
+    avg_duration_ms = int(total_duration_ms / total) if total else 0
     tests_tracked = len(all_tests) > 0
     has_coverage  = any(i["has_coverage"] for i in endpoints.values())
 
@@ -212,6 +236,12 @@ def write_summary():
         f.write(f"- **Total de tipos de teste rastreados:** {total_tests}\n")
         f.write(f"- **Endpoints com sucesso:** {success_count}\n")
         f.write(f"- **Endpoints com falha:** {fail_count}\n\n")
+
+        f.write("## Métricas de Execução Real\n\n")
+        f.write(f"- **Total de chamadas HTTP executadas:** {total_http_calls}\n")
+        f.write(f"- **Duração acumulada dos endpoints:** {total_duration_ms} ms\n")
+        f.write(f"- **Duração média por endpoint:** {avg_duration_ms} ms\n\n")
+
         f.write("*Relatório gerado automaticamente a partir do log de execução.*\n")
 
 

@@ -132,6 +132,7 @@ run_test() {
     
     local token="$(get_token "$role")"
     local args=(--method "$method" --endpoint "$endpoint" --base-url "$BASE_URL")
+    [ -n "$role" ] && args+=(--role "$role")
     [ -n "$token" ] && args+=(--token "$token")
     [ -n "$test_data_file" ] && [ -f "$test_data_file" ] && args+=(--test-data "$test_data_file")
     args+=(--security-context "$security_context")

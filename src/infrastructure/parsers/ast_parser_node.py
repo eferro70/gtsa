@@ -243,16 +243,17 @@ def analyze_project(project_path: str, output_dir: str = None):
                     print(f"   ❌ Erro: {e}")
     
     # Gera relatório
-    # Define output_dir para ../../output/ast se não for passado
+    # Define output_dir para ../../output se não for passado
     if output_dir is None:
-        output_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../../output/ast'))
+        output_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../../output'))
     output_path = Path(output_dir)
     output_path.mkdir(exist_ok=True)
     
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    
-    # Salva todos endpoints
-    with open(output_path / f"endpoints_{timestamp}.json", 'w', encoding='utf-8') as f:
+    endpoints_file = output_path / "all_endpoints.json"
+
+    # Mantém o contrato principal do projeto com um artefato consolidado estável.
+    with open(endpoints_file, 'w', encoding='utf-8') as f:
         json.dump(all_endpoints, f, indent=2, ensure_ascii=False)
     
     # Gera relatório Markdown
@@ -286,7 +287,7 @@ def analyze_project(project_path: str, output_dir: str = None):
     print(f"\n📊 Resumo:")
     print(f"   Total de endpoints: {len(all_endpoints)}")
     print(f"   Relatório gerado: {output_path}/report_{timestamp}.md")
-    print(f"   JSON gerado: {output_path}/endpoints_{timestamp}.json")
+    print(f"   JSON gerado: {endpoints_file}")
     
     return all_endpoints
 

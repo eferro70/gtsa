@@ -14,6 +14,19 @@ REPORTS_DIR="output"
 SCAN_DIR=src/application/pipeline/tests/scan_20260428_160549
 LLM_MODEL="gemma"
 
+# Variáveis padrão para controle de passos (podem ser sobrescritas pelo .env)
+STEP_2_ENABLED="true"
+STEP_3_ENABLED="true"
+
+# Carrega variáveis de ambiente do arquivo .env (sobrescreve os padrões se definidas)
+ENV_FILE="$(dirname "${BASH_SOURCE[0]}")/.env"
+if [[ -f "$ENV_FILE" ]]; then
+    set +u  # Desabilita verificação de variáveis não definidas para sourcing
+    # shellcheck source=.env
+    source "$ENV_FILE"
+    set -u  # Re-habilita verificação
+fi
+
 # Limpa log anterior para garantir execução limpa
 > "$LOGFILE"
 
@@ -70,6 +83,7 @@ main() {
     log "🚀 Iniciando orquestrador GTSA"
     log "📁 Fonte: $API_SOURCE"
     log "📄 OpenAPI: $OPENAPI_JSON"
+    log "⚙️  Controle de passos: STEP_2_ENABLED=$STEP_2_ENABLED | STEP_3_ENABLED=$STEP_3_ENABLED"
     echo "" >> "$LOGFILE"
 
     START_TOTAL=$(date +%s)
@@ -79,16 +93,20 @@ main() {
         python3 src/application/pipeline/step1_scan.py -i "$API_SOURCE"
 
     # Passo 2: Geração de OpenAPI (opcional)
-    # run_step 2 "Geração automática da especificação OpenAPI" \
-    #     python3 src/application/pipeline/step2_openapi.py
+    if [[ "$STEP_2_ENABLED" == "true" || "$STEP_2_ENABLED" == "1" ]]; then
+        run_step 2 "Geração automática da especificação OpenAPI" \
+            python3 src/application/pipeline/step2_openapi.py
+    else
+        log "⏭️  [Passo 2] Pulando: Geração automática da especificação OpenAPI (STEP_2_ENABLED=false)"
+    fi
 
     # Passo 3: [LLM] Dados de exemplo (opcional)
-    run_step 3 "[LLM] Geração de dados de exemplo para testes" \
-        python3 src/application/pipeline/step3_dados_exemplo.py "$OPENAPI_JSON" --only-with-body --llm-backend ollama --llm-model "$LLM_MODEL"
-
-    # Passo 4: Parser AST
-    run_step 4 "Parser AST (extração de endpoints)" \
-        python3 src/application/pipeline/step4_ast_parser.py "$API_SOURCE"
+    if [[ "$STEP_3_ENABLED" == "true" || "$STEP_3_ENABLED" == "1" ]]; then
+        run_step 3 "[LLM] Geração de dados de exemplo para testes" \
+            python3 src/application/pipeline/step3_dados_exemplo.py "$OPENAPI_JSON" --only-with-body --llm-backend ollama --llm-model "$LLM_MODEL"
+    else
+        log "⏭️  [Passo 3] Pulando: Geração de dados de exemplo para testes (STEP_3_ENABLED=false)"
+    fi
 
     # Descobre diretório do scan mais recente automaticamente
     SCAN_DIR=$(ls -td src/application/pipeline/tests/scan_* 2>/dev/null | head -n1)
@@ -98,21 +116,21 @@ main() {
         exit 1
     fi
 
-    # Passo 5: [LLM] Análise de risco (Heurística)
-    run_step 5 "[LLM] Análise de risco e enriquecimento" \
-        python3 src/application/pipeline/step5_analyzer_and_enricher.py "$SCAN_DIR/all_endpoints.json" --openapi docs/openapi.yaml --llm-backend ollama
+    # Passo 4: [LLM] Análise de risco (Heurística)
+    run_step 4 "[LLM] Análise de risco e enriquecimento" \
+        python3 src/application/pipeline/step4_analyzer_and_enricher.py "$SCAN_DIR/all_endpoints.json" --openapi docs/openapi.yaml --llm-backend ollama
 
-    # Passo 6: Gerador de testes
-    run_step 6 "Gerar testes inteligentes" \
-        python3 src/application/pipeline/step6_generator.py "$OPENAPI_JSON" 
+    # Passo 5: Gerador de testes
+    run_step 5 "Gerar testes inteligentes" \
+        python3 src/application/pipeline/step5_generator.py "$OPENAPI_JSON" 
 
-    # Passo 7: [LLM] Execução dos testes
-    run_step 7 "[LLM] Executar testes gerados" \
-        bash src/application/pipeline/step7_run_llm_tests.sh --llm-backend ollama --llm-model "$LLM_MODEL"
+    # Passo 6: [LLM] Execução dos testes
+    run_step 6 "[LLM] Executar testes gerados" \
+        bash src/application/pipeline/step6_run_llm_tests.sh --llm-backend ollama --llm-model "$LLM_MODEL"
 
-    # Passo 8: Relatório
-    run_step 8 "Gerar relatório de testes" \
-        python3 src/application/pipeline/step8_gerar_relatorio_markdown.py
+    # Passo 7: Relatório
+    run_step 7 "Gerar relatório de testes" \
+        python3 src/application/pipeline/step7_gerar_relatorio_markdown.py
 
     # ────────────────────────────────────────────────────────────────────────
     # 📊 FINALIZAÇÃO

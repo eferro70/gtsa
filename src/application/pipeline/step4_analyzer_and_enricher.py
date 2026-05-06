@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-step5_analyzer_unified.py
+step4_analyzer_and_enricher.py
 ---------------------------
 Script UNIFICADO para análise de segurança e enriquecimento de endpoints.
 
@@ -17,13 +17,13 @@ SAÍDAS:
 
 USO:
     # Apenas análise de segurança (mais rápido)
-    python3 step5_analyzer_unified.py output/scan_*/all_endpoints.json --no-llm
+    python3 step4_analyzer_and_enricher.py output/scan_*/all_endpoints.json --no-llm
     
     # Com enriquecimento OpenAPI
-    python3 step5_analyzer_unified.py output/scan_*/all_endpoints.json --openapi docs/openapi.yaml
+    python3 step4_analyzer_and_enricher.py output/scan_*/all_endpoints.json --openapi docs/openapi.yaml
     
     # Completo (segurança + OpenAPI + exemplos + roles)
-    python3 step5_analyzer_unified.py output/scan_*/all_endpoints.json --openapi docs/openapi.yaml --no-llm
+    python3 step4_analyzer_and_enricher.py output/scan_*/all_endpoints.json --openapi docs/openapi.yaml --no-llm
 """
 
 import json

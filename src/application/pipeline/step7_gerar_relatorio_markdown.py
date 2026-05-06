@@ -1,5 +1,5 @@
 """
-gerar_relatorio_markdown.py
+step7_relatorio_markdown.py
 ---------------------------
 Gera um relatório em Markdown com o resumo dos testes de API executados, a partir do log de execução.
 
@@ -8,7 +8,7 @@ Principais funções:
 - Extrai resultados de sucesso/falha por endpoint, método e role.
 - Gera um arquivo Markdown com o resumo dos testes, cobertura e falhas.
 
-Uso típico: python3 gerar_relatorio_markdown.py
+Uso típico: python3 step7_relatorio_markdown.py
 """
 
 import re

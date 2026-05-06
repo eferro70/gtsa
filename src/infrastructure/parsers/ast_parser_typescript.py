@@ -1,26 +1,4 @@
-"""
-step4_ast_parser.py
--------------------
-Script para análise AST de projetos Node/TypeScript usando tree-sitter.
-
-Funcionalidades:
-- Varre recursivamente o diretório informado, analisando arquivos .ts e .tsx (exceto arquivos/diretórios ignorados).
-- Extrai endpoints de APIs, métodos, handlers e parâmetros usando análise sintática.
-- Gera relatórios detalhados em JSON e Markdown, com resumo dos endpoints encontrados.
-- A cada execução, sobrescreve os arquivos antigos de saída (relatório e JSON) no diretório output.
-
-Parâmetros de linha de comando:
-  <caminho_do_projeto>   Caminho para a raiz do projeto Node/TypeScript a ser analisado (obrigatório)
-    [output_dir]           (Opcional) Caminho para salvar os relatórios (padrão: ../../../src/application/pipeline/tests)
-
-Exemplo de uso:
-    python3 step4_ast_parser.py /caminho/para/projeto
-
-Saídas:
-- tests/regular_endpoints.json   (lista de endpoints extraídos)
-- <output>/api_analyse_report.md (relatório em Markdown)
-"""
-
+# ast_parser_node.py
 import re
 import json
 from pathlib import Path
@@ -29,6 +7,9 @@ from tree_sitter import Language, Parser
 import tree_sitter_typescript
 from dataclasses import dataclass, asdict
 from datetime import datetime
+
+# Importar a classe base
+from .base_parser import BaseParser, ApiEndpoint
 
 @dataclass
 class ApiEndpoint:
@@ -45,25 +26,35 @@ class ApiEndpoint:
     def to_dict(self):
         return asdict(self)
 
-class TSASTParser:
-    def __init__(self, lang: str = "typescript"):
-        self.lang = lang
+
+class TypeScriptParser(BaseParser):
+    """Parser específico para TypeScript/JavaScript"""
+    
+    def __init__(self):
+        super().__init__("typescript")
+        self.supported_extensions = {'.ts', '.tsx', '.js', '.jsx'}
+        self.ignore_suffixes = {'.d.ts', '.spec.ts', '.test.ts', '.spec.js', '.test.js'}
+        
         TS_LANGUAGE = Language(tree_sitter_typescript.language_typescript())
         self.parser = Parser(TS_LANGUAGE)
         self.language = TS_LANGUAGE
-        print(f"✅ Parser configurado para {lang}")
+        print(f"✅ Parser configurado para TypeScript/JavaScript")
 
     def parse_code(self, code: str):
+        """Parseia o código e retorna a árvore AST"""
         return self.parser.parse(code.encode("utf8"))
 
     def get_root_node(self, code: str):
+        """Retorna o nó raiz da AST"""
         tree = self.parser.parse(code.encode("utf8"))
         return tree.root_node
 
-    def _get_node_text(self, node):
+    def _get_node_text(self, node) -> str:
+        """Extrai o texto de um nó"""
         return node.text.decode("utf8")
 
     def _is_external_url(self, path: str) -> bool:
+        """Verifica se o path é uma URL externa"""
         return path.startswith(('http://', 'https://', 'ftp://', 'ws://'))
 
     def _extract_handler_name(self, handler_node) -> str:
@@ -226,114 +217,15 @@ class TSASTParser:
         find_endpoints(root_node)
         return endpoints
 
-
-# Função auxiliar para analisar projeto inteiro
-def analyze_project(project_path: str, output_dir: str = None):
-    """Analisa projeto inteiro e gera relatórios"""
-    import os
-    from pathlib import Path
-    
-    parser = TSASTParser()
-    all_endpoints = []
-    
-    ignore_dirs = {'__tests__', '__test__', 'test', 'tests', 'node_modules', 'dist', 'build', 'coverage'}
-    
-    for root, dirs, files in os.walk(project_path):
-        dirs[:] = [d for d in dirs if d not in ignore_dirs]
-        
-        for file in files:
-            if file.endswith(('.ts', '.tsx')) and not file.endswith(('.spec.ts', '.test.ts', '.d.ts')):
-                file_path = os.path.join(root, file)
-                rel_path = os.path.relpath(file_path, project_path)
-                
-                print(f"📁 Analisando: {rel_path}")
-                
-                try:
-                    with open(file_path, 'r', encoding='utf-8') as f:
-                        code = f.read()
-                    
-                    endpoints = parser.extract_api_endpoints(code, rel_path)
-                    if endpoints:
-                        all_endpoints.extend(endpoints)
-                        print(f"   ✅ {len(endpoints)} endpoints encontrados")
-                        for ep in endpoints[:3]:
-                            print(f"      • {ep['method']} {ep['path']} -> {ep['name']}")
-                        if len(endpoints) > 3:
-                            print(f"      ... e mais {len(endpoints) - 3}")
-                except Exception as e:
-                    print(f"   ❌ Erro: {e}")
-    
-    # Gera relatório
-    # Define output_dir para 'output' se não for passado
-    if output_dir is None:
-        output_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../../output'))
-
-    output_path = Path(output_dir)
-    output_path.mkdir(exist_ok=True)
-
-    # Exclui arquivos antigos de saída (relatórios e JSON)
-    for f in output_path.glob("*_endpoints.json"):
-        try:
-            f.unlink()
-        except Exception as e:
-            print(f"⚠️  Não foi possível remover {f}: {e}")
-    for f in output_path.glob("*_relatorio_api.md"):
-        try:
-            f.unlink()
-        except Exception as e:
-            print(f"⚠️  Não foi possível remover {f}: {e}")
-
-
-    # Gera regular_endpoints.json sempre em tests
-    endpoints_file_name = "regular_endpoints.json"
-    tests_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../../src/application/pipeline/tests'))
-    Path(tests_dir).mkdir(exist_ok=True)
-    with open(Path(tests_dir) / endpoints_file_name, 'w', encoding='utf-8') as f:
-        json.dump(all_endpoints, f, indent=2, ensure_ascii=False)
-
-    # Gera relatório Markdown em output/
-    report = f"""# Relatório de Análise de API - regular
-
-## Resumo
-
-- **Total de endpoints encontrados:** {len(all_endpoints)}
-- **Métodos HTTP:** {', '.join(set(ep['method'] for ep in all_endpoints))}
-
-## Endpoints por Método
-"""
-    methods_count = {}
-    for ep in all_endpoints:
-        methods_count[ep['method']] = methods_count.get(ep['method'], 0) + 1
-
-    for method, count in sorted(methods_count.items()):
-        report += f"- **{method}:** {count}\n"
-
-    report += "\n## Lista de Endpoints\n\n"
-    report += "| Método | Path | Handler | Arquivo | Linha |\n"
-    report += "|--------|------|---------|---------|-------|\n"
-
-    for ep in sorted(all_endpoints, key=lambda x: (x['method'], x['path'])):
-        report += f"| {ep['method']} | `{ep['path']}` | `{ep['name']}` | {ep['file_path']} | {ep['line_number']} |\n"
-
-
-    report_file_name = "api_analyse_report.md"
-    with open(output_path / report_file_name, 'w', encoding='utf-8') as f:
-        f.write(report)
-
-    print(f"\n📊 Resumo:")
-    print(f"   Total de endpoints: {len(all_endpoints)}")
-    print(f"   Relatório gerado: {output_path}/{report_file_name}")
-    print(f"   JSON gerado: {tests_dir}/{endpoints_file_name}")
-
-    return all_endpoints
-
-
-if __name__ == '__main__':
-    import sys
-    
-    if len(sys.argv) < 2:
-        print("Uso: python asp_parser_node.py /caminho/do/projeto")
-        sys.exit(1)
-
-    project_path = sys.argv[1]
-    analyze_project(project_path, output_dir=None)
+    def get_ast_summary(self, code: str) -> Dict[str, Any]:
+        """Retorna um resumo da AST para o código"""
+        root_node = self.get_root_node(code)
+        return {
+            "type": root_node.type,
+            "children_count": len(root_node.children),
+            "byte_range": [root_node.start_byte, root_node.end_byte],
+            "position": {
+                "start": {"line": root_node.start_point[0], "column": root_node.start_point[1]},
+                "end": {"line": root_node.end_point[0], "column": root_node.end_point[1]},
+            }
+        }

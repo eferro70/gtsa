@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-gerar_dados_exemplo.py
+step3_dados_exemplo.py
 Gera output/tests/dados/{METHOD}_{endpoint}.json para cada endpoint do openapi.json.
 
 Prioridade para o body gerado:
@@ -12,11 +12,11 @@ Prioridade para o body gerado:
 Parâmetros de path são salvos em `_path_params` no JSON gerado.
 
 Uso:
-    python gerar_dados_exemplo.py <openapi.json>
-    python gerar_dados_exemplo.py <openapi.json> --llm-backend ollama --llm-model llama3
-    python gerar_dados_exemplo.py <openapi.json> --llm-backend gatiator --llm-model phi
-    python gerar_dados_exemplo.py <openapi.json> --only-with-body
-    python gerar_dados_exemplo.py <openapi.json> --no-overwrite
+    python step3_dados_exemplo.py <openapi.json>
+    python step3_dados_exemplo.py <openapi.json> --llm-backend ollama --llm-model llama3
+    python step3_dados_exemplo.py <openapi.json> --llm-backend gatiator --llm-model phi
+    python step3_dados_exemplo.py <openapi.json> --only-with-body
+    python step3_dados_exemplo.py <openapi.json> --no-overwrite
 """
 
 import json

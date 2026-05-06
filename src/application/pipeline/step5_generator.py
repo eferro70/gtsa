@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-step7_generator.py (OTIMIZADO E CORRIGIDO)
+step5_generator.py 
 ------------------
 Gera automaticamente arquivos de teste para APIs REST a partir de uma especificação OpenAPI e endpoints enriquecidos.
 AGORA com suporte a:
@@ -39,7 +39,7 @@ class SmartSchemathesisGenerator:
         if not self.enriched_file.exists():
             raise FileNotFoundError(
                 f"❌ Arquivo não encontrado: {self.enriched_file}\n"
-                f"💡 Execute primeiro: python3 step5_analyzer_unified.py"
+                f"💡 Execute primeiro: python3 step4_analyzer_and_enricher.py"
             )
         print(f"✅ enriched_endpoints.json encontrado: {self.enriched_file}")
         
@@ -585,7 +585,7 @@ if __name__ == "__main__":
         runner_template = f'''#!/bin/bash
 
 # ============================================================
-# step7_run_llm_tests.sh (OTIMIZADO)
+# step6_run_llm_tests.sh 
 # ============================================================
 # Configurações de segurança
 ONLY_HIGH_RISK="${{ONLY_HIGH_RISK:-false}}"           # Testar apenas endpoints de alto risco
@@ -885,10 +885,10 @@ exit 0
         if self._write_file_safely(tests_dir / "test_api_security.py", test_content, "test_api_security.py"):
             success_count += 1
         
-        # 5. step7_run_llm_tests.sh
+        # 5. step6_run_llm_tests.sh
         runner_content = self.generate_runner()
-        runner_path = pipeline_dir / "step7_run_llm_tests.sh"
-        if self._write_file_safely(runner_path, runner_content, "step7_run_llm_tests.sh"):
+        runner_path = pipeline_dir / "step6_run_llm_tests.sh"
+        if self._write_file_safely(runner_path, runner_content, "step6_run_llm_tests.sh"):
             success_count += 1
             # Torna executável
             runner_path.chmod(0o755)
@@ -896,13 +896,13 @@ exit 0
         print(f"\n✅ Geração concluída: {success_count}/{total_files} arquivos criados.")
         print("\n📌 Para executar os testes:")
         print("   # Testar apenas endpoints de alto risco")
-        print("   ONLY_HIGH_RISK=true ./src/application/pipeline/step7_run_llm_tests.sh")
+        print("   ONLY_HIGH_RISK=true ./src/application/pipeline/step6_run_llm_tests.sh")
         print("")
         print("   # Testar com score máximo 0.7")
-        print("   MAX_RISK_SCORE=0.7 ./src/application/pipeline/step7_run_llm_tests.sh")
+        print("   MAX_RISK_SCORE=0.7 ./src/application/pipeline/step6_run_llm_tests.sh")
         print("")
         print("   # Teste completo")
-        print("   ./src/application/pipeline/step7_run_llm_tests.sh")
+        print("   ./src/application/pipeline/step6_run_llm_tests.sh")
         
         return success_count == total_files
 

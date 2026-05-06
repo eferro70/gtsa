@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # ============================================================
-# step7_run_llm_tests.sh (OTIMIZADO)
+# step6_run_llm_tests.sh 
 # ============================================================
 # Configurações de segurança
 ONLY_HIGH_RISK="${ONLY_HIGH_RISK:-false}"           # Testar apenas endpoints de alto risco

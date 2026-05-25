@@ -14,10 +14,6 @@ REPORTS_DIR="output"
 SCAN_DIR=src/application/pipeline/tests/scan_20260428_160549
 LLM_MODEL="gemma"
 
-# Variáveis padrão para controle de passos (podem ser sobrescritas pelo .env)
-STEP_2_ENABLED="true"
-STEP_3_ENABLED="true"
-
 # Carrega variáveis de ambiente do arquivo .env (sobrescreve os padrões se definidas)
 ENV_FILE="$(dirname "${BASH_SOURCE[0]}")/.env"
 if [[ -f "$ENV_FILE" ]]; then
@@ -25,6 +21,21 @@ if [[ -f "$ENV_FILE" ]]; then
     # shellcheck source=.env
     source "$ENV_FILE"
     set -u  # Re-habilita verificação
+fi
+
+# Fallback seguro para controle de passos (respeita .env e variáveis de ambiente)
+if [[ -v STEP_2_ENABLED ]]; then
+    STEP_2_SOURCE="env"
+else
+    STEP_2_ENABLED="false"
+    STEP_2_SOURCE="fallback"
+fi
+
+if [[ -v STEP_3_ENABLED ]]; then
+    STEP_3_SOURCE="env"
+else
+    STEP_3_ENABLED="true"
+    STEP_3_SOURCE="fallback"
 fi
 
 # Limpa log anterior para garantir execução limpa
@@ -83,6 +94,8 @@ main() {
     log "🚀 Iniciando orquestrador GTSA"
     log "📁 Fonte: $API_SOURCE"
     log "📄 OpenAPI: $OPENAPI_JSON"
+    log "🔧 [Config] STEP_2_ENABLED=$STEP_2_ENABLED (origem: $STEP_2_SOURCE)"
+    log "🔧 [Config] STEP_3_ENABLED=$STEP_3_ENABLED (origem: $STEP_3_SOURCE)"
     log "⚙️  Controle de passos: STEP_2_ENABLED=$STEP_2_ENABLED | STEP_3_ENABLED=$STEP_3_ENABLED"
     echo "" >> "$LOGFILE"
 

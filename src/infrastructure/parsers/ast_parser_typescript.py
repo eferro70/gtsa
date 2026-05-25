@@ -109,10 +109,10 @@ class TypeScriptParser(BaseParser):
         start_line = node.start_point[0] + 1  # 1-indexed
         end_line = node.end_point[0] + 1
         
-        # Pega algumas linhas ao redor para contexto
+        # Pega uma janela maior para incluir blocos Swagger imediatamente acima da rota
         lines = code.split('\n')
-        context_start = max(0, start_line - 3)
-        context_end = min(len(lines), end_line + 2)
+        context_start = max(0, start_line - 45)
+        context_end = min(len(lines), end_line + 4)
         context = '\n'.join(lines[context_start:context_end])
         
         return {

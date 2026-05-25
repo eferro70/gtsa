@@ -161,17 +161,24 @@ class VulnerabilityDatabase:
     
     def get_vulnerability_info(self, vuln_name: str) -> Optional[Dict]:
         return self.mappings.get("vulnerabilities", {}).get(vuln_name)
+
+    def _get_owasp_entry(self, vuln_info: Dict) -> Optional[Dict]:
+        """Compatibilidade: aceita chaves 'owasp' (legado) e 'owasp_2023' (config atual)."""
+        if not vuln_info:
+            return None
+        return vuln_info.get('owasp') or vuln_info.get('owasp_2023')
     
     def get_owasp_summary(self, vulnerabilities: List[str]) -> List[Dict]:
         owasp_map = {}
         for vuln_name in vulnerabilities:
             vuln_info = self.get_vulnerability_info(vuln_name)
-            if vuln_info and 'owasp' in vuln_info:
-                owasp_id = vuln_info['owasp']['id']
+            owasp = self._get_owasp_entry(vuln_info) if vuln_info else None
+            if owasp:
+                owasp_id = owasp['id']
                 if owasp_id not in owasp_map:
                     owasp_map[owasp_id] = {
                         "id": owasp_id,
-                        "category": vuln_info['owasp']['category'],
+                        "category": owasp.get('category') or owasp.get('name', 'Unknown'),
                         "vulnerabilities": [],
                         "severity": vuln_info.get('severity', 'medium')
                     }
@@ -200,11 +207,12 @@ class VulnerabilityDatabase:
         for vuln_name in vulnerabilities:
             vuln_info = self.get_vulnerability_info(vuln_name)
             if vuln_info:
+                owasp = self._get_owasp_entry(vuln_info)
                 enriched.append({
                     "name": vuln_name,
                     "display_name": vuln_info.get('name', vuln_name),
                     "severity": vuln_info.get('severity', 'medium'),
-                    "owasp": vuln_info.get('owasp'),
+                    "owasp": owasp,
                     "sans": vuln_info.get('sans'),
                     "remediation": vuln_info.get('remediation', 'Revisar implementação de segurança.'),
                     "references": vuln_info.get('references', [])
@@ -223,6 +231,7 @@ class AdvancedVulnerabilityDetector:
     def detect_vulnerabilities(self, endpoint: Dict, auth_required: bool = True) -> List[str]:
         path = endpoint.get('path', '').lower()
         method = endpoint.get('method', '').upper()
+        context = str(endpoint.get('context', '')).lower()
         vulnerabilities = []
         
         # Verifica UUID
@@ -244,6 +253,17 @@ class AdvancedVulnerabilityDetector:
         
         if re.search(r':query\b|:filter\b|:search\b|:sort\b', path) and not is_id_uuid:
             vulnerabilities.append("injection")
+
+        # Heurística adicional: parâmetros de query para ordenação/filtro tendem a ser vetores de injection
+        # quando não há validação/allowlist adequada no backend.
+        if method == 'GET':
+            has_query_block = ('in: query' in context) or ('req.query' in context)
+            has_sort_filter_query = re.search(
+                r'name:\s*(sort(direction|field)?|order(by)?|filter|search|q)\b|req\.query\.(sort|order|filter|search|q)',
+                context,
+            )
+            if has_query_block and has_sort_filter_query and not is_id_uuid:
+                vulnerabilities.append("injection")
         
         if re.search(r'url|uri|endpoint|fetch|load|proxy|webhook', path):
             vulnerabilities.append("ssrf")
@@ -280,6 +300,7 @@ class OpenAPIEnricher:
         self.openapi_data = self._load_openapi() if openapi_file else None
         self.examples_dir = Path("output/tests/dados")
         self.krakend_roles = self._load_krakend_roles()
+        self.krakend_disable_jwk = self._load_krakend_disable_jwk()
     
     def _load_openapi(self) -> Optional[Dict]:
         if not self.openapi_file or not self.openapi_file.exists():
@@ -333,6 +354,56 @@ class OpenAPIEnricher:
                 print(f"⚠️  Erro ao ler roles do Krakend: {e}")
         
         return krakend_roles
+
+    def _load_krakend_disable_jwk(self) -> Dict:
+        """Carrega endpoints com disable_jwk_security=true do KrakenD"""
+        disable_jwk = {}
+
+        env_path = Path(".env")
+        krakend_conf = None
+        endpoint_prefix = None
+
+        if env_path.exists():
+            with open(env_path, 'r', encoding='utf-8') as f:
+                for line in f:
+                    if line.strip().startswith("KRAKEND_CONF"):
+                        krakend_conf = line.strip().split("=", 1)[-1]
+                    if line.strip().startswith("ENDPOINT_PREFIX"):
+                        endpoint_prefix = line.strip().split("=", 1)[-1]
+
+        if krakend_conf and Path(krakend_conf).exists():
+            try:
+                with open(krakend_conf, 'r', encoding='utf-8') as f:
+                    krakend_data = json.load(f)
+
+                for ep in krakend_data.get("endpoints", []):
+                    ep_path = ep.get("endpoint", "")
+                    if endpoint_prefix:
+                        ep_path = ep_path.replace("$ENDPOINT_PREFIX", endpoint_prefix)
+                    ep_method = ep.get("method", "").upper()
+
+                    extra = ep.get("extra_config", {})
+                    jose = extra.get("github.com/devopsfaith/krakend-jose/validator")
+                    if jose and jose.get("disable_jwk_security") is True:
+                        disable_jwk[(ep_path, ep_method)] = True
+            except Exception as e:
+                print(f"⚠️  Erro ao ler disable_jwk_security do Krakend: {e}")
+
+        return disable_jwk
+
+    def _path_candidates(self, path: str) -> List[str]:
+        """Gera variantes do path para match tolerante de prefixo e versão."""
+        candidates = [path]
+        # /api/v1/X  ↔  /api/X
+        if path.startswith('/api/v1/'):
+            candidates.append(path.replace('/api/v1/', '/api/', 1))
+        elif path.startswith('/api/'):
+            candidates.append(path.replace('/api/', '/api/v1/', 1))
+        # /v1/X  ↔  /api/v1/X  ↔  /api/X  (KrakenD usa $PREFIX/v1/recurso)
+        if path.startswith('/v1/'):
+            candidates.append('/api' + path)               # /v1/X → /api/v1/X
+            candidates.append('/api' + path[3:])           # /v1/X → /api/X
+        return list(dict.fromkeys(candidates))
     
     def _make_example_filename(self, method: str, path: str) -> str:
         """Gera nome de arquivo para exemplo baseado no método e path"""
@@ -343,8 +414,10 @@ class OpenAPIEnricher:
         return f"{method.upper()}_{sanitized}.json"
     
     def _normalize_path(self, path: str) -> str:
-        """Normaliza path para comparação (substitui variáveis por {X})"""
-        return re.sub(r"\{[^}/]+\}", "{X}", path)
+        """Normaliza path para comparação (substitui {param} e :param por {X})"""
+        normalized = re.sub(r"\{[^}/]+\}", "{X}", path)   # {id} → {X}
+        normalized = re.sub(r":[^/]+", "{X}", normalized)    # :id  → {X}
+        return normalized
     
     def enrich_endpoint(self, endpoint: Dict) -> Dict:
         """Adiciona informações do OpenAPI a um endpoint"""
@@ -376,7 +449,7 @@ class OpenAPIEnricher:
         
         # Busca roles do Krakend
         roles = []
-        norm_path = self._normalize_path(path)
+        norm_path_candidates = [self._normalize_path(p) for p in self._path_candidates(path)]
         
         # Tenta match exato
         if (path, method) in self.krakend_roles:
@@ -384,12 +457,54 @@ class OpenAPIEnricher:
         else:
             # Tenta match por path normalizado
             for (k_path, k_method), k_roles in self.krakend_roles.items():
-                if k_method == method and self._normalize_path(k_path) == norm_path:
+                if k_method == method and self._normalize_path(k_path) in norm_path_candidates:
                     roles = k_roles
                     break
         
         endpoint['roles'] = roles
+
+        # Marca misconfiguration de gateway (JWKS inseguro)
+        disable_jwk = False
+        if (path, method) in self.krakend_disable_jwk:
+            disable_jwk = True
+        else:
+            for (k_path, k_method), is_disabled in self.krakend_disable_jwk.items():
+                if is_disabled and k_method == method and self._normalize_path(k_path) in norm_path_candidates:
+                    disable_jwk = True
+                    break
+
+        endpoint['gateway_disable_jwk_security'] = disable_jwk
         
+        return endpoint
+
+    def _enrich_krakend_only(self, endpoint: Dict) -> Dict:
+        """Aplica roles + disable_jwk do KrakenD sem depender de OpenAPI."""
+        path = endpoint.get('path', '')
+        method = endpoint.get('method', '')
+        norm_candidates = [self._normalize_path(p) for p in self._path_candidates(path)]
+
+        # Roles
+        roles = []
+        if (path, method) in self.krakend_roles:
+            roles = self.krakend_roles[(path, method)]
+        else:
+            for (k_path, k_method), k_roles in self.krakend_roles.items():
+                if k_method == method and self._normalize_path(k_path) in norm_candidates:
+                    roles = k_roles
+                    break
+        endpoint['roles'] = roles
+
+        # disable_jwk_security
+        disable_jwk = False
+        if (path, method) in self.krakend_disable_jwk:
+            disable_jwk = True
+        else:
+            for (k_path, k_method), is_disabled in self.krakend_disable_jwk.items():
+                if is_disabled and k_method == method and self._normalize_path(k_path) in norm_candidates:
+                    disable_jwk = True
+                    break
+        endpoint['gateway_disable_jwk_security'] = disable_jwk
+
         return endpoint
 
 
@@ -635,8 +750,9 @@ def generate_enhanced_report(endpoints: List[Dict], output_file: Path):
         for vuln in e.get('vulnerabilities_detailed', []):
             if vuln.get('owasp'):
                 owasp_id = vuln['owasp']['id']
+                owasp_name = vuln['owasp'].get('category') or vuln['owasp'].get('name', 'Unknown')
                 if owasp_id not in owasp_map:
-                    owasp_map[owasp_id] = {'count': 0, 'name': vuln['owasp']['category']}
+                    owasp_map[owasp_id] = {'count': 0, 'name': owasp_name}
                 owasp_map[owasp_id]['count'] += 1
             if vuln.get('sans'):
                 cwe_id = vuln['sans']['cwe_id']
@@ -733,7 +849,8 @@ def analyze_project_endpoints(endpoints_file: Union[str, Path] = None,
         print(f"📄 Enriquecendo com OpenAPI: {openapi_file}")
     
     # Inicializa componentes
-    analyzer = LocalLLMAnalyzer(model=model, backend=backend, llm_url=llm_url)
+    analyzer_backend = backend if use_llm else "gatiator"
+    analyzer = LocalLLMAnalyzer(model=model, backend=analyzer_backend, llm_url=llm_url)
     enricher = OpenAPIEnricher(Path(openapi_file) if openapi_file else None)
     
     # Analisa e enriquece cada endpoint
@@ -750,16 +867,37 @@ def analyze_project_endpoints(endpoints_file: Union[str, Path] = None,
         else:
             security_analysis = analyzer._simple_heuristic_analysis(endpoint)
         
-        # Enriquece com dados do OpenAPI
+        # Enriquece com dados do OpenAPI e sempre com dados do KrakenD
         enriched_endpoint = {**endpoint, **security_analysis}
         if openapi_file:
             enriched_endpoint = enricher.enrich_endpoint(enriched_endpoint)
+        else:
+            # Mesmo sem OpenAPI, aplica roles + disable_jwk_security do KrakenD
+            enriched_endpoint = enricher._enrich_krakend_only(enriched_endpoint)
+
+        # Regra explícita: disable_jwk_security=true → broken_auth + misconfiguration + risco alto
+        if enriched_endpoint.get('gateway_disable_jwk_security'):
+            vulns = list(enriched_endpoint.get('vulnerabilities', []))
+            changed = False
+            for v in ('broken_auth', 'security_misconfiguration'):
+                if v not in vulns:
+                    vulns.append(v)
+                    changed = True
+            if changed:
+                enriched_endpoint['vulnerabilities'] = vulns
+                enriched_endpoint['vulnerabilities_detailed'] = analyzer.vuln_db.enrich_vulnerabilities(vulns)
+                enriched_endpoint['owasp_summary'] = analyzer.vuln_db.get_owasp_summary(vulns)
+                enriched_endpoint['sans_summary'] = analyzer.vuln_db.get_sans_summary(vulns)
+            # Força risco alto — bypass de validação JWT é crítico independente do nível anterior
+            enriched_endpoint['risk_level'] = 'alto'
+            enriched_endpoint['risk_score'] = max(float(enriched_endpoint.get('risk_score', 0.1)), 0.85)
+            enriched_endpoint['risk_reason'] = 'Gateway com disable_jwk_security=true: bypass de validação JWT possível'
         
         enriched.append(enriched_endpoint)
         
-        vuln_count = len(security_analysis.get('vulnerabilities', []))
-        owasp_count = len(security_analysis.get('owasp_summary', []))
-        print(f"   ✅ Vulns: {vuln_count} | Risco: {security_analysis.get('risk_level', '?')} | OWASP: {owasp_count}")
+        vuln_count = len(enriched_endpoint.get('vulnerabilities', []))
+        owasp_count = len(enriched_endpoint.get('owasp_summary', []))
+        print(f"   ✅ Vulns: {vuln_count} | Risco: {enriched_endpoint.get('risk_level', '?')} | OWASP: {owasp_count}")
     
     elapsed = time.time() - start_time
     

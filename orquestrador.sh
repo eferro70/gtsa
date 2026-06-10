@@ -2,7 +2,7 @@
 # ============================================================================
 # 🚀 Orquestrador GTSA - Pipeline de Análise e Teste de APIs
 # ============================================================================
-set -euo pipefail  # Sai imediatamente em erros, trata pipes e variáveis não definidas
+set -euo pipefail
 
 # ────────────────────────────────────────────────────────────────────────────
 # 📦 CONFIGURAÇÃO
@@ -13,32 +13,26 @@ LOGFILE="orquestrador.log"
 REPORTS_DIR="output"
 SCAN_DIR=src/application/pipeline/tests/scan_20260428_160549
 LLM_MODEL="gemma"
+OPENAPI_LOCAL="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/openapi.json"
 
-# Carrega variáveis de ambiente do arquivo .env (sobrescreve os padrões se definidas)
+# Carrega variáveis de ambiente do arquivo .env
 ENV_FILE="$(dirname "${BASH_SOURCE[0]}")/.env"
 if [[ -f "$ENV_FILE" ]]; then
-    set +u  # Desabilita verificação de variáveis não definidas para sourcing
+    set +u
     # shellcheck source=.env
     source "$ENV_FILE"
-    set -u  # Re-habilita verificação
+    set -u
 fi
 
-# Fallback seguro para controle de passos (respeita .env e variáveis de ambiente)
-if [[ -v STEP_2_ENABLED ]]; then
-    STEP_2_SOURCE="env"
-else
-    STEP_2_ENABLED="false"
-    STEP_2_SOURCE="fallback"
+# Configurações padrão (respeita .env)
+STEP_2_ENABLED="${STEP_2_ENABLED:-false}"
+STEP_3_ENABLED="${STEP_3_ENABLED:-true}"
+VERBOSE_FLAG=""
+if [[ "${VERBOSE:-false}" == "true" ]]; then
+    VERBOSE_FLAG="--verbose"
 fi
 
-if [[ -v STEP_3_ENABLED ]]; then
-    STEP_3_SOURCE="env"
-else
-    STEP_3_ENABLED="true"
-    STEP_3_SOURCE="fallback"
-fi
-
-# Limpa log anterior para garantir execução limpa
+# Limpa log anterior
 > "$LOGFILE"
 
 # ────────────────────────────────────────────────────────────────────────────
@@ -48,7 +42,6 @@ log() {
     local message="$1"
     local timestamp
     timestamp=$(date '+%Y-%m-%d %H:%M:%S')
-    # Imprime no console e anexa ao arquivo de log
     echo "[$timestamp] $message" | tee -a "$LOGFILE"
 }
 
@@ -62,7 +55,6 @@ run_step() {
     local start
     start=$(date +%s)
 
-    # Executa o comando. Saída vai para o log, console mostra apenas o progresso.
     if "${cmd[@]}" >> "$LOGFILE" 2>&1; then
         local elapsed=$(( $(date +%s) - start ))
         log "✅ [Passo $step_num] Concluído em ${elapsed}s"
@@ -74,19 +66,6 @@ run_step() {
     echo "---" >> "$LOGFILE"
 }
 
-get_latest_scan_dir() {
-    # Busca diretórios scan_* ordenados por data (mais recente primeiro)
-    local dir
-    dir=$(ls -td "$REPORTS_DIR"/scan_* 2>/dev/null | head -n1) || true
-    
-    if [[ -z "$dir" ]]; then
-        log "❌ Nenhum diretório 'scan_*' encontrado em '$REPORTS_DIR/'"
-        log "💡 Execute primeiro o Passo 4 (Parser AST)"
-        exit 1
-    fi
-    echo "$dir"
-}
-
 # ────────────────────────────────────────────────────────────────────────────
 # 🚀 PIPELINE PRINCIPAL
 # ────────────────────────────────────────────────────────────────────────────
@@ -94,10 +73,13 @@ main() {
     log "🚀 Iniciando orquestrador GTSA"
     log "📁 Fonte: $API_SOURCE"
     log "📄 OpenAPI: $OPENAPI_JSON"
-    log "🔧 [Config] STEP_2_ENABLED=$STEP_2_ENABLED (origem: $STEP_2_SOURCE)"
-    log "🔧 [Config] STEP_3_ENABLED=$STEP_3_ENABLED (origem: $STEP_3_SOURCE)"
-    log "⚙️  Controle de passos: STEP_2_ENABLED=$STEP_2_ENABLED | STEP_3_ENABLED=$STEP_3_ENABLED"
+    log "⚙️  STEP_2_ENABLED=$STEP_2_ENABLED | STEP_3_ENABLED=$STEP_3_ENABLED"
     echo "" >> "$LOGFILE"
+
+    # Copia a spec OpenAPI
+    log "📋 Copiando OpenAPI spec para diretório local: $OPENAPI_LOCAL"
+    cp "$OPENAPI_JSON" "$OPENAPI_LOCAL"
+    export OPENAPI_LOCAL
 
     START_TOTAL=$(date +%s)
 
@@ -106,53 +88,69 @@ main() {
         python3 src/application/pipeline/step1_scan.py -i "$API_SOURCE"
 
     # Passo 2: Geração de OpenAPI (opcional)
-    if [[ "$STEP_2_ENABLED" == "true" || "$STEP_2_ENABLED" == "1" ]]; then
+    if [[ "$STEP_2_ENABLED" == "true" ]]; then
         run_step 2 "Geração automática da especificação OpenAPI" \
             python3 src/application/pipeline/step2_openapi.py
     else
-        log "⏭️  [Passo 2] Pulando: Geração automática da especificação OpenAPI (STEP_2_ENABLED=false)"
+        log "⏭️  [Passo 2] Pulando (STEP_2_ENABLED=false)"
     fi
 
-    # Passo 3: [LLM] Dados de exemplo (opcional)
-    if [[ "$STEP_3_ENABLED" == "true" || "$STEP_3_ENABLED" == "1" ]]; then
+    # Passo 3: [LLM] Dados de exemplo
+    if [[ "$STEP_3_ENABLED" == "true" ]]; then
         run_step 3 "[LLM] Geração de dados de exemplo para testes" \
-            python3 src/application/pipeline/step3_dados_exemplo.py "$OPENAPI_JSON" --only-with-body --llm-backend ollama --llm-model "$LLM_MODEL"
+            python3 src/application/pipeline/step3_dados_exemplo.py "$OPENAPI_LOCAL" --only-with-body --llm-backend ollama --llm-model "$LLM_MODEL"
     else
-        log "⏭️  [Passo 3] Pulando: Geração de dados de exemplo para testes (STEP_3_ENABLED=false)"
+        log "⏭️  [Passo 3] Pulando (STEP_3_ENABLED=false)"
     fi
 
-    # Descobre diretório do scan mais recente automaticamente
+    # Descobre diretório do scan mais recente
     SCAN_DIR=$(ls -td src/application/pipeline/tests/scan_* 2>/dev/null | head -n1)
     if [[ -z "$SCAN_DIR" ]]; then
-        log "❌ Nenhum diretório 'scan_*' encontrado em 'src/application/pipeline/tests/'"
-        log "💡 Execute primeiro o Passo 4 (Parser AST)"
+        log "❌ Nenhum diretório 'scan_*' encontrado"
         exit 1
     fi
 
-    # Passo 4: [LLM] Análise de risco (Heurística)
-    run_step 4 "[LLM] Análise de risco e enriquecimento" \
-        python3 src/application/pipeline/step4_analyzer_and_enricher.py "$SCAN_DIR/all_endpoints.json" --openapi docs/openapi.yaml --llm-backend ollama
+    # Passo 4: Análise de risco
+    run_step 4 "Análise de risco e enriquecimento" \
+        python3 src/application/pipeline/step4_analyzer_and_enricher.py "$SCAN_DIR/all_endpoints.json" --openapi "$OPENAPI_LOCAL" --no-llm
 
-    # Passo 5: Gerador de testes
-    run_step 5 "Gerar testes inteligentes" \
-        python3 src/application/pipeline/step5_generator.py "$OPENAPI_JSON" 
+    log "⏭️  [Passo 5] Pulando (não utilizado)"
 
-    # Passo 6: [LLM] Execução dos testes
-    run_step 6 "[LLM] Executar testes gerados" \
-        bash src/application/pipeline/step6_run_llm_tests.sh --llm-backend ollama --llm-model "$LLM_MODEL"
+    # Passo 6: Schemathesis com dados reais
+    log "🔹 [Passo 6] Iniciando: Schemathesis com dados reais"
+    
+    # Exporta tokens para o subprocesso
+    export TOKEN_REQUISITANTE="${TOKEN_REQUISITANTE:-}"
+    export TOKEN_GESTOR="${TOKEN_GESTOR:-}"
+    export TOKEN_ADMINISTRADOR="${TOKEN_ADMINISTRADOR:-}"
+    export TOKEN_INTERESSADO="${TOKEN_INTERESSADO:-}"
+    export CHAVE_ACESSO_SISTEMA="${CHAVE_ACESSO_SISTEMA:-}"
+    export API_BASE_URL="${API_BASE_URL:-http://localhost}"
+    export ONLY_HIGH_RISK="${ONLY_HIGH_RISK:-false}"
+    export MAX_EXAMPLES="${MAX_EXAMPLES:-10}"
+    export VERBOSE="${VERBOSE:-false}"
+    
+    # Executa o Schemathesis
+    STEP6_EXIT=0
+    python3 src/application/pipeline/step6_schemathesis_with_data.py $VERBOSE_FLAG || STEP6_EXIT=$?
+    
+    if [ $STEP6_EXIT -eq 0 ]; then
+        log "✅ [Passo 6] Concluído com sucesso"
+    else
+        log "⚠️ [Passo 6] Concluído com exit $STEP6_EXIT"
+    fi
 
     # Passo 7: Relatório
     run_step 7 "Gerar relatório de testes" \
         python3 src/application/pipeline/step7_gerar_relatorio_markdown.py
 
-    # ────────────────────────────────────────────────────────────────────────
-    # 📊 FINALIZAÇÃO
-    # ────────────────────────────────────────────────────────────────────────
+    # Propaga falha do passo 6
+    [ $STEP6_EXIT -eq 0 ] || exit $STEP6_EXIT
+
     END_TOTAL=$(date +%s)
     ELAPSED_TOTAL=$((END_TOTAL - START_TOTAL))
     log "⏱️  Pipeline concluído! Tempo total: ${ELAPSED_TOTAL}s"
     log "📄 Log detalhado salvo em: $LOGFILE"
 }
 
-# Executa o pipeline
 main "$@"

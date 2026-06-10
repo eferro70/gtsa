@@ -1,0 +1,4 @@
+# file: /home/s231991563/projetos/gtsa/src/infrastructure/interfaces/hooks/schemathesis_auth_hook.py
+# hypothesis_version: 6.150.2
+
+['Authorization', 'before_call', 'formatted_path', 'method', 'path', 'path_parameters', 'roles', 'tests']

@@ -1,0 +1,4 @@
+# file: /home/s231991563/projetos/gtsa/src/infrastructure/interfaces/hooks/auth_hooks.py
+# hypothesis_version: 6.150.2
+
+['.env', 'Authorization', 'Bearer ', 'auth_config.json', 'auth_header', 'auth_prefix', 'config', 'default_role', 'env_var', 'fixed_headers', 'name', 'r', 'role_tokens', 'utf-8', 'value']

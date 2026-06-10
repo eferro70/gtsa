@@ -1,0 +1,4 @@
+# file: /home/s231991563/projetos/gtsa/output/schemathesis_hooks.py
+# hypothesis_version: 6.150.2
+
+['/api/v1/clientes', '/api/v1/contas', '/api/v1/grupos', '0', '10', 'ASC', 'Authorization', 'id', 'limit', 'nome', 'offset', 'pendente', 'perfil', 'sigla', 'sortDirection', 'sortField', 'status', 'true']

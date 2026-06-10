@@ -231,7 +231,8 @@ class AdvancedVulnerabilityDetector:
     def detect_vulnerabilities(self, endpoint: Dict, auth_required: bool = True) -> List[str]:
         path = endpoint.get('path', '').lower()
         method = endpoint.get('method', '').upper()
-        context = str(endpoint.get('context', '')).lower()
+        context_raw = str(endpoint.get('context', ''))
+        context = context_raw.lower()
         vulnerabilities = []
         
         # Verifica UUID
@@ -245,17 +246,138 @@ class AdvancedVulnerabilityDetector:
                     is_id_uuid = True
         
         # Regras de detecção
-        if re.search(r':id\b|:user_id\b|:account_id\b|:document_id\b', path):
+        # BOLA: flagra apenas quando o parâmetro de ID identifica diretamente o recurso.
+        # Critério: o parâmetro `:id` (ou variante) deve ser o segmento terminal do path,
+        # OU ser imediatamente seguido de outro parâmetro (recurso aninhado por ID).
+        # Sub-ações estáticas após `:id` (ex: /:id/assinar, /:id/cancelar) já são cobertas
+        # pelo controle de acesso do recurso pai e não geram BOLA duplicado.
+        #
+        # Refinamento com contexto do handler (Opção B):
+        # Se o scanner incluiu o código do controller/handler (sinalizado pelo marcador
+        # "// --- handler:"), verifica se há verificação de ownership genérica:
+        # userId, ownerId, idCliente, idConta, tenantId, accountId, etc. passados
+        # junto à busca por ID. Se sim → falso positivo (proteção no handler).
+        def _has_direct_id_access(p: str) -> bool:
+            segments = p.strip('/').split('/')
+            for i, seg in enumerate(segments):
+                if re.match(r'^:(id|user_id|account_id|document_id)\b', seg):
+                    if i == len(segments) - 1:
+                        return True  # :id terminal
+                    next_seg = segments[i + 1]
+                    if next_seg.startswith(':'):
+                        return True  # :id seguido de outro parâmetro
+            return False
+
+        def _handler_has_ownership_check(ctx: str) -> bool:
+            """Verifica se o handler (código do controller resolvido) contém
+            evidência de verificação de propriedade — de forma genérica, sem
+            depender de convenções específicas do projeto."""
+            handler_marker = '// --- handler:'
+            if handler_marker not in ctx:
+                return False  # contexto não foi expandido, não podemos decidir
+            handler_code = ctx[ctx.index(handler_marker):]
+            # Padrões genéricos de ownership: qualquer identificador de usuário/tenant
+            # passado como argumento em chamada de método junto ao ID do recurso
+            return bool(re.search(
+                r'\b(?:userId|user_id|ownerId|owner_id|'
+                r'idCliente|idConta|idUsuario|codUsuario|'
+                r'tenantId|tenant_id|accountId|account_id|'
+                r'requesterId|requester_id|createdBy|created_by|'
+                r'this\.id[A-Z]|this\.user)\b',
+                handler_code,
+            ))
+
+        if _has_direct_id_access(path) and not _handler_has_ownership_check(context_raw):
             vulnerabilities.append("bola")
         
         if re.search(r'/admin/|/internal/|/users/role|/permission|/privilege', path):
             vulnerabilities.append("bfla")
-        
+
+        repo_marker = "// --- repository:"
+
+        def _has_local_injection_evidence(ctx: str) -> bool:
+            """Exige evidência no código quando o contexto não alcança o repositório.
+
+            Evita promover para vulnerabilidade confirmada casos em que só há
+            indício documental de sort/filter na spec ou no handler.
+            """
+            dynamic_sql_patterns = [
+                r'order\s+by\s+[`\"\']?\$\{',
+                r'order\s+by\s+["\']?\s*\+',
+                r'where\s+.*[`\"\']?\$\{',
+                r'where\s+.*["\']\s*\+',
+                r'select\s+.*[`\"\']?\$\{',
+                r'select\s+.*["\']\s*\+',
+                r'sequelize\.literal\s*\(',
+                r'\bliteral\s*\(',
+            ]
+            return any(re.search(pattern, ctx, re.IGNORECASE | re.DOTALL) for pattern in dynamic_sql_patterns)
+
+        def _injection_mitigated(ep: Dict, ctx: str) -> bool:
+            """Suprime injection apenas quando TODAS as secoes de repositorio
+            no contexto enriquecido demonstram protecao ativa contra injection
+            em ORDER BY (allowlist de campo + sanitizacao de direcao nao comentada).
+            Se QUALQUER secao nao estiver protegida, a vulnerabilidade persiste.
+            """
+            ALLOWLIST_RE = re.compile(
+                r"\b(?:allowedSortFields|allowedFields|allowedColumns|validSortFields|"
+                r"validFields|sortWhitelist|SORT_WHITELIST|allowedOrderBy|allowedSortColumns)\b"
+                r"|\.includes\s*\(\s*\w*[Ss]ort|"
+                r"\.includes\s*\(\s*\w*[Ff]ield"
+            )
+            DIRECTION_RE = re.compile(
+                r"\b(?:sanitizeSortDirection|sanitizeDirection|validateSortDirection|"
+                r"sanitizeOrder|validateOrder)\s*\("
+                r"|(?:sortDirection|direction)\s*===?\s*[\"'](?:ASC|DESC)[\"']"
+                r"|[\"'](?:ASC|DESC)[\"']\s*:\s*[\"'](?:ASC|DESC)[\"']"
+            )
+
+            def _check_section(text):
+                """Checa allowlist+direction guard em uma secao de codigo (sem comentarios)."""
+                uncommented = re.sub(r"//[^\n]*", "", text)
+                return ALLOWLIST_RE.search(uncommented) and DIRECTION_RE.search(uncommented)
+
+            # Coletar secoes de repositorio do contexto
+            if repo_marker not in ctx:
+                return False
+
+            # Dividir pelo marcador de repositorio e checar cada secao
+            parts = ctx.split(repo_marker)
+            # parts[0] = contexto antes do primeiro repositorio (handler + use-case)
+            # parts[1:] = cada secao de repositorio (comeca com "ClassName.method ---\n{body}")
+            repo_sections = parts[1:]
+            if not repo_sections:
+                return False
+
+            # Uma secao "lida com sorting dinamico" se contem as VARIAVEIS de sort
+            # (nao apenas ORDER BY hardcoded).
+            SORT_USAGE_RE = re.compile(
+                r"\bsort(?:Field|Direction|By)\b|"
+                r"\bsortfield\b|\bsortdirection\b|"
+                r"\border_by\b|\borderby\b",
+                re.IGNORECASE,
+            )
+
+            for section in repo_sections:
+                # Remover comentarios
+                uncommented = re.sub(r"//[^\n]*", "", section)
+                # Se esta secao usa sorting mas nao tem protecao completa -> vulneravel
+                if SORT_USAGE_RE.search(uncommented):
+                    if not (ALLOWLIST_RE.search(uncommented) and DIRECTION_RE.search(uncommented)):
+                        return False  # caminho de execucao vulneravel
+
+            return True
+        mitigated = _injection_mitigated(endpoint, context_raw)
+        has_repo_context = repo_marker in context_raw
+        has_local_injection_evidence = _has_local_injection_evidence(context_raw)
+        can_confirm_injection = has_repo_context or has_local_injection_evidence
+
         if re.search(r':query\b|:filter\b|:search\b|:sort\b', path) and not is_id_uuid:
-            vulnerabilities.append("injection")
+            if can_confirm_injection and not mitigated:
+                vulnerabilities.append("injection")
 
         # Heurística adicional: parâmetros de query para ordenação/filtro tendem a ser vetores de injection
-        # quando não há validação/allowlist adequada no backend.
+        # quando o contexto alcança o repositório ou traz evidência local de SQL dinâmico.
         if method == 'GET':
             has_query_block = ('in: query' in context) or ('req.query' in context)
             has_sort_filter_query = re.search(
@@ -263,7 +385,8 @@ class AdvancedVulnerabilityDetector:
                 context,
             )
             if has_query_block and has_sort_filter_query and not is_id_uuid:
-                vulnerabilities.append("injection")
+                if can_confirm_injection and not mitigated:
+                    vulnerabilities.append("injection")
         
         if re.search(r'url|uri|endpoint|fetch|load|proxy|webhook', path):
             vulnerabilities.append("ssrf")
@@ -428,11 +551,23 @@ class OpenAPIEnricher:
         if self.openapi_data:
             paths = self.openapi_data.get('paths', {})
             method_lower = method.lower()
-            
-            if path in paths and method_lower in paths[path]:
-                details = paths[path][method_lower]
+
+            # Tenta match com tolerância de prefixo/versão
+            details = None
+            for candidate in self._path_candidates(path):
+                norm_candidate = self._normalize_path(candidate)
+                for spec_path, spec_methods in paths.items():
+                    if self._normalize_path(spec_path) == norm_candidate and method_lower in spec_methods:
+                        details = spec_methods[method_lower]
+                        break
+                if details:
+                    break
+
+            if details:
                 endpoint['summary'] = details.get('summary')
                 endpoint['description'] = details.get('description')
+                # Armazena parâmetros do OpenAPI para uso na análise de vulnerabilidades
+                endpoint['openapi_parameters'] = details.get('parameters', [])
         
         # Busca exemplo real
         example_filename = self._make_example_filename(method, path)
@@ -656,6 +791,97 @@ class LocalLLMAnalyzer:
             "tags": self._infer_tags(endpoint)
         }
     
+    def _cross_validate_vulns(self, llm_vulns: List[str], endpoint: Dict) -> List[str]:
+        """
+        Filtra vulnerabilidades retornadas pelo LLM exigindo evidência mínima
+        no path ou chamadas de código perigosas reais no contexto.
+        Usa padrões conservadores para evitar falsos positivos por palavras
+        genéricas em comentários swagger.
+        """
+        path    = endpoint.get('path', '').lower()
+        context = str(endpoint.get('context', '')).lower()
+        method  = endpoint.get('method', '').upper()
+
+        # Apenas a parte de código (após o último bloco de comentário swagger */
+        # se existir), para não confundir descições com chamadas reais.
+        code_only = context
+        if '*/' in context:
+            code_only = context[context.rfind('*/') + 2:]
+
+        def _bola_direct_access(p: str) -> bool:
+            """Mesmo critério de detect_vulnerabilities: BOLA só quando :id é terminal
+            ou seguido diretamente de outro parâmetro (recurso aninhado)."""
+            segs = p.strip('/').split('/')
+            for idx, s in enumerate(segs):
+                if re.match(r'^:(id|user_id|account_id|document_id)\b', s):
+                    if idx == len(segs) - 1:
+                        return True
+                    if segs[idx + 1].startswith(':'):
+                        return True
+            return False
+
+        evidence = {
+            # Path com acesso direto a recurso por ID (exclui sub-ações estáticas)
+            'bola': _bola_direct_access(path),
+
+            # Path explicitamente administrativo OU código verifica role/permissão
+            'bfla': bool(re.search(r'/admin|/internal/|/manage/', path)) or
+                    bool(re.search(r'req\.user\.role|hasrole\(|checkpermission\(|isadmin\(', code_only)),
+
+            # Código usa input do usuário diretamente em query SQL/ORM
+            'injection': bool(re.search(
+                r'req\.query\.\w|req\.params\.\w.*(?:sql|query|find|where)|'
+                r'knex\.|sequelize\.|typeorm\.|\.raw\(|query\(`|query\(\s*["\']', code_only)),
+
+            # Código faz requisição HTTP com dado do usuário
+            'ssrf': bool(re.search(
+                r'fetch\((?:req\.|.*req\b)|axios\.(?:get|post|put|patch|delete)\((?:req\.|.*req\b)|'
+                r'http\.(?:get|post)\((?:req\.|.*req\b)|got\((?:req\.|.*req\b)', code_only)),
+
+            # Endpoint sem autenticação (determinado na análise heurística de contexto)
+            'broken_auth': bool(re.search(r'public|health|metrics|swagger|no.?auth|unauthenticated', path)) and
+                           method in ('POST', 'PUT', 'PATCH', 'DELETE'),
+
+            # Código aplica req.body diretamente a update/save sem filtro
+            'mass_assignment': bool(re.search(
+                r'\.save\(req\.body|object\.assign\(.*req\.body|'
+                r'update\(.*req\.body|\.create\(req\.body|\.\.\.(req\.body)', code_only)),
+
+            # Path com sufixo de debug/test/dev
+            'security_misconfiguration': bool(re.search(
+                r'/debug|/test-|/dev-|/private|/internal/', path)),
+
+            # Path de autenticação/OTP com método que cria/altera dados
+            'rate_limiting_absence': bool(re.search(
+                r'/login|/auth|/register|/otp|/reset.?password|/forgot', path)) and
+                                     method in ('POST', 'PUT', 'PATCH'),
+
+            # Código usa parser XML real
+            'xxe': bool(re.search(
+                r'xml2js|xmlparser|libxml|domparser|parsestring.*xml|\.xml\b', code_only)),
+
+            # Código faz redirect com dado do usuário
+            'open_redirect': bool(re.search(
+                r'res\.redirect\(req\.|res\.redirect\(.*query\.|res\.redirect\(.*param', code_only)),
+
+            # Path de webhook/callback que consome serviço externo
+            'unsafe_consumption': bool(re.search(r'/webhook|/callback', path)) or
+                                  bool(re.search(
+                                      r'fetch\(.*req\.|axios\.\w+\(.*req\.', code_only)),
+        }
+
+        kept, discarded = [], []
+        for vuln in llm_vulns:
+            if evidence.get(vuln, False):
+                kept.append(vuln)
+            else:
+                discarded.append(vuln)
+
+        if discarded:
+            print(f"   🔍 LLM cross-validate: descartados sem evidência → {discarded}")
+
+        return kept
+
     def analyze_endpoint(self, endpoint: Dict, code_context: str = "", max_retries: int = 2) -> Dict:
         """Analisa endpoint com fallback para heurística"""
         for attempt in range(max_retries):
@@ -666,14 +892,16 @@ class LocalLLMAnalyzer:
                     llm_vulns = result.get('vulnerabilities', [])
                     if isinstance(llm_vulns, list):
                         clean_vulns = []
-                        valid_vulns = ['bola', 'bfla', 'injection', 'ssrf', 'broken_auth', 
-                                      'mass_assignment', 'security_misconfiguration', 
+                        valid_vulns = ['bola', 'bfla', 'injection', 'ssrf', 'broken_auth',
+                                      'mass_assignment', 'security_misconfiguration',
                                       'rate_limiting_absence', 'xxe', 'open_redirect', 'unsafe_consumption']
                         for v in llm_vulns:
                             if isinstance(v, str):
                                 vuln_clean = v.lower().strip().replace(' ', '_')
                                 if vuln_clean in valid_vulns:
                                     clean_vulns.append(vuln_clean)
+                        # Cross-valida com evidências do path/contexto
+                        clean_vulns = self._cross_validate_vulns(clean_vulns, endpoint)
                         result['vulnerabilities'] = clean_vulns
                     else:
                         result['vulnerabilities'] = []
@@ -700,14 +928,31 @@ class LocalLLMAnalyzer:
     
     def _call_llm(self, endpoint: Dict, code_context: str = "") -> Dict:
         """Chama o backend LLM"""
-        prompt = f"""Responda apenas com JSON. Endpoint: {endpoint.get('method', '')} {endpoint.get('path', '')}
+        # Usa o contexto de código do endpoint se não foi fornecido explicitamente
+        effective_context = code_context or endpoint.get('context', '')
+        # Limita o contexto a 1500 caracteres para não estourar o contexto do LLM
+        if effective_context:
+            effective_context = effective_context[:1500]
 
-Formato exato:
+        context_section = f"""
+Código-fonte relevante (trecho real do arquivo):
+```
+{effective_context}
+```
+""" if effective_context else ""
+
+        prompt = f"""Responda apenas com JSON. Analise o endpoint abaixo com base no código-fonte fornecido.
+Endpoint: {endpoint.get('method', '')} {endpoint.get('path', '')}
+{context_section}
+Instruções:
+- Liste em "vulnerabilities" APENAS as vulnerabilidades confirmadas pelo código acima.
+- Se o código não evidenciar a vulnerabilidade, NÃO a inclua.
+- Se não houver código suficiente para análise, retorne "vulnerabilities": [].
+
+Formato exato (responda SOMENTE este JSON):
 {{"pii_fields":[],"auth_required":false,"auth_type":"jwt","risk_level":"baixo","risk_reason":"","vulnerabilities":[],"business_purpose":"","critical_resource":false}}
 
-Use vulnerabilities: bola, bfla, injection, ssrf, broken_auth, mass_assignment, security_misconfiguration, rate_limiting_absence, xxe, open_redirect, unsafe_consumption
-
-Apenas o JSON."""
+Valores válidos para vulnerabilities: bola, bfla, injection, ssrf, broken_auth, mass_assignment, security_misconfiguration, rate_limiting_absence, xxe, open_redirect, unsafe_consumption"""
         
         payload = {"model": self.model, "messages": [{"role": "user", "content": prompt}]}
         headers = {"Content-Type": "application/json"}
@@ -794,12 +1039,14 @@ def generate_enhanced_report(endpoints: List[Dict], output_file: Path):
     high_risk_count = 0
     for e in endpoints:
         if e.get('risk_level') == 'alto':
-            vulns = ', '.join(e.get('vulnerabilities', [])) if e.get('vulnerabilities') else '-'
+            if e.get('vulnerabilities'):
+                vulns = ', '.join(e.get('vulnerabilities', []))
+            elif e.get('risk_reason'):
+                vulns = f"sem mapeamento explícito ({e.get('risk_reason')})"
+            else:
+                vulns = 'sem mapeamento explícito'
             report += f"| {e.get('method', '')} | `{e.get('path', '')}` | {vulns} |\n"
             high_risk_count += 1
-            if high_risk_count >= 20:
-                report += f"| ... | *mais {high_risk - 20} endpoints* | ... |\n"
-                break
     
     if high_risk == 0:
         report += "| Nenhum endpoint de alto risco detectado | - | - |\n"
@@ -833,7 +1080,8 @@ def analyze_project_endpoints(endpoints_file: Union[str, Path] = None,
                              model: str = "codellama:7b",
                              use_llm: bool = True,
                              backend: str = "gatiator",
-                             llm_url: str = None) -> Dict[str, Any]:
+                             llm_url: str = None,
+                             limit: int = None) -> Dict[str, Any]:
     """Função principal unificada"""
     # Carrega endpoints do scan
     if endpoints_file:
@@ -841,8 +1089,12 @@ def analyze_project_endpoints(endpoints_file: Union[str, Path] = None,
             endpoints = json.load(f)
     elif not endpoints:
         raise ValueError("Forneça endpoints_file ou endpoints")
-    
-    print(f"\n📁 Carregados {len(endpoints)} endpoints do scan")
+
+    total_available = len(endpoints)
+    if limit is not None:
+        endpoints = endpoints[:limit]
+
+    print(f"\n📁 Carregados {total_available} endpoints do scan" + (f" (limitado a {limit})" if limit is not None else ""))
     print(f"🤖 Modo: {'Híbrido (LLM + Heurística)' if use_llm else 'Heurística pura'}")
     
     if openapi_file:
@@ -861,19 +1113,21 @@ def analyze_project_endpoints(endpoints_file: Union[str, Path] = None,
     for i, endpoint in enumerate(endpoints, 1):
         print(f"\n📊 {i}/{total}: {endpoint.get('method', '')} {endpoint.get('path', '')}")
         
-        # Análise de segurança
+        # Enriquece com OpenAPI/KrakenD ANTES da análise de segurança,
+        # para que detect_vulnerabilities tenha acesso a openapi_parameters.
+        if openapi_file:
+            endpoint = enricher.enrich_endpoint(endpoint)
+        else:
+            endpoint = enricher._enrich_krakend_only(endpoint)
+
+        # Análise de segurança (já usa o endpoint enriquecido)
         if use_llm:
             security_analysis = analyzer.analyze_endpoint(endpoint)
         else:
             security_analysis = analyzer._simple_heuristic_analysis(endpoint)
         
-        # Enriquece com dados do OpenAPI e sempre com dados do KrakenD
+        # Merge dos resultados de segurança no endpoint já enriquecido
         enriched_endpoint = {**endpoint, **security_analysis}
-        if openapi_file:
-            enriched_endpoint = enricher.enrich_endpoint(enriched_endpoint)
-        else:
-            # Mesmo sem OpenAPI, aplica roles + disable_jwk_security do KrakenD
-            enriched_endpoint = enricher._enrich_krakend_only(enriched_endpoint)
 
         # Regra explícita: disable_jwk_security=true → broken_auth + misconfiguration + risco alto
         if enriched_endpoint.get('gateway_disable_jwk_security'):
@@ -892,6 +1146,40 @@ def analyze_project_endpoints(endpoints_file: Union[str, Path] = None,
             enriched_endpoint['risk_level'] = 'alto'
             enriched_endpoint['risk_score'] = max(float(enriched_endpoint.get('risk_score', 0.1)), 0.85)
             enriched_endpoint['risk_reason'] = 'Gateway com disable_jwk_security=true: bypass de validação JWT possível'
+
+        # Guarda de coerência: evita "alto" sem evidências explícitas de vulnerabilidade.
+        # Exceção: regra crítica de gateway (disable_jwk_security) já tratada acima.
+        if (
+            enriched_endpoint.get('risk_level') == 'alto'
+            and not enriched_endpoint.get('gateway_disable_jwk_security')
+            and not enriched_endpoint.get('vulnerabilities')
+            and not enriched_endpoint.get('pii_fields')
+        ):
+            method = str(enriched_endpoint.get('method', '')).upper()
+            if method in {'POST', 'PUT', 'PATCH', 'DELETE'}:
+                enriched_endpoint['risk_level'] = 'médio'
+                enriched_endpoint['risk_score'] = min(float(enriched_endpoint.get('risk_score', 0.9)), 0.5)
+                enriched_endpoint['risk_reason'] = 'Risco ajustado por coerência: sem vulnerabilidades/PII explícitas (operação de escrita)'
+            else:
+                enriched_endpoint['risk_level'] = 'baixo'
+                enriched_endpoint['risk_score'] = min(float(enriched_endpoint.get('risk_score', 0.9)), 0.1)
+                enriched_endpoint['risk_reason'] = 'Risco ajustado por coerência: sem vulnerabilidades/PII explícitas'
+
+        # Guarda de coerência complementar: se houver vulnerabilidades, o risco
+        # não pode permanecer "baixo" sem justificativa.
+        vulns_present = bool(enriched_endpoint.get('vulnerabilities'))
+        if vulns_present and enriched_endpoint.get('risk_level') == 'baixo':
+            detailed = enriched_endpoint.get('vulnerabilities_detailed', []) or []
+            severities = {str(v.get('severity', '')).lower() for v in detailed if isinstance(v, dict)}
+
+            if 'critical' in severities or 'high' in severities:
+                enriched_endpoint['risk_level'] = 'alto'
+                enriched_endpoint['risk_score'] = max(float(enriched_endpoint.get('risk_score', 0.1)), 0.85)
+                enriched_endpoint['risk_reason'] = 'Risco elevado por coerência: vulnerabilidades de severidade alta/crítica detectadas'
+            elif 'medium' in severities or not severities:
+                enriched_endpoint['risk_level'] = 'médio'
+                enriched_endpoint['risk_score'] = max(float(enriched_endpoint.get('risk_score', 0.1)), 0.5)
+                enriched_endpoint['risk_reason'] = 'Risco ajustado por coerência: vulnerabilidades detectadas'
         
         enriched.append(enriched_endpoint)
         
@@ -956,6 +1244,8 @@ EXEMPLOS:
     parser.add_argument("--llm-backend", choices=["gatiator", "ollama", "none"], default="none", help="Backend LLM")
     parser.add_argument("--llm-model", default="codellama:7b", help="Modelo LLM")
     parser.add_argument("--no-llm", action="store_true", help="Usa apenas heurística (recomendado para CI/CD)")
+    parser.add_argument("--limit", "-n", type=int, default=None, metavar="N",
+                        help="Analisa apenas os primeiros N endpoints (útil para validação rápida)")
     
     args = parser.parse_args()
     
@@ -971,13 +1261,17 @@ EXEMPLOS:
         print(f"🔍 Usando scan mais recente: {endpoints_path}")
     
     use_llm = not args.no_llm and args.llm_backend != "none"
+
+    if args.limit is not None:
+        print(f"⚠️  Modo validação: analisando apenas os primeiros {args.limit} endpoints (--limit {args.limit})")
     
     results = analyze_project_endpoints(
         endpoints_file=endpoints_path,
         openapi_file=args.openapi,
         model=args.llm_model,
         use_llm=use_llm,
-        backend=args.llm_backend if use_llm else "none"
+        backend=args.llm_backend if use_llm else "none",
+        limit=args.limit
     )
     
     # Resumo final

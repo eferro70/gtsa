@@ -104,7 +104,214 @@ class TypeScriptParser(BaseParser):
         
         return "anonymous"
 
-    def _extract_route_metadata(self, code: str, node) -> Dict[str, Any]:
+    def _resolve_controller_context(self, route_context: str, source_root: str) -> Optional[str]:
+        """
+        Segue a referência do controller delegado na rota e retorna o código do
+        método handle/execute dele. Funciona com qualquer framework que use o
+        padrão controller.execute(req, res) ou controller.handle(req, res).
+
+        Algoritmo genérico (sem dependência de convenção do projeto):
+          1. Extrai o nome da variável do controller a partir da expressão de
+             delegação (ex: "await xyzController.execute(req, res)").
+          2. Converte camelCase → PascalCase para inferir o nome da classe/arquivo
+             (ex: xyzController → XyzController → XyzController.ts).
+          3. Busca o arquivo correspondente abaixo do source_root.
+          4. Extrai o corpo do primeiro método handle() ou execute() encontrado.
+        """
+        if not source_root:
+            return None
+
+        # 1. Extrair nome da variável do controller
+        # Pega a ÚLTIMA ocorrência — o contexto inclui ±45 linhas que podem
+        # conter rotas anteriores; a última expressão de delegação é a da rota atual.
+        matches = re.findall(
+            r'await\s+([a-z][A-Za-z0-9_]*)\.(?:execute|handle)\s*\(', route_context
+        )
+        if not matches:
+            return None
+        var_name = matches[-1]  # última ocorrência = rota atual
+
+        # 2. Converter para PascalCase para obter o nome da classe/arquivo
+        #    Regra: primeiro caractere maiúsculo, resto inalterado
+        class_name = var_name[0].upper() + var_name[1:]  # ex: "BuscarFluxoController"
+
+        # 3. Buscar o arquivo no projeto (busca recursiva, ignora node_modules/dist)
+        source_path = Path(source_root)
+        candidates = []
+        try:
+            for p in source_path.rglob(f"{class_name}.ts"):
+                parts = p.parts
+                if any(s in parts for s in ('node_modules', 'dist', '__tests__', 'spec')):
+                    continue
+                # Excluir arquivos de teste
+                if p.stem.endswith(('.spec', '.test')):
+                    continue
+                candidates.append(p)
+        except Exception:
+            return None
+
+        if not candidates:
+            return None
+
+        # Preferir o arquivo mais raso (menor número de segmentos de path)
+        ctrl_file = min(candidates, key=lambda p: len(p.parts))
+
+        # 4. Extrair corpo do método handle ou execute
+        try:
+            ctrl_code = ctrl_file.read_text(encoding='utf-8')
+        except Exception:
+            return None
+
+        # Regex genérica: captura o corpo do primeiro handle/execute async
+        method_match = re.search(
+            r'async\s+(?:handle|execute)\s*\([^)]*\)[^{]*\{',
+            ctrl_code,
+        )
+        if not method_match:
+            return None
+
+        # Extrair bloco balanceado de chaves a partir do '{'
+        start = method_match.end() - 1  # posição do '{'
+        depth = 0
+        end = start
+        for i, ch in enumerate(ctrl_code[start:], start):
+            if ch == '{':
+                depth += 1
+            elif ch == '}':
+                depth -= 1
+                if depth == 0:
+                    end = i + 1
+                    break
+
+        body = ctrl_code[start:end]
+        deep_chain = self._resolve_deep_chain(ctrl_code, body, source_root)
+        return f"\n// --- handler: {class_name}.handle ---\n{body}{deep_chain}"
+
+    def _extract_method_body(self, code: str, method_regex: str) -> Optional[str]:
+        """Extrai o corpo de um método usando contagem de chaves."""
+        m = re.search(method_regex, code)
+        if not m:
+            return None
+        start = m.end() - 1
+        depth = 0
+        end = start
+        for i, ch in enumerate(code[start:], start):
+            if ch == '{':
+                depth += 1
+            elif ch == '}':
+                depth -= 1
+                if depth == 0:
+                    end = i + 1
+                    break
+        return code[start:end]
+
+    def _resolve_deep_chain(self, ctrl_code: str, handle_body: str, source_root: str) -> str:
+        """
+        Segue a cadeia: handle() → useCase.execute() → repository.method()
+        Retorna contexto adicional com os corpos de execute() e do método do repositório.
+        Limitado a 1 use case e 3 métodos de repositório para evitar excesso de contexto.
+        """
+        if not source_root:
+            return ""
+        extra = ""
+        source_path = Path(source_root)
+
+        # 1. Encontrar chamadas `await this.PROP.execute(...)` no handle body
+        use_case_calls = re.findall(
+            r'await\s+this\.([a-zA-Z][a-zA-Z0-9_]*)\.execute\s*\(',
+            handle_body,
+        )
+        if not use_case_calls:
+            return extra
+
+        for prop_name in use_case_calls[:1]:  # apenas o primeiro use case
+            # 2. Encontrar o tipo da propriedade na declaração da classe do controller
+            type_match = re.search(
+                rf'\b{re.escape(prop_name)}\s*:\s*([A-Z][A-Za-z0-9_]*)',
+                ctrl_code,
+            )
+            if not type_match:
+                continue
+            uc_class = type_match.group(1)
+
+            # 3. Localizar o arquivo do use case
+            uc_candidates = []
+            try:
+                for p in source_path.rglob(f"{uc_class}.ts"):
+                    parts = p.parts
+                    if any(s in parts for s in ('node_modules', 'dist', '__tests__', 'spec')):
+                        continue
+                    if p.stem.endswith(('.spec', '.test')):
+                        continue
+                    uc_candidates.append(p)
+            except Exception:
+                continue
+            if not uc_candidates:
+                continue
+
+            uc_file = min(uc_candidates, key=lambda p: len(p.parts))
+            try:
+                uc_code = uc_file.read_text(encoding='utf-8')
+            except Exception:
+                continue
+
+            # 4. Extrair corpo do execute()
+            execute_body = self._extract_method_body(
+                uc_code,
+                r'async\s+execute\s*\([^)]*\)[^{]*\{',
+            )
+            if not execute_body:
+                continue
+            extra += f"\n// --- use-case: {uc_class}.execute ---\n{execute_body}"
+
+            # 5. Encontrar chamadas de repositório em execute():
+            #    `await this.REPO.METHOD(...)` ou `await REPO.METHOD(...)`
+            repo_calls = re.findall(
+                r'await\s+(?:this\.[a-z][a-zA-Z0-9_]*\.)?'
+                r'([a-z][a-zA-Z0-9_]*(?:listar|buscar|criar|atualizar|'
+                r'deletar|list|find|create|update|delete|get)[A-Za-z0-9_]*)\s*\(',
+                execute_body,
+            )
+            # também padrão inverso: this.rep.listar...
+            repo_calls += re.findall(
+                r'await\s+(?:this\.[a-z][a-zA-Z0-9_]*)\.'
+                r'((?:listar|buscar|criar|atualizar|list|find|create|update|get)[A-Za-z0-9_]*)\s*\(',
+                execute_body,
+            )
+            seen = set()
+            for method_name in repo_calls:
+                if method_name in seen:
+                    continue
+                seen.add(method_name)
+                if len(seen) > 3:
+                    break
+
+                # 6. Buscar o método em arquivos de repositório
+                for repo_path in source_path.rglob('*Repositori*.ts'):
+                    if any(s in repo_path.parts for s in ('node_modules', 'dist', '__tests__')):
+                        continue
+                    try:
+                        repo_code = repo_path.read_text(encoding='utf-8')
+                    except Exception:
+                        continue
+
+                    repo_body = self._extract_method_body(
+                        repo_code,
+                        rf'async\s+{re.escape(method_name)}\s*\([^)]*\)[^{{]*\{{',
+                    )
+                    if not repo_body:
+                        continue
+
+                    # Limitar tamanho para não inflar contexto
+                    if len(repo_body) > 3000:
+                        repo_body = repo_body[:3000] + "\n// [truncado]"
+
+                    extra += f"\n// --- repository: {repo_path.stem}.{method_name} ---\n{repo_body}"
+                    break  # próximo método
+
+        return extra
+
+    def _extract_route_metadata(self, code: str, node, source_root: str = None) -> Dict[str, Any]:
         """Extrai metadados da rota (linha, contexto, etc.)"""
         start_line = node.start_point[0] + 1  # 1-indexed
         end_line = node.end_point[0] + 1
@@ -114,7 +321,12 @@ class TypeScriptParser(BaseParser):
         context_start = max(0, start_line - 45)
         context_end = min(len(lines), end_line + 4)
         context = '\n'.join(lines[context_start:context_end])
-        
+
+        # Tenta seguir a referência do controller para enriquecer o contexto
+        handler_context = self._resolve_controller_context(context, source_root)
+        if handler_context:
+            context = context + handler_context
+
         return {
             'line_number': start_line,
             'context': context,
@@ -168,7 +380,7 @@ class TypeScriptParser(BaseParser):
                     params.append({'name': f"...{self._get_node_text(name_node)}", 'type': 'array'})
         return params
 
-    def extract_api_endpoints(self, code: str, file_path: str = "unknown") -> List[Dict]:
+    def extract_api_endpoints(self, code: str, file_path: str = "unknown", source_root: str = None) -> List[Dict]:
         """Extrai endpoints com metadados melhorados"""
         root_node = self.get_root_node(code)
         endpoints = []
@@ -199,7 +411,7 @@ class TypeScriptParser(BaseParser):
                                         if not self._is_external_url(path):
                                             handler_name = self._extract_handler_name(handler_node)
                                             params = self._extract_function_params(handler_node) if handler_node.type in ('function_expression', 'arrow_function', 'function_declaration') else []
-                                            metadata = self._extract_route_metadata(code, node)
+                                            metadata = self._extract_route_metadata(code, node, source_root=source_root)
                                             
                                             endpoints.append({
                                                 'name': handler_name,

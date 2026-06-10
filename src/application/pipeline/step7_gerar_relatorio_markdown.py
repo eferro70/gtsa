@@ -1,258 +1,386 @@
+#!/usr/bin/env python3
 """
-step7_relatorio_markdown.py
----------------------------
-Gera um relatório em Markdown com o resumo dos testes de API executados, a partir do log de execução.
+step7_gerar_relatorio_markdown.py (CORRIGIDO)
+-------------------------------------------
+Gera relatório preciso a partir dos resultados do Schemathesis.
 
-Principais funções:
-- Lê o arquivo de log dos testes automatizados.
-- Extrai resultados de sucesso/falha por endpoint, método e role.
-- Gera um arquivo Markdown com o resumo dos testes, cobertura e falhas.
-
-Uso típico: python3 step7_relatorio_markdown.py
+Agora parseia corretamente:
+- JUnit XML para contagem real de testes
+- Log do Schemathesis para estatísticas detalhadas
+- Summary final do Schemathesis
 """
 
-import re
+import json
 import os
+import re
+import xml.etree.ElementTree as ET
 from collections import defaultdict
+from datetime import datetime
+from pathlib import Path
+from typing import Dict, List, Any, Optional
 
-LOGFILE = "test_api_llm.log"
-SUMMARY_MD = "output/test_api_llm_summary.md"
-HTTP_METHOD_PATTERN = r"(GET|POST|PUT|PATCH|DELETE|HEAD|OPTIONS|USE)"
-
-# ✅ POST /api/v1/foo (role: REQ)
-# ❌ GET /api/v1/bar (role: REQ) [exit 1]
-RE_ENDPOINT_RESULT = re.compile(
-    rf"(?:\[.*?\]\s*)?([✅❌])\s+{HTTP_METHOD_PATTERN}\s+(\S+)\s+\(role:\s*([^)]*)\)"
-)
-
-# [INFO] ▶️ Iniciando testes para POST /api/v1/foo
-RE_ENDPOINT_START = re.compile(
-    rf"▶️\s+Iniciando testes para\s+{HTTP_METHOD_PATTERN}\s+(\S+)"
-)
-
-# [INFO] 🧪 test_basic para GET /api/v1/foo
-# [INFO] 🧪 test_multiple_examples: 5 exemplos para GET /api/v1/foo
-# Extrai (test_name, method, path) diretamente da linha — tolerante a intercalação
-RE_TEST_LINE = re.compile(
-    rf"🧪\s+(test_\w+)[^\n]*\bpara\s+{HTTP_METHOD_PATTERN}\s+(\S+)"
-)
-
-# [INFO] 🧪 test_basic
-RE_TEST_LINE_SIMPLE = re.compile(r"🧪\s+(test_\w+)\b")
-
-# [SUCCESS] ✅ test_basic passou
-# [ERROR] ❌ test_property_based falhou: ...
-RE_TEST_RESULT_LINE = re.compile(r"(?:✅|❌)\s+(test_\w+)\b")
-
-# [INFO] 📊 Cobertura automática: Testando endpoint POST /api/v1/foo
-RE_COVERAGE = re.compile(
-    rf"📊 Cobertura automática.*?{HTTP_METHOD_PATTERN}\s+(\S+)"
-)
-
-# [INFO] 📊 Resultados para GET /api/v1/foo: 1 passaram, 0 falharam
-RE_RESULTS_LINE = re.compile(
-    rf"📊\s+Resultados para\s+{HTTP_METHOD_PATTERN}\s+(\S+):\s*(\d+)\s+passaram,\s*(\d+)\s+falharam"
-)
-
-# [METRIC] endpoint_summary method=GET path=/api/foo role=REQ passed=3 failed=0 http_calls=5 duration_ms=120
-RE_ENDPOINT_METRIC = re.compile(
-    rf"endpoint_summary\s+method={HTTP_METHOD_PATTERN}\s+path=(\S+)\s+role=(\S*)\s+passed=(\d+)\s+failed=(\d+)\s+http_calls=(\d+)\s+duration_ms=(\d+)"
-)
-
-endpoints = defaultdict(lambda: {
-    "status": "",
-    "tests": set(),
-    "method": "",
-    "path": "",
-    "role": "",
-    "has_coverage": False,
-    "http_calls": 0,
-    "duration_ms": 0,
-})
-
-tracked_tests = set()
-
-def parse_log():
-    if not os.path.exists(LOGFILE):
-        print(f"Arquivo de log não encontrado: {LOGFILE}")
-        return
-
-    with open(LOGFILE, "r", encoding="utf-8") as f:
-        lines = f.readlines()
-
-    current_endpoint_key = None
-
-    for line in lines:
-        line = line.rstrip("\n")
-
-        # Resultado final do endpoint (escrito pelo shell)
-        m = RE_ENDPOINT_RESULT.match(line)
-        if m:
-            symbol, method, path, role = m.groups()
-            key = f"{method} {path}"
-            endpoints[key]["method"] = method
-            endpoints[key]["path"] = path
-            endpoints[key]["role"] = role
-            # Só atualiza status se ainda não tem ✅ (primeiro resultado vence)
-            if not endpoints[key]["status"]:
-                endpoints[key]["status"] = "✅" if symbol == "✅" else "❌"
-            continue
-
-        # Início de endpoint — garante que o endpoint existe no dict
-        m = RE_ENDPOINT_START.search(line)
-        if m:
-            method, path = m.groups()
-            key = f"{method} {path}"
-            endpoints[key]["method"] = method
-            endpoints[key]["path"] = path
-            current_endpoint_key = key
-            continue
-
-        # Tipo de teste — extrai endpoint diretamente da linha
-        m = RE_TEST_LINE.search(line)
-        if m:
-            test_name, method, path = m.groups()
-            key = f"{method} {path}"
-            endpoints[key]["method"] = method
-            endpoints[key]["path"] = path
-            endpoints[key]["tests"].add(test_name)
-            tracked_tests.add(test_name)
-            continue
-
-        # Tipo de teste sem endpoint na própria linha
-        m = RE_TEST_LINE_SIMPLE.search(line)
-        if m:
-            test_name = m.group(1)
-            tracked_tests.add(test_name)
-            if current_endpoint_key:
-                endpoints[current_endpoint_key]["tests"].add(test_name)
-            continue
-
-        # Tipo de teste registrado por linha de sucesso/falha
-        m = RE_TEST_RESULT_LINE.search(line)
-        if m:
-            test_name = m.group(1)
-            tracked_tests.add(test_name)
-            if current_endpoint_key:
-                endpoints[current_endpoint_key]["tests"].add(test_name)
-            continue
-
-        # Cobertura automática — extrai endpoint diretamente da linha
-        m = RE_COVERAGE.search(line)
-        if m:
-            method, path = m.groups()
-            key = f"{method} {path}"
-            endpoints[key]["has_coverage"] = True
-            continue
-
-        # Resultado por endpoint no formato atual do log
-        m = RE_RESULTS_LINE.search(line)
-        if m:
-            method, path, _passed, failed = m.groups()
-            key = f"{method} {path}"
-            endpoints[key]["method"] = method
-            endpoints[key]["path"] = path
-            endpoints[key]["status"] = "✅" if int(failed) == 0 else "❌"
-            continue
-
-        # Métricas reais por endpoint
-        m = RE_ENDPOINT_METRIC.search(line)
-        if m:
-            method, path, role, passed, failed, http_calls, duration_ms = m.groups()
-            key = f"{method} {path}"
-            endpoints[key]["method"] = method
-            endpoints[key]["path"] = path
-            if role and role != "-":
-                endpoints[key]["role"] = role
-            endpoints[key]["http_calls"] += int(http_calls)
-            endpoints[key]["duration_ms"] += int(duration_ms)
-            endpoints[key]["status"] = "✅" if int(failed) == 0 else "❌"
+# Configurações
+OUTPUT_DIR = Path("output")
+JUNIT_XML = OUTPUT_DIR / "schemathesis_results.xml"
+SCHEMATHESIS_LOG = OUTPUT_DIR / "schemathesis.log"
+HIGH_RISK_SPEC = OUTPUT_DIR / "openapi_high_risk.json"
+SUMMARY_MD = OUTPUT_DIR / "test_api_summary.md"
 
 
-def write_summary():
-
-    TEST_TYPES = {
-        "test_specific_data":         ("TS", "Teste com dados específicos"),
-        "test_basic":                 ("TB", "Teste básico (dados mínimos)"),
-        "test_pii_leakage":           ("TL", "Teste de vazamento de PII"),
-        "test_property_based":        ("TP", "Teste property-based (Hypothesis)"),
-        "test_multiple_examples":     ("TM", "Teste múltiplos exemplos aleatórios"),
-        "test_response_schema":       ("TR", "Teste de schema de resposta"),
-        "test_endpoint_without_body": ("SB", "Teste sem body (GET/DELETE)"),
-        "test_no_generated":          ("TN", "Teste sem dados gerados (--no-generated)"),
-    }
-
-    # Mapeamento reverso para legenda
-    CODE_TO_LABEL = {v[0]: v[1] for v in TEST_TYPES.values()}
-
-
-    all_tests = set(tracked_tests)
-    for info in endpoints.values():
-        all_tests.update(info["tests"])
-
-    total         = len(endpoints)
-    success_count = sum(1 for i in endpoints.values() if i["status"] == "✅")
-    fail_count    = sum(1 for i in endpoints.values() if i["status"] == "❌")
-    total_tests   = sum(len(i["tests"]) for i in endpoints.values())
-    total_http_calls = sum(i["http_calls"] for i in endpoints.values())
-    total_duration_ms = sum(i["duration_ms"] for i in endpoints.values())
-    avg_duration_ms = int(total_duration_ms / total) if total else 0
-    tests_tracked = len(all_tests) > 0
-    has_coverage  = any(i["has_coverage"] for i in endpoints.values())
-
-
-
-    with open(SUMMARY_MD, "w", encoding="utf-8") as f:
-        f.write("# Relatório de Testes de API\n\n")
-
-        f.write("## Tipos de Teste Executados\n\n")
-        f.write("| Código | Tipo de Teste | Status |\n")
-        f.write("|--------|-------------------------------|--------|\n")
-        for test_key, (code, test_label) in TEST_TYPES.items():
-            status = "✅" if test_key in all_tests else ("❌" if tests_tracked else "⚠️ não rastreado")
-            f.write(f"| {code} | {test_label} | {status} |\n")
-        coverage_status = "✅" if (has_coverage or total > 0) else "❌"
-        f.write(f"| — | Cobertura automática de todos endpoints | {coverage_status} |\n\n")
-
-        f.write("---\n\n")
-        f.write("## Detalhamento por Endpoint\n\n")
-        f.write("> **Legenda dos símbolos de status:**  ")
-        f.write("✅ = sucesso, ❌ = falha, ⚠️ = status desconhecido/não registrado\n\n")
-        f.write("| Método | Endpoint | Role | Testes Realizados | Status Final |\n")
-        f.write("|--------|----------|------|-------------------|--------------|\n")
-        for key, info in sorted(endpoints.items()):
-            if info["tests"]:
-                codes = [TEST_TYPES[t][0] if t in TEST_TYPES else t for t in sorted(info["tests"])]
-                tests_str = ", ".join(codes)
+class SchemathesisReportParser:
+    """Parser corrigido para relatório do Schemathesis"""
+    
+    def __init__(self):
+        self.results = {
+            'total_tests': 0,
+            'passed': 0,
+            'failed': 0,
+            'errors': 0,
+            'skipped': 0,
+            'duration_seconds': 0,
+            'endpoints_tested': 0,
+            'endpoints_errored': 0,
+            'endpoints_skipped': 0,
+            'filtered_to_high_risk': False,
+            'filtered_endpoints_count': 0,
+            'failures_by_type': defaultdict(int),
+            'endpoints': defaultdict(lambda: {
+                'method': '',
+                'path': '',
+                'tests': 0,
+                'passed': 0,
+                'failed': 0,
+                'errors': 0,
+                'failures': []
+            }),
+            'schemathesis_summary': {}
+        }
+    
+    def parse_junit_xml(self):
+        """Parse JUnit XML para estatísticas precisas"""
+        if not JUNIT_XML.exists():
+            print(f"⚠️  JUnit XML não encontrado: {JUNIT_XML}")
+            return
+        
+        try:
+            tree = ET.parse(JUNIT_XML)
+            root = tree.getroot()
+            
+            # Busca testsuite
+            testsuite = root.find('.//testsuite')
+            if testsuite is not None:
+                self.results['total_tests'] = int(testsuite.get('tests', 0))
+                self.results['failed'] = int(testsuite.get('failures', 0))
+                self.results['errors'] = int(testsuite.get('errors', 0))
+                self.results['skipped'] = int(testsuite.get('skipped', 0))
+                self.results['passed'] = self.results['total_tests'] - self.results['failed'] - self.results['errors'] - self.results['skipped']
+                self.results['duration_seconds'] = float(testsuite.get('time', 0))
+            
+            # Parse test cases para detalhamento por endpoint
+            for testcase in root.findall('.//testcase'):
+                classname = testcase.get('classname', 'unknown')
+                name = testcase.get('name', 'unknown')
+                
+                # Extrai método e path do classname
+                if ' ' in classname:
+                    method, path = classname.split(' ', 1)
+                else:
+                    method, path = '', classname
+                
+                key = f"{method} {path}"
+                self.results['endpoints'][key]['method'] = method
+                self.results['endpoints'][key]['path'] = path
+                self.results['endpoints'][key]['tests'] += 1
+                
+                # Verifica falhas
+                failure = testcase.find('failure')
+                error = testcase.find('error')
+                
+                if failure is not None:
+                    self.results['endpoints'][key]['failed'] += 1
+                    failure_msg = failure.get('message', 'Sem mensagem')
+                    self.results['endpoints'][key]['failures'].append({
+                        'test': name,
+                        'message': failure_msg[:500]
+                    })
+                    
+                    # Classifica tipo de falha
+                    if 'Server error' in failure_msg or '500' in failure_msg:
+                        self.results['failures_by_type']['server_error'] += 1
+                    elif 'Missing header' in failure_msg:
+                        self.results['failures_by_type']['missing_header'] += 1
+                    elif 'violates schema' in failure_msg:
+                        self.results['failures_by_type']['schema_violation'] += 1
+                    elif 'rejected schema-compliant' in failure_msg:
+                        self.results['failures_by_type']['rejected_valid'] += 1
+                    elif 'Undocumented HTTP status' in failure_msg:
+                        self.results['failures_by_type']['undocumented_status'] += 1
+                    elif 'accepts invalid authentication' in failure_msg:
+                        self.results['failures_by_type']['auth_issue'] += 1
+                    else:
+                        self.results['failures_by_type']['other'] += 1
+                        
+                elif error is not None:
+                    self.results['endpoints'][key]['errors'] += 1
+                    
+        except Exception as e:
+            print(f"❌ Erro ao parsear JUnit: {e}")
+    
+    def parse_schemathesis_log(self):
+        """Parse do log do Schemathesis para o summary"""
+        if not SCHEMATHESIS_LOG.exists():
+            print(f"⚠️  Log não encontrado: {SCHEMATHESIS_LOG}")
+            return
+        
+        with open(SCHEMATHESIS_LOG, 'r', encoding='utf-8') as f:
+            content = f.read()
+        
+        # Extrai summary final
+        summary_match = re.search(r'Test cases:\s+(\d+)\s+generated,\s+(\d+)\s+found\s+(\d+)\s+unique\s+failures', content)
+        if summary_match:
+            self.results['schemathesis_summary'] = {
+                'generated': int(summary_match.group(1)),
+                'found': int(summary_match.group(2)),
+                'unique_failures': int(summary_match.group(3))
+            }
+        
+        # Extrai operações
+        operations_match = re.search(r'API Operations:\s+Selected:\s+(\d+)/(\d+)\s+Tested:\s+(\d+)\s+Errored:\s+(\d+)\s+Skipped:\s+(\d+)', content)
+        if operations_match:
+            self.results['endpoints_tested'] = int(operations_match.group(3))
+            self.results['endpoints_errored'] = int(operations_match.group(4))
+            self.results['endpoints_skipped'] = int(operations_match.group(5))
+        
+        # Extrai falhas por tipo
+        failures_section = re.search(r'Failures:\s+(.+?)(?=\n\n|\Z)', content, re.DOTALL)
+        if failures_section:
+            for line in failures_section.group(1).split('\n'):
+                match = re.match(r'\s*❌\s+(.+?):\s+(\d+)', line)
+                if match:
+                    failure_type = match.group(1)
+                    count = int(match.group(2))
+                    # Mapeia para categoria
+                    if 'Server error' in failure_type:
+                        self.results['failures_by_type']['server_error'] = count
+                    elif 'Missing header' in failure_type:
+                        self.results['failures_by_type']['missing_header'] = count
+                    elif 'violates schema' in failure_type:
+                        self.results['failures_by_type']['schema_violation'] = count
+                    elif 'rejected schema-compliant' in failure_type:
+                        self.results['failures_by_type']['rejected_valid'] = count
+                    elif 'Undocumented HTTP status' in failure_type:
+                        self.results['failures_by_type']['undocumented_status'] = count
+                    elif 'accepts invalid authentication' in failure_type:
+                        self.results['failures_by_type']['auth_issue'] = count
+                    elif 'Unsupported methods' in failure_type:
+                        self.results['failures_by_type']['unsupported_methods'] = count
+        
+        # Extrai erros de schema
+        errors_match = re.search(r'Errors:\s+🚫\s+Schema Error:\s+(\d+)', content)
+        if errors_match:
+            self.results['schema_errors'] = int(errors_match.group(1))
+    
+    def check_if_filtered(self):
+        """Verifica se houve filtragem por alto risco"""
+        if HIGH_RISK_SPEC.exists():
+            try:
+                with open(HIGH_RISK_SPEC, 'r') as f:
+                    spec = json.load(f)
+                    paths = spec.get('paths', {})
+                    if paths:
+                        self.results['filtered_to_high_risk'] = True
+                        self.results['filtered_endpoints_count'] = len(paths)
+            except Exception:
+                pass
+    
+    def generate_markdown(self):
+        """Gera relatório Markdown corrigido"""
+        
+        OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+        
+        with open(SUMMARY_MD, 'w', encoding='utf-8') as f:
+            # Cabeçalho
+            f.write("# 🔒 Relatório de Testes Schemathesis\n\n")
+            f.write(f"*Gerado em: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}*\n\n")
+            
+            # Configuração
+            f.write("## ⚙️ Configuração dos Testes\n\n")
+            if self.results.get('filtered_to_high_risk'):
+                f.write(f"⚠️ **Teste restrito a alto risco**: Apenas endpoints com classificação **alto risco** foram testados.\n")
+                f.write(f"   - Endpoints de alto risco: {self.results.get('filtered_endpoints_count', 0)}\n\n")
             else:
-                tests_str = "Nenhum identificado" if tests_tracked else "não rastreado"
-            status = info["status"] or "⚠️"
-            role   = info["role"] or "—"
-            f.write(f"| {info['method']} | {info['path']} | {role} | {tests_str} | {status} |\n")
-
-        f.write("\n---\n\n")
-        f.write("## Estatísticas\n\n")
-        f.write(f"- **Total de endpoints testados:** {total}\n")
-        f.write(f"- **Total de tipos de teste rastreados:** {total_tests}\n")
-        f.write(f"- **Endpoints com sucesso:** {success_count}\n")
-        f.write(f"- **Endpoints com falha:** {fail_count}\n\n")
-
-        f.write("## Métricas de Execução Real\n\n")
-        f.write(f"- **Total de chamadas HTTP executadas:** {total_http_calls}\n")
-        f.write(f"- **Duração acumulada dos endpoints:** {total_duration_ms} ms\n")
-        f.write(f"- **Duração média por endpoint:** {avg_duration_ms} ms\n\n")
-
-        f.write("*Relatório gerado automaticamente a partir do log de execução.*\n")
+                f.write("✅ **Teste completo**: Todos os endpoints da OpenAPI spec foram testados.\n\n")
+            
+            # Resumo Geral
+            f.write("## 📊 Resumo Geral dos Testes\n\n")
+            
+            # Usa dados do JUnit se disponível, senão usa do log
+            if self.results['total_tests'] > 0:
+                total = self.results['total_tests']
+                passed = self.results['passed']
+                failed = self.results['failed']
+                errors = self.results['errors']
+                skipped = self.results['skipped']
+                success_rate = (passed / total * 100) if total > 0 else 0
+            else:
+                # Fallback para dados do summary
+                summary = self.results.get('schemathesis_summary', {})
+                total = summary.get('generated', 0)
+                failed = summary.get('unique_failures', 0)
+                passed = total - failed
+                success_rate = (passed / total * 100) if total > 0 else 0
+                errors = self.results.get('schema_errors', 0)
+                skipped = 0
+            
+            f.write("| Métrica | Valor |\n")
+            f.write("|---------|-------|\n")
+            f.write(f"| **Total de casos de teste gerados** | **{total:,}** |\n")
+            f.write(f"| ✅ Testes bem-sucedidos | {passed:,} |\n")
+            f.write(f"| ❌ Testes com falha | {failed:,} |\n")
+            f.write(f"| ⚠️ Erros de schema | {errors} |\n")
+            f.write(f"| ⏭️ Testes ignorados | {skipped} |\n")
+            f.write(f"| **Taxa de sucesso** | **{success_rate:.1f}%** |\n")
+            
+            if self.results['duration_seconds'] > 0:
+                f.write(f"| ⏱️ Duração total | {self.results['duration_seconds']:.2f}s |\n")
+            
+            f.write("\n")
+            
+            # Estatísticas de endpoints
+            f.write("## 🎯 Cobertura de Endpoints\n\n")
+            f.write("| Métrica | Valor |\n")
+            f.write("|---------|-------|\n")
+            f.write(f"| Total de operações na spec | {self.results.get('endpoints_tested', 0) + self.results.get('endpoints_errored', 0) + self.results.get('endpoints_skipped', 0)} |\n")
+            f.write(f"| ✅ Endpoints testados | {self.results.get('endpoints_tested', 0)} |\n")
+            f.write(f"| ⚠️ Endpoints com erro | {self.results.get('endpoints_errored', 0)} |\n")
+            f.write(f"| ⏭️ Endpoints ignorados | {self.results.get('endpoints_skipped', 0)} |\n")
+            f.write("\n")
+            
+            # Tipos de Falha
+            f.write("## 🔍 Tipos de Falha Encontrados\n\n")
+            f.write("| Tipo de Falha | Quantidade | Severidade |\n")
+            f.write("|---------------|------------|------------|\n")
+            
+            failure_types = {
+                'server_error': ('Erro interno do servidor (500)', '🔴 Alta'),
+                'missing_header': ('Header obrigatório ausente não rejeitado', '🔴 Alta'),
+                'auth_issue': ('Aceita autenticação inválida', '🔴 Alta'),
+                'rejected_valid': ('Rejeita requisição válida (falso positivo)', '🟠 Média'),
+                'schema_violation': ('Resposta viola schema documentado', '🟠 Média'),
+                'undocumented_status': ('Status HTTP não documentado', '🟡 Baixa'),
+                'unsupported_methods': ('Métodos não suportados (ex: TRACE)', '🟡 Baixa'),
+                'other': ('Outras falhas', '🟡 Baixa')
+            }
+            
+            for key, (label, severity) in failure_types.items():
+                count = self.results['failures_by_type'].get(key, 0)
+                if count > 0:
+                    f.write(f"| {label} | {count} | {severity} |\n")
+            
+            f.write("\n")
+            
+            # Detalhamento de falhas por endpoint (top 10)
+            if self.results['endpoints']:
+                f.write("## 📋 Detalhamento por Endpoint (Top 10 com mais falhas)\n\n")
+                f.write("| Método | Endpoint | Testes | ✅ | ❌ | ⚠️ |\n")
+                f.write("|--------|----------|--------|----|----|-----|\n")
+                
+                # Ordena por número de falhas
+                sorted_endpoints = sorted(
+                    self.results['endpoints'].items(),
+                    key=lambda x: x[1]['failed'],
+                    reverse=True
+                )[:10]
+                
+                for key, info in sorted_endpoints:
+                    if info['method'] and info['path']:
+                        f.write(f"| {info['method']} | `{info['path'][:50]}` | {info['tests']} | ")
+                        f.write(f"{info['passed']} | {info['failed']} | {info['errors']} |\n")
+                
+                f.write("\n")
+            
+            # Principais falhas
+            f.write("## 🐛 Principais Falhas Encontradas\n\n")
+            
+            all_failures = []
+            for info in self.results['endpoints'].values():
+                all_failures.extend(info['failures'])
+            
+            # Mostra primeiras 10 falhas
+            for i, failure in enumerate(all_failures[:10], 1):
+                f.write(f"**{i}. {failure['test']}**\n\n")
+                f.write(f"```\n{failure['message'][:300]}\n```\n\n")
+            
+            if len(all_failures) > 10:
+                f.write(f"*... e mais {len(all_failures) - 10} falhas*\n\n")
+            
+            # Recomendações
+            f.write("## 💡 Recomendações\n\n")
+            
+            if self.results['failures_by_type'].get('server_error', 0) > 0:
+                f.write("### 🔴 Críticas (Corrigir Imediatamente)\n\n")
+                f.write("1. **Erros internos do servidor (500)** - API está quebrando com entradas válidas\n")
+                f.write("   - Verifique logs do servidor para stack traces\n")
+                f.write("   - Adicione tratamento de exceções nos endpoints\n")
+                f.write("   - Valide inputs antes de processar\n\n")
+            
+            if self.results['failures_by_type'].get('auth_issue', 0) > 0:
+                f.write("### 🟠 Segurança\n\n")
+                f.write("1. **Falhas de autenticação** - Endpoints aceitando tokens inválidos\n")
+                f.write("   - Implemente validação rigorosa de tokens JWT\n")
+                f.write("   - Retorne 401 para credenciais inválidas\n\n")
+            
+            if self.results['failures_by_type'].get('schema_violation', 0) > 0:
+                f.write("### 🟡 Documentação\n\n")
+                f.write("1. **Inconsistências de schema** - Respostas não correspondem à documentação\n")
+                f.write("   - Atualize a OpenAPI spec para refletir a implementação real\n")
+                f.write("   - Ou corrija a implementação para seguir a spec\n\n")
+            
+            # Informações técnicas
+            f.write("## 📁 Informações Técnicas\n\n")
+            f.write(f"- **Arquivo de log:** `{SCHEMATHESIS_LOG}`\n")
+            f.write(f"- **Relatório JUnit:** `{JUNIT_XML}`\n")
+            if self.results.get('filtered_to_high_risk'):
+                f.write(f"- **Spec filtrada:** `{HIGH_RISK_SPEC}`\n")
+            f.write(f"- **Ferramenta:** [Schemathesis](https://schemathesis.readthedocs.io/)\n")
+            f.write(f"- **Comando executado:** `schemathesis run --checks all --report junit`\n\n")
+            
+            f.write("*Relatório gerado automaticamente pelo pipeline de testes GTSA.*\n")
+    
+    def run(self):
+        """Executa todo o pipeline"""
+        print("📊 Gerando relatório a partir dos resultados do Schemathesis...")
+        
+        self.parse_junit_xml()
+        self.parse_schemathesis_log()
+        self.check_if_filtered()
+        self.generate_markdown()
+        
+        # Estatísticas finais
+        print(f"\n✅ Relatório gerado: {SUMMARY_MD}")
+        print(f"\n📈 Resumo dos testes:")
+        
+        if self.results['total_tests'] > 0:
+            print(f"   - Total de testes: {self.results['total_tests']:,}")
+            print(f"   - ✅ Sucesso: {self.results['passed']:,}")
+            print(f"   - ❌ Falhas: {self.results['failed']:,}")
+        else:
+            summary = self.results.get('schemathesis_summary', {})
+            print(f"   - Total gerado: {summary.get('generated', 0):,}")
+            print(f"   - ❌ Falhas únicas: {summary.get('unique_failures', 0)}")
+        
+        print(f"   - 📊 Cobertura: {self.results.get('endpoints_tested', 0)} endpoints testados")
+        
+        # Mostra principais problemas
+        if self.results['failures_by_type'].get('server_error', 0) > 0:
+            print(f"   - 🔴 {self.results['failures_by_type']['server_error']} erros 500 detectados")
+        if self.results['failures_by_type'].get('auth_issue', 0) > 0:
+            print(f"   - 🔴 {self.results['failures_by_type']['auth_issue']} falhas de autenticação")
 
 
 def main():
-    parse_log()
-    write_summary()
-    print(f"✅ Relatório gerado em {SUMMARY_MD}")
-    print(f"📊 Total de endpoints analisados: {len(endpoints)}")
-    success = sum(1 for i in endpoints.values() if i["status"] == "✅")
-    fail    = sum(1 for i in endpoints.values() if i["status"] == "❌")
-    print(f"   ✅ Sucesso: {success}  ❌ Falha: {fail}")
+    parser = SchemathesisReportParser()
+    parser.run()
 
 
 if __name__ == "__main__":

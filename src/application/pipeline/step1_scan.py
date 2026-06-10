@@ -211,7 +211,7 @@ def analyze_project(
                     code = f.read()
 
                 # Extrai endpoints usando o parser específico
-                raw_endpoints = parser.extract_api_endpoints(code, file_path=rel_path)
+                raw_endpoints = parser.extract_api_endpoints(code, file_path=rel_path, source_root=project_path)
                 
                 # Filtra URLs externas
                 valid_endpoints = [

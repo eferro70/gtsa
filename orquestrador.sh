@@ -114,10 +114,8 @@ main() {
     run_step 4 "Análise de risco e enriquecimento" \
         python3 src/application/pipeline/step4_analyzer_and_enricher.py "$SCAN_DIR/all_endpoints.json" --openapi "$OPENAPI_LOCAL" --no-llm
 
-    log "⏭️  [Passo 5] Pulando (não utilizado)"
-
-    # Passo 6: Schemathesis com dados reais
-    log "🔹 [Passo 6] Iniciando: Schemathesis com dados reais"
+    # Passo 5: Schemathesis com dados reais
+    log "🔹 [Passo 5] Iniciando: Schemathesis com dados reais"
     
     # Exporta tokens para o subprocesso
     export TOKEN_REQUISITANTE="${TOKEN_REQUISITANTE:-}"
@@ -131,18 +129,18 @@ main() {
     export VERBOSE="${VERBOSE:-false}"
     
     # Executa o Schemathesis
-    STEP6_EXIT=0
-    python3 src/application/pipeline/step6_schemathesis_with_data.py $VERBOSE_FLAG || STEP6_EXIT=$?
+    STEP5_EXIT=0
+    python3 src/application/pipeline/step5_schemathesis_with_data.py $VERBOSE_FLAG || STEP5_EXIT=$?
     
-    if [ $STEP6_EXIT -eq 0 ]; then
-        log "✅ [Passo 6] Concluído com sucesso"
+    if [ $STEP5_EXIT -eq 0 ]; then
+        log "✅ [Passo 5] Concluído com sucesso"
     else
-        log "⚠️ [Passo 6] Concluído com exit $STEP6_EXIT"
+        log "⚠️ [Passo 5] Concluído com exit $STEP5_EXIT"
     fi
 
-    # Passo 7: Relatório
-    run_step 7 "Gerar relatório de testes" \
-        python3 src/application/pipeline/step7_gerar_relatorio_markdown.py
+    # Passo 6: Relatório
+    run_step 6 "Gerar relatório de testes" \
+        python3 src/application/pipeline/step6_gerar_relatorio_markdown.py
 
     # Propaga falha do passo 6
     [ $STEP6_EXIT -eq 0 ] || exit $STEP6_EXIT

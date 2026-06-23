@@ -1,0 +1,4 @@
+# file: /home/s231991563/projetos/gtsa/src/application/pipeline/schemathesis_hooks.py
+# hypothesis_version: 6.152.3
+
+['.env', '/', '/api/v1/clientes', '0', '10', '=', 'ADMINISTRADOR', 'ASC', 'AUTH_COOKIE_NAME', 'Authorization', 'Bearer ', 'Cookie', 'ENV_FILE', 'GESTOR', 'GET /api/clientes', 'GET /api/contas', 'GET /api/fluxo/:id', 'GET /api/fluxos', 'GET /api/getlink', 'GET /api/grupos', 'GET /metrics', 'INTERESSADO', 'PATCH /api/link', 'PATCH /api/notificar', 'PAV', 'POST /api/clientes', 'POST /api/documentos', 'POST /api/fluxos', 'POST /api/grupos', 'PUT /api/fluxos/:id', 'PUT /api/grupos/:id', 'PUT /api/logout', 'PUT /api/token', 'REQUISITANTE', 'TOKEN_REQUISITANTE', 'auth_loader.py', 'custom_headers', 'limit', 'nome', 'offset', 'pendente', 'roles', 'sigla', 'sortDirection', 'sortField', 'status', 'true', 'utils', '{algoritmo}', '{codigo}', '{email}', '{idConta}', '{idRequisitante}', '{id}', '{perfil}']

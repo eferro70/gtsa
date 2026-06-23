@@ -6162,7 +6162,7 @@
           },
           {
             "in": "query",
-            "name": "pendente",
+            "name": "pendentes",
             "schema": {
               "type": "boolean"
             }
@@ -6950,7 +6950,8 @@
       "patch": {
         "summary": "Reenvia links para os interessados de um fluxo",
         "tags": [
-          "Links"
+          "Links",
+          "Requisitante Sistema"
         ],
         "security": [
           {

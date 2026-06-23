@@ -17,9 +17,10 @@ Parâmetros de linha de comando:
     -i, --input       Caminho para a raiz do projeto (obrigatório)
     --language        Linguagem do projeto (typescript, python, java, etc.)
     --output-dir      Diretório para relatórios (padrão: ../../../output)
+    --debug           Ativa modo debug com logs detalhados
 
 Exemplo de uso:
-    python3 step1_scan.py -i /caminho/para/projeto --language typescript
+    python3 step1_scan.py -i /caminho/para/projeto --language typescript --debug
 """
 
 import os
@@ -51,6 +52,12 @@ try:
 except ImportError as e:
     print(f"⚠️  Aviso: Não foi possível carregar o parser TypeScript: {e}")
     PARSERS = {}
+
+try:
+    from src.infrastructure.parsers.ast_parser_java import JavaSpringParser
+    PARSERS['java'] = JavaSpringParser
+except ImportError as e:
+    print(f"⚠️  Aviso: Não foi possível carregar o parser Java: {e}")
 
 # Constantes de varredura
 IGNORE_DIRS = {
@@ -106,7 +113,7 @@ def detect_project_language(project_path: str) -> Optional[str]:
     return None
 
 
-def get_parser_for_language(language: str) -> Optional[BaseParser]:
+def get_parser_for_language(language: str, debug: bool = False) -> Optional[BaseParser]:
     """Retorna o parser apropriado para a linguagem"""
     if language not in PARSERS:
         print(f"❌ Parser não encontrado para linguagem: {language}")
@@ -114,13 +121,18 @@ def get_parser_for_language(language: str) -> Optional[BaseParser]:
         return None
     
     parser_class = PARSERS[language]
-    return parser_class()
+    
+    try:
+        return parser_class(debug=debug)
+    except TypeError:
+        return parser_class()
 
 
 def analyze_project(
     project_path: str, 
     language: Optional[str] = None,
-    output_dir: Optional[str] = None
+    output_dir: Optional[str] = None,
+    debug: bool = False
 ) -> Dict:
     """
     Analisa projeto e extrai endpoints
@@ -129,6 +141,7 @@ def analyze_project(
         project_path: Caminho do projeto
         language: Linguagem do projeto (se None, tenta detectar)
         output_dir: Diretório de saída para relatórios
+        debug: Ativar modo debug
     
     Returns:
         Dicionário com resultados da análise
@@ -141,23 +154,25 @@ def analyze_project(
             raise ValueError("Não foi possível detectar a linguagem do projeto. Especifique com --language")
     
     # Obtém parser
-    parser = get_parser_for_language(language)
+    parser = get_parser_for_language(language, debug=debug)
     if parser is None:
         raise ValueError(f"Parser não disponível para linguagem: {language}")
     
     print(f"🚀 Iniciando análise do projeto: {project_path}")
     print(f"📝 Linguagem: {language}")
+    if debug:
+        print(f"🐛 Modo debug ativado")
     
     # -- diretório base de testes -----------------------------------------------
+
     base_dir = os.path.abspath(
         os.path.join(os.path.dirname(__file__), '../../../src/application/pipeline/tests')
     )
+
     if os.path.exists(base_dir):
-        for item in os.listdir(base_dir):
-            item_path = os.path.join(base_dir, item)
-            if os.path.isdir(item_path) and item.startswith('scan_'):
-                print(f"🗑️  Limpando diretório anterior: {item_path}")
-                shutil.rmtree(item_path)
+        print(f"🗑️ Limpando diretório: {base_dir}")
+        shutil.rmtree(base_dir)
+
     os.makedirs(base_dir, exist_ok=True)
 
     # -- diretório com timestamp ------------------------------------------------
@@ -171,7 +186,16 @@ def analyze_project(
         output_dir = os.path.abspath(
             os.path.join(os.path.dirname(__file__), '../../../output')
         )
+    else:
+        # Se for um caminho relativo, resolve a partir da raiz do projeto
+        if not os.path.isabs(output_dir):
+            project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../..'))
+            output_dir = os.path.join(project_root, output_dir)
+        output_dir = os.path.abspath(output_dir)
+    
+    # Cria o diretório de output
     Path(output_dir).mkdir(parents=True, exist_ok=True)
+    print(f"📁 Diretório de relatórios: {output_dir}")
     
     # Limpa arquivos antigos
     for old in Path(output_dir).glob("*_endpoints.json"):
@@ -323,9 +347,10 @@ def analyze_project(
                 f.write(f"- ❌ {err}\n")
 
     # ---------------------------------------------------------------------------
-    # Saídas de compatibilidade
+    # Saídas de compatibilidade (arquivos na raiz do projeto)
     # ---------------------------------------------------------------------------
 
+    # Salva regular_endpoints.json na raiz do projeto
     with open(Path(base_dir) / f"regular_endpoints_{language}.json", "w", encoding="utf-8") as f:
         json.dump(all_flat, f, indent=2, ensure_ascii=False)
 
@@ -333,20 +358,34 @@ def analyze_project(
     for ep in all_flat:
         methods_count[ep['method']] = methods_count.get(ep['method'], 0) + 1
 
-    with open(Path(output_dir) / f"api_analyse_report_{language}.md", "w", encoding="utf-8") as f:
+    # Gera o relatório Markdown no diretório de output
+    report_path = Path(output_dir) / f"api_analyse_report_{language}.md"
+    # No step1_scan.py, na geração do relatório:
+    with open(report_path, "w", encoding="utf-8") as f:
         f.write(f"# Relatório de Análise de API - {language}\n\n")
         f.write("## Resumo\n\n")
         f.write(f"- **Total de endpoints encontrados:** {len(all_flat)}\n")
+        
+        # Conta endpoints principais vs auxiliares
+        main_endpoints = [ep for ep in all_flat if not ep.get('is_auxiliary', False)]
+        aux_endpoints = [ep for ep in all_flat if ep.get('is_auxiliary', False)]
+        
+        f.write(f"- **Endpoints principais:** {len(main_endpoints)}\n")
+        f.write(f"- **Endpoints auxiliares:** {len(aux_endpoints)}\n")
+        
         if all_flat:
             f.write(f"- **Métodos HTTP:** {', '.join(sorted(methods_count))}\n")
         f.write("\n## Endpoints por Método\n\n")
         for method, count in sorted(methods_count.items()):
             f.write(f"- **{method}:** {count}\n")
         f.write("\n## Lista de Endpoints\n\n")
-        f.write("| Método | Path | Handler | Arquivo | Linha |\n")
-        f.write("|--------|------|---------|---------|-------|\n")
+        f.write("| Método | Path | Handler | Arquivo | Linha | Tipo |\n")
+        f.write("|--------|------|---------|---------|-------|------|\n")
         for ep in sorted(all_flat, key=lambda x: (x['method'], x['path'])):
-            f.write(f"| {ep['method']} | `{ep['path']}` | `{ep['handler']}` | {ep['file']} | {ep.get('line_number', '-')} |\n")
+            tipo = "⚠️ Auxiliar" if ep.get('is_auxiliary', False) else "✅ Principal"
+            f.write(f"| {ep['method']} | `{ep['path']}` | `{ep['handler']}` | {ep['file']} | {ep.get('line_number', '-')} | {tipo} |\n")
+
+    print(f"📄 Relatório gerado em: {report_path}")
 
     # ---------------------------------------------------------------------------
     # Resumo no console
@@ -361,7 +400,7 @@ def analyze_project(
     print(f"Erros:                        {len(errors)}")
     print(f"\n📁 Resultados em:             {session_dir}")
     print(f"📄 regular_endpoints.json:    {base_dir}/regular_endpoints_{language}.json")
-    print(f"📄 api_analyse_report.md:     {output_dir}/api_analyse_report_{language}.md")
+    print(f"📄 api_analyse_report.md:     {report_path}")
     
     return summary
 
@@ -376,10 +415,12 @@ def main():
                             help='Linguagem do projeto (typescript, python, java, etc.)')
     arg_parser.add_argument('--output-dir', default=None,
                             help='Diretório para relatórios (padrão: ../../../output)')
+    arg_parser.add_argument('--debug', action='store_true',
+                            help='Ativar modo debug com logs detalhados')
     args = arg_parser.parse_args()
 
     try:
-        analyze_project(args.input, args.language, args.output_dir)
+        analyze_project(args.input, args.language, args.output_dir, debug=args.debug)
     except Exception as e:
         print(f"❌ Erro durante a análise: {e}")
         sys.exit(1)

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 step3_dados_exemplo.py
-Gera output/tests/dados/{METHOD}_{endpoint}.json para cada endpoint do openapi.json.
+Gera tests/dados/{METHOD}_{endpoint}.json para cada endpoint do openapi.json.
 
 Prioridade para o body gerado:
     1. `example` inline no requestBody               → usa diretamente, SEM LLM
@@ -29,12 +29,8 @@ from pathlib import Path
 from copy import deepcopy
 import json
 
-# Carrega variáveis do .env automaticamente
-try:
-    from dotenv import load_dotenv
-    load_dotenv()
-except ImportError:
-    print("⚠️  python-dotenv não instalado. Variáveis do .env não serão carregadas automaticamente.")
+# Importa o utilitário de carregamento de .env
+from utils.env_loader import load_environment, add_env_arg
 
 # ─── Configuração padrão ──────────────────────────────────────────────────────
 
@@ -327,44 +323,55 @@ def make_filename(method: str, path: str) -> str:
 # ─── Main ─────────────────────────────────────────────────────────────────────
 
 def main():
-
     parser = argparse.ArgumentParser(
         description="Gera arquivos de dados de teste a partir do openapi.json",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Exemplos:
-  python gerar_dados_exemplo.py openapi.json
-  python gerar_dados_exemplo.py openapi.json --llm-backend ollama --llm-url http://localhost:11434/v1/chat/completions --llm-model llama3.2
-  python gerar_dados_exemplo.py openapi.json --only-with-body --no-overwrite
+  python step3_dados_exemplo.py openapi.json
+  python step3_dados_exemplo.py openapi.json --llm-backend ollama --llm-model llama3.2
+  python step3_dados_exemplo.py openapi.json --only-with-body --no-overwrite --env-file .env.serproid
         """
     )
     parser.add_argument("openapi", help="Caminho para o openapi.json")
-    parser.add_argument("--llm-backend", choices=["gatiator", "ollama"], default=DEFAULT_BACKEND,
-                        help="Backend LLM (sobrepõe LLM_BACKEND do .env). "
-                             "gatiator → porta 1313 | ollama → porta 11434")
+    parser.add_argument("--llm-backend", choices=["gatiator", "ollama"], default="ollama",
+                        help="Backend LLM (sobrepõe LLM_BACKEND do .env)")
     parser.add_argument("--llm-url", default=None,
                         help="URL do backend LLM. Se omitido, usa a URL padrão do backend escolhido.")
-    parser.add_argument("--llm-model", default=DEFAULT_MODEL,
-                        help=f"Modelo LLM a usar. Default: {DEFAULT_MODEL}")
-    parser.add_argument("--output-dir", default="src/application/pipeline/tests/dados",
+    parser.add_argument("--llm-model", default="codellama:7b",
+                        help=f"Modelo LLM a usar.")
+    parser.add_argument("--data-dir", default="src/application/pipeline/tests/dados",
                         help="Diretório de saída. Default: src/application/pipeline/tests/dados")
     parser.add_argument("--only-with-body", action="store_true",
                         help="Gera apenas para endpoints com requestBody")
     parser.add_argument("--no-overwrite", action="store_true",
                         help="Não sobrescreve arquivos existentes (default: sobrescreve)")
+    
+    # Adiciona o argumento --env-file
+    add_env_arg(parser)
+    parser.add_argument("--verbose", action="store_true", help="Exibe logs detalhados")
+    
     args = parser.parse_args()
+    
+    # Carrega o arquivo .env especificado
+    load_environment(env_file=args.env_file, verbose=args.verbose)
+    
+    # Pega configurações do .env
+    llm_backend = os.getenv("LLM_BACKEND", args.llm_backend)
+    llm_model = os.getenv("LLM_MODEL", args.llm_model)
+    llm_url = os.getenv("LLM_BASE_URL", args.llm_url)
 
     # URL efetiva: argumento explícito tem prioridade; senão usa o mapa de backend
     effective_url = args.llm_url or BACKEND_URLS[args.llm_backend]
 
     # ── Setup de diretórios ───────────────────────────────────────────────────
     openapi_path = Path(args.openapi).resolve()
-    output_dir   = Path(args.output_dir)
-    output_dir.mkdir(parents=True, exist_ok=True)
+    data_dir = Path(args.data_dir)
+    data_dir.mkdir(parents=True, exist_ok=True)
 
     print(f"📄 OpenAPI  : {openapi_path}")
     print(f"🤖 LLM      : {args.llm_backend}  ({effective_url} | modelo: {args.llm_model})")
-    print(f"📁 Saída    : {output_dir.resolve()}")
+    print(f"📁 Saída    : {data_dir.resolve()}")
     print()
 
     root  = load_openapi(str(openapi_path))
@@ -391,7 +398,7 @@ Exemplos:
 
             total += 1
             filename = make_filename(method, path)
-            out_file = output_dir / filename
+            out_file = data_dir / filename
 
             if out_file.exists() and args.no_overwrite:
                 print(f"  ⏭️  Já existe: {filename}")
@@ -453,7 +460,7 @@ Exemplos:
     print(f"🤖 Via LLM          : {from_llm}")
     print(f"⏭️  Pulados          : {skipped}")
     print(f"❌ Erros            : {errors}")
-    print(f"📁 Saída            : {output_dir.resolve()}")
+    print(f"📁 Saída            : {data_dir.resolve()}")
 
 
 if __name__ == "__main__":

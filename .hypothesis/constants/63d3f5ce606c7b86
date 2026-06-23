@@ -1,0 +1,4 @@
+# file: /home/s231991563/projetos/gtsa/src/application/pipeline/utils/auth_loader.py
+# hypothesis_version: 6.152.3
+
+[401, '***', '<token>', 'ADMINISTRADOR', 'API_AUTH_HEADERS', 'AUTH_COOKIE_NAME', 'AUTH_PROFILE', 'AUTH_TYPE', 'Authorization', 'Bearer', 'CLIENT_ID', 'CLIENT_SECRET', 'Content-Type', 'Cookie', 'GESTOR', 'INTERESSADO', 'MTJjYTVmY2YtZ...', 'PAV', 'REQUISITANTE', 'TESTE', 'TOKEN_ADMINISTRADOR', 'TOKEN_GESTOR', 'TOKEN_INTERESSADO', 'TOKEN_PAV', 'TOKEN_REQUISITANTE', 'TOKEN_TESTE', 'TOKEN_URL', 'accessToken', 'access_token', 'auto', 'client_credentials', 'client_id', 'client_secret', 'eyJhbGciOi...', 'grant_type', 'seu-token-aqui', 'static', 'token', 'token-aqui', 'your-token-here', '{}']

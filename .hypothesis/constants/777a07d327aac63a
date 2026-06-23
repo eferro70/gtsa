@@ -1,0 +1,4 @@
+# file: /home/s231991563/projetos/gtsa/src/application/pipeline/schemathesis_hooks.py
+# hypothesis_version: 6.152.3
+
+['.env', '/api/v1/clientes', '0', '10', 'ASC', 'ENV_FILE', 'auth_loader.py', 'limit', 'nome', 'offset', 'pendente', 'sigla', 'sortDirection', 'sortField', 'status', 'true', 'utils']

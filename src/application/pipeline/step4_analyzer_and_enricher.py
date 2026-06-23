@@ -3,46 +3,30 @@
 step4_analyzer_and_enricher.py
 ---------------------------
 Script UNIFICADO para análise de segurança e enriquecimento de endpoints.
-
 FUNCIONALIDADES:
 1. Analisa riscos e detecta vulnerabilidades (OWASP API Top 10 2023 + SANS Top 25)
 2. Enriquece com dados do OpenAPI/Swagger (summary, description)
 3. Adiciona exemplos reais de requisição (de output/tests/dados/)
 4. Adiciona roles de autorização (do arquivo de configuração do KrakenD)
-5. Modo Híbrido: LLM (Ollama/Gatiator) + Heurística com fallback automático
-
+5. Detecta headers customizados de autenticação (OpenAPI + .env)
+6. Modo Híbrido: LLM (Ollama/Gatiator) + Heurística com fallback automático
 SAÍDAS:
 - src/application/pipeline/tests/enriched_endpoints.json (completo)
-- output/final_security_report.md (relatório OWASP/SANS)
-
-USO:
-    # Apenas análise de segurança (mais rápido)
-    python3 step4_analyzer_and_enricher.py output/scan_*/all_endpoints.json --no-llm
-    
-    # Com enriquecimento OpenAPI
-    python3 step4_analyzer_and_enricher.py output/scan_*/all_endpoints.json --openapi docs/openapi.yaml
-    
-    # Completo (segurança + OpenAPI + exemplos + roles)
-    python3 step4_analyzer_and_enricher.py output/scan_*/all_endpoints.json --openapi docs/openapi.yaml --no-llm
+- <output_dir>/final_security_report.md (relatório OWASP/SANS)
+- <output_dir>/test_api_summary.md (resumo de mapeamento)
 """
-
+import os
+import sys
 import json
 import requests
-import os
 import time
 import re
-from typing import Dict, List, Any, Optional, Union
 from pathlib import Path
+from typing import Dict, List, Any, Optional, Union
 from datetime import datetime
+import argparse
+from utils.env_loader import load_environment, add_env_arg, get_env_file_from_args
 
-# Carrega variáveis do .env
-try:
-    from dotenv import load_dotenv
-    load_dotenv()
-except ImportError:
-    print("⚠️  python-dotenv não instalado. Variáveis do .env não serão carregadas automaticamente.")
-
-# Tenta importar PyYAML para suporte a OpenAPI YAML
 try:
     import yaml
     YAML_AVAILABLE = True
@@ -53,13 +37,12 @@ except ImportError:
 
 class VulnerabilityDatabase:
     """Gerencia o banco de vulnerabilidades OWASP API Top 10 2023 + SANS Top 25"""
-    
+
     def __init__(self, config_path: Optional[Path] = None):
         self.config_path = config_path or Path("config/vulnerability_mapping.json")
         self.mappings = self._load_mappings()
-    
+
     def _load_mappings(self) -> Dict:
-        """Carrega mapeamentos do arquivo JSON"""
         if self.config_path.exists():
             try:
                 with open(self.config_path, 'r', encoding='utf-8') as f:
@@ -71,9 +54,8 @@ class VulnerabilityDatabase:
             print(f"⚠️  Arquivo de mapeamento não encontrado: {self.config_path}")
             print("   Usando mapeamento padrão OWASP API Top 10 2023")
             return self._get_default_mappings()
-    
+
     def _get_default_mappings(self) -> Dict:
-        """Fallback com OWASP API Top 10 2023"""
         return {
             "version": "2.0",
             "standard": "OWASP API Security Top 10 2023",
@@ -158,16 +140,15 @@ class VulnerabilityDatabase:
                 }
             }
         }
-    
+
     def get_vulnerability_info(self, vuln_name: str) -> Optional[Dict]:
         return self.mappings.get("vulnerabilities", {}).get(vuln_name)
 
     def _get_owasp_entry(self, vuln_info: Dict) -> Optional[Dict]:
-        """Compatibilidade: aceita chaves 'owasp' (legado) e 'owasp_2023' (config atual)."""
         if not vuln_info:
             return None
         return vuln_info.get('owasp') or vuln_info.get('owasp_2023')
-    
+
     def get_owasp_summary(self, vulnerabilities: List[str]) -> List[Dict]:
         owasp_map = {}
         for vuln_name in vulnerabilities:
@@ -184,7 +165,7 @@ class VulnerabilityDatabase:
                     }
                 owasp_map[owasp_id]['vulnerabilities'].append(vuln_name)
         return list(owasp_map.values())
-    
+
     def get_sans_summary(self, vulnerabilities: List[str]) -> List[Dict]:
         sans_map = {}
         for vuln_name in vulnerabilities:
@@ -201,7 +182,7 @@ class VulnerabilityDatabase:
                     }
                 sans_map[cwe_id]['vulnerabilities'].append(vuln_name)
         return sorted(sans_map.values(), key=lambda x: x['rank'])
-    
+
     def enrich_vulnerabilities(self, vulnerabilities: List[str]) -> List[Dict]:
         enriched = []
         for vuln_name in vulnerabilities:
@@ -224,19 +205,18 @@ class VulnerabilityDatabase:
 
 class AdvancedVulnerabilityDetector:
     """Detector heurístico de vulnerabilidades"""
-    
+
     def __init__(self):
         self.vuln_db = VulnerabilityDatabase()
-    
+
     def detect_vulnerabilities(self, endpoint: Dict, auth_required: bool = True) -> List[str]:
         path = endpoint.get('path', '').lower()
         method = endpoint.get('method', '').upper()
         context_raw = str(endpoint.get('context', ''))
         context = context_raw.lower()
         vulnerabilities = []
-        
-        # Verifica UUID
         is_id_uuid = False
+
         params = endpoint.get('parameters', [])
         for param in params:
             if param.get('in') == 'path' and param.get('name', '').lower() == 'id':
@@ -244,40 +224,23 @@ class AdvancedVulnerabilityDetector:
                 fmt = schema.get('format', '').lower()
                 if fmt == 'uuid':
                     is_id_uuid = True
-        
-        # Regras de detecção
-        # BOLA: flagra apenas quando o parâmetro de ID identifica diretamente o recurso.
-        # Critério: o parâmetro `:id` (ou variante) deve ser o segmento terminal do path,
-        # OU ser imediatamente seguido de outro parâmetro (recurso aninhado por ID).
-        # Sub-ações estáticas após `:id` (ex: /:id/assinar, /:id/cancelar) já são cobertas
-        # pelo controle de acesso do recurso pai e não geram BOLA duplicado.
-        #
-        # Refinamento com contexto do handler (Opção B):
-        # Se o scanner incluiu o código do controller/handler (sinalizado pelo marcador
-        # "// --- handler:"), verifica se há verificação de ownership genérica:
-        # userId, ownerId, idCliente, idConta, tenantId, accountId, etc. passados
-        # junto à busca por ID. Se sim → falso positivo (proteção no handler).
+
         def _has_direct_id_access(p: str) -> bool:
             segments = p.strip('/').split('/')
             for i, seg in enumerate(segments):
                 if re.match(r'^:(id|user_id|account_id|document_id)\b', seg):
                     if i == len(segments) - 1:
-                        return True  # :id terminal
+                        return True
                     next_seg = segments[i + 1]
                     if next_seg.startswith(':'):
-                        return True  # :id seguido de outro parâmetro
+                        return True
             return False
 
         def _handler_has_ownership_check(ctx: str) -> bool:
-            """Verifica se o handler (código do controller resolvido) contém
-            evidência de verificação de propriedade — de forma genérica, sem
-            depender de convenções específicas do projeto."""
             handler_marker = '// --- handler:'
             if handler_marker not in ctx:
-                return False  # contexto não foi expandido, não podemos decidir
+                return False
             handler_code = ctx[ctx.index(handler_marker):]
-            # Padrões genéricos de ownership: qualquer identificador de usuário/tenant
-            # passado como argumento em chamada de método junto ao ID do recurso
             return bool(re.search(
                 r'\b(?:userId|user_id|ownerId|owner_id|'
                 r'idCliente|idConta|idUsuario|codUsuario|'
@@ -289,18 +252,13 @@ class AdvancedVulnerabilityDetector:
 
         if _has_direct_id_access(path) and not _handler_has_ownership_check(context_raw):
             vulnerabilities.append("bola")
-        
+
         if re.search(r'/admin/|/internal/|/users/role|/permission|/privilege', path):
             vulnerabilities.append("bfla")
 
         repo_marker = "// --- repository:"
 
         def _has_local_injection_evidence(ctx: str) -> bool:
-            """Exige evidência no código quando o contexto não alcança o repositório.
-
-            Evita promover para vulnerabilidade confirmada casos em que só há
-            indício documental de sort/filter na spec ou no handler.
-            """
             dynamic_sql_patterns = [
                 r'order\s+by\s+[`\"\']?\$\{',
                 r'order\s+by\s+["\']?\s*\+',
@@ -314,11 +272,6 @@ class AdvancedVulnerabilityDetector:
             return any(re.search(pattern, ctx, re.IGNORECASE | re.DOTALL) for pattern in dynamic_sql_patterns)
 
         def _injection_mitigated(ep: Dict, ctx: str) -> bool:
-            """Suprime injection apenas quando TODAS as secoes de repositorio
-            no contexto enriquecido demonstram protecao ativa contra injection
-            em ORDER BY (allowlist de campo + sanitizacao de direcao nao comentada).
-            Se QUALQUER secao nao estiver protegida, a vulnerabilidade persiste.
-            """
             ALLOWLIST_RE = re.compile(
                 r"\b(?:allowedSortFields|allowedFields|allowedColumns|validSortFields|"
                 r"validFields|sortWhitelist|SORT_WHITELIST|allowedOrderBy|allowedSortColumns)\b"
@@ -329,44 +282,27 @@ class AdvancedVulnerabilityDetector:
                 r"\b(?:sanitizeSortDirection|sanitizeDirection|validateSortDirection|"
                 r"sanitizeOrder|validateOrder)\s*\("
                 r"|(?:sortDirection|direction)\s*===?\s*[\"'](?:ASC|DESC)[\"']"
-                r"|[\"'](?:ASC|DESC)[\"']\s*:\s*[\"'](?:ASC|DESC)[\"']"
+                r"|[\"](?:ASC|DESC)[\"]\s*:\s*[\"'](?:ASC|DESC)[\"']"
             )
-
-            def _check_section(text):
-                """Checa allowlist+direction guard em uma secao de codigo (sem comentarios)."""
-                uncommented = re.sub(r"//[^\n]*", "", text)
-                return ALLOWLIST_RE.search(uncommented) and DIRECTION_RE.search(uncommented)
-
-            # Coletar secoes de repositorio do contexto
             if repo_marker not in ctx:
                 return False
-
-            # Dividir pelo marcador de repositorio e checar cada secao
             parts = ctx.split(repo_marker)
-            # parts[0] = contexto antes do primeiro repositorio (handler + use-case)
-            # parts[1:] = cada secao de repositorio (comeca com "ClassName.method ---\n{body}")
             repo_sections = parts[1:]
             if not repo_sections:
                 return False
-
-            # Uma secao "lida com sorting dinamico" se contem as VARIAVEIS de sort
-            # (nao apenas ORDER BY hardcoded).
             SORT_USAGE_RE = re.compile(
                 r"\bsort(?:Field|Direction|By)\b|"
                 r"\bsortfield\b|\bsortdirection\b|"
                 r"\border_by\b|\borderby\b",
                 re.IGNORECASE,
             )
-
             for section in repo_sections:
-                # Remover comentarios
                 uncommented = re.sub(r"//[^\n]*", "", section)
-                # Se esta secao usa sorting mas nao tem protecao completa -> vulneravel
                 if SORT_USAGE_RE.search(uncommented):
                     if not (ALLOWLIST_RE.search(uncommented) and DIRECTION_RE.search(uncommented)):
-                        return False  # caminho de execucao vulneravel
-
+                        return False
             return True
+
         mitigated = _injection_mitigated(endpoint, context_raw)
         has_repo_context = repo_marker in context_raw
         has_local_injection_evidence = _has_local_injection_evidence(context_raw)
@@ -376,8 +312,6 @@ class AdvancedVulnerabilityDetector:
             if can_confirm_injection and not mitigated:
                 vulnerabilities.append("injection")
 
-        # Heurística adicional: parâmetros de query para ordenação/filtro tendem a ser vetores de injection
-        # quando o contexto alcança o repositório ou traz evidência local de SQL dinâmico.
         if method == 'GET':
             has_query_block = ('in: query' in context) or ('req.query' in context)
             has_sort_filter_query = re.search(
@@ -387,173 +321,209 @@ class AdvancedVulnerabilityDetector:
             if has_query_block and has_sort_filter_query and not is_id_uuid:
                 if can_confirm_injection and not mitigated:
                     vulnerabilities.append("injection")
-        
+
         if re.search(r'url|uri|endpoint|fetch|load|proxy|webhook', path):
             vulnerabilities.append("ssrf")
-        
+
         if not auth_required and method in ['POST', 'PUT', 'PATCH', 'DELETE']:
             vulnerabilities.append("broken_auth")
-        
+
         if re.search(r'/update|/patch|/edit|/modify', path) and method in ['PUT', 'PATCH', 'POST']:
             vulnerabilities.append("mass_assignment")
-        
+
         if re.search(r'/debug|/test|/dev|/internal|/private', path):
             vulnerabilities.append("security_misconfiguration")
-        
+
         if re.search(r'/login|/auth|/register|/reset-password|/otp', path) and method == 'POST':
             vulnerabilities.append("rate_limiting_absence")
-        
+
         if re.search(r'/xml|/soap|/xsd|/wsdl|\.xml$', path) and method in ['POST', 'PUT']:
             vulnerabilities.append("xxe")
-        
+
         if re.search(r'redirect|callback|return_to|next|goto|returnurl', path):
             vulnerabilities.append("open_redirect")
-        
+
         if re.search(r'/webhook|/callback|/integrations|/third-party', path):
             vulnerabilities.append("unsafe_consumption")
-        
+
         return list(dict.fromkeys(vulnerabilities))
 
 
 class OpenAPIEnricher:
-    """Enriquece endpoints com dados do OpenAPI/Swagger"""
-    
-    def __init__(self, openapi_file: Optional[Path] = None):
+    def __init__(self, openapi_file=None, output_dir=None, env_file=None):
         self.openapi_file = openapi_file
-        self.openapi_data = self._load_openapi() if openapi_file else None
-        self.examples_dir = Path("output/tests/dados")
+        if openapi_file:
+            try:
+                with open(openapi_file, 'r', encoding='utf-8') as f:
+                    if str(openapi_file).endswith(('.yaml', '.yml')):
+                        if YAML_AVAILABLE:
+                            self.openapi_data = yaml.safe_load(f)
+                        else:
+                            print("⚠️  PyYAML não disponível para carregar YAML")
+                            self.openapi_data = None
+                    else:
+                        self.openapi_data = json.load(f)
+            except Exception as e:
+                print(f"⚠️  Erro ao carregar OpenAPI: {e}")
+                self.openapi_data = None
+        else:
+            self.openapi_data = None
+
+        self.output_dir = output_dir or Path("output")
+        self.examples_dir = self.output_dir / "tests/dados"
+        self.env_file = env_file
         self.krakend_roles = self._load_krakend_roles()
         self.krakend_disable_jwk = self._load_krakend_disable_jwk()
-    
-    def _load_openapi(self) -> Optional[Dict]:
-        if not self.openapi_file or not self.openapi_file.exists():
-            return None
-        
-        with open(self.openapi_file, 'r', encoding='utf-8') as f:
-            content = f.read()
-        
-        if self.openapi_file.suffix in ['.yaml', '.yml']:
-            if YAML_AVAILABLE:
-                return yaml.safe_load(content)
-            else:
-                print("⚠️  PyYAML não instalado. Ignorando arquivo YAML.")
-                return None
-        else:
-            return json.loads(content)
-    
+        self.custom_auth_headers_env = self._load_custom_auth_headers_from_env()
+
+    def _load_custom_auth_headers_from_env(self) -> Dict[str, Dict[str, str]]:
+        """
+        Carrega CUSTOM_AUTH_HEADERS do .env.
+        Formato: "PUT /api/v1/login-sistema:x-chave-acesso-sistema=CHAVE_ACESSO_SISTEMA;..."
+        Resultado: {"PUT /api/v1/login-sistema": {"x-chave-acesso-sistema": "CHAVE_ACESSO_SISTEMA"}}
+        """
+        result = {}
+        raw = os.getenv("CUSTOM_AUTH_HEADERS", "").strip()
+        if not raw:
+            return result
+        for item in raw.split(';'):
+            item = item.strip()
+            if not item or ':' not in item:
+                continue
+            endpoint_key, headers_str = item.split(':', 1)
+            endpoint_key = endpoint_key.strip()
+            headers = {}
+            for header_pair in headers_str.split(','):
+                header_pair = header_pair.strip()
+                if '=' not in header_pair:
+                    continue
+                header_name, env_var = header_pair.split('=', 1)
+                headers[header_name.strip()] = env_var.strip()
+            if headers:
+                result[endpoint_key] = headers
+        if result:
+            print(f"✅ Custom auth headers carregados do .env: {len(result)} endpoint(s)")
+        return result
+
+    def _detect_custom_auth_headers_from_openapi(self, details: Dict) -> Dict[str, str]:
+        """
+        Detecta headers customizados de autenticação nos parâmetros do OpenAPI.
+        Considera custom qualquer header required com nome prefixado por 'x-' ou 'X-'.
+        Retorna: {"header-name": "ENV_VAR_NAME"}
+        """
+        custom = {}
+        if not details:
+            return custom
+        parameters = details.get('parameters', [])
+        for param in parameters:
+            if param.get('in') == 'header' and param.get('required', False):
+                name = param.get('name', '')
+                if name.lower().startswith('x-'):
+                    env_var = name.upper().replace('-', '_')
+                    custom[name] = env_var
+        return custom
+
     def _load_krakend_roles(self) -> Dict:
-        """Carrega roles do arquivo de configuração do KrakenD"""
         krakend_roles = {}
-        
-        # Busca KRAKEND_CONF do .env
-        env_path = Path(".env")
-        krakend_conf = None
-        endpoint_prefix = None
-        
-        if env_path.exists():
-            with open(env_path, 'r', encoding='utf-8') as f:
-                for line in f:
-                    if line.strip().startswith("KRAKEND_CONF"):
-                        krakend_conf = line.strip().split("=", 1)[-1]
-                    if line.strip().startswith("ENDPOINT_PREFIX"):
-                        endpoint_prefix = line.strip().split("=", 1)[-1]
-        
-        if krakend_conf and Path(krakend_conf).exists():
-            try:
-                with open(krakend_conf, 'r', encoding='utf-8') as f:
-                    krakend_data = json.load(f)
-                
-                for ep in krakend_data.get("endpoints", []):
-                    ep_path = ep.get("endpoint", "")
-                    if endpoint_prefix:
-                        ep_path = ep_path.replace("$ENDPOINT_PREFIX", endpoint_prefix)
-                    ep_method = ep.get("method", "").upper()
-                    
-                    extra = ep.get("extra_config", {})
-                    jose = extra.get("github.com/devopsfaith/krakend-jose/validator")
-                    if jose and "roles" in jose:
-                        krakend_roles[(ep_path, ep_method)] = jose["roles"]
-            except Exception as e:
-                print(f"⚠️  Erro ao ler roles do Krakend: {e}")
-        
+        krakend_conf = os.getenv("KRAKEND_CONF", "").strip()
+        endpoint_prefix = os.getenv("ENDPOINT_PREFIX", "").strip()
+        if not krakend_conf:
+            print("⚠️  KRAKEND_CONF não definido — roles do KrakenD não serão carregados")
+            return krakend_roles
+        if not Path(krakend_conf).exists():
+            print(f"⚠️  KRAKEND_CONF não encontrado: {krakend_conf}")
+            return krakend_roles
+        try:
+            with open(krakend_conf, 'r', encoding='utf-8') as f:
+                krakend_data = json.load(f)
+            for ep in krakend_data.get("endpoints", []):
+                ep_path = ep.get("endpoint", "")
+                if endpoint_prefix:
+                    ep_path = ep_path.replace("$ENDPOINT_PREFIX", endpoint_prefix)
+                ep_method = ep.get("method", "").upper()
+                extra = ep.get("extra_config", {})
+                jose = extra.get("github.com/devopsfaith/krakend-jose/validator")
+                if jose and "roles" in jose:
+                    krakend_roles[(ep_path, ep_method)] = jose["roles"]
+            print(f"✅ KrakenD roles carregados: {len(krakend_roles)} endpoints")
+        except Exception as e:
+            print(f"⚠️  Erro ao ler roles do Krakend: {e}")
         return krakend_roles
 
     def _load_krakend_disable_jwk(self) -> Dict:
-        """Carrega endpoints com disable_jwk_security=true do KrakenD"""
         disable_jwk = {}
-
-        env_path = Path(".env")
-        krakend_conf = None
-        endpoint_prefix = None
-
-        if env_path.exists():
-            with open(env_path, 'r', encoding='utf-8') as f:
-                for line in f:
-                    if line.strip().startswith("KRAKEND_CONF"):
-                        krakend_conf = line.strip().split("=", 1)[-1]
-                    if line.strip().startswith("ENDPOINT_PREFIX"):
-                        endpoint_prefix = line.strip().split("=", 1)[-1]
-
-        if krakend_conf and Path(krakend_conf).exists():
-            try:
-                with open(krakend_conf, 'r', encoding='utf-8') as f:
-                    krakend_data = json.load(f)
-
-                for ep in krakend_data.get("endpoints", []):
-                    ep_path = ep.get("endpoint", "")
-                    if endpoint_prefix:
-                        ep_path = ep_path.replace("$ENDPOINT_PREFIX", endpoint_prefix)
-                    ep_method = ep.get("method", "").upper()
-
-                    extra = ep.get("extra_config", {})
-                    jose = extra.get("github.com/devopsfaith/krakend-jose/validator")
-                    if jose and jose.get("disable_jwk_security") is True:
-                        disable_jwk[(ep_path, ep_method)] = True
-            except Exception as e:
-                print(f"⚠️  Erro ao ler disable_jwk_security do Krakend: {e}")
-
+        krakend_conf = os.getenv("KRAKEND_CONF", "").strip()
+        endpoint_prefix = os.getenv("ENDPOINT_PREFIX", "").strip()
+        if not krakend_conf or not Path(krakend_conf).exists():
+            return disable_jwk
+        try:
+            with open(krakend_conf, 'r', encoding='utf-8') as f:
+                krakend_data = json.load(f)
+            for ep in krakend_data.get("endpoints", []):
+                ep_path = ep.get("endpoint", "")
+                if endpoint_prefix:
+                    ep_path = ep_path.replace("$ENDPOINT_PREFIX", endpoint_prefix)
+                ep_method = ep.get("method", "").upper()
+                extra = ep.get("extra_config", {})
+                jose = extra.get("github.com/devopsfaith/krakend-jose/validator")
+                if jose and jose.get("disable_jwk_security") is True:
+                    disable_jwk[(ep_path, ep_method)] = True
+        except Exception as e:
+            print(f"⚠️  Erro ao ler disable_jwk_security do Krakend: {e}")
         return disable_jwk
 
     def _path_candidates(self, path: str) -> List[str]:
-        """Gera variantes do path para match tolerante de prefixo e versão."""
         candidates = [path]
-        # /api/v1/X  ↔  /api/X
         if path.startswith('/api/v1/'):
             candidates.append(path.replace('/api/v1/', '/api/', 1))
         elif path.startswith('/api/'):
             candidates.append(path.replace('/api/', '/api/v1/', 1))
-        # /v1/X  ↔  /api/v1/X  ↔  /api/X  (KrakenD usa $PREFIX/v1/recurso)
         if path.startswith('/v1/'):
-            candidates.append('/api' + path)               # /v1/X → /api/v1/X
-            candidates.append('/api' + path[3:])           # /v1/X → /api/X
+            candidates.append('/api' + path)
+            candidates.append('/api' + path[3:])
         return list(dict.fromkeys(candidates))
-    
+
     def _make_example_filename(self, method: str, path: str) -> str:
-        """Gera nome de arquivo para exemplo baseado no método e path"""
         sanitized = path.lstrip("/")
         sanitized = re.sub(r"\{[^}/]+\}", "X", sanitized)
         sanitized = re.sub(r"[/\\\s]+", "_", sanitized)
         sanitized = re.sub(r"[^a-zA-Z0-9_\-]", "", sanitized)
         return f"{method.upper()}_{sanitized}.json"
-    
+
     def _normalize_path(self, path: str) -> str:
-        """Normaliza path para comparação (substitui {param} e :param por {X})"""
-        normalized = re.sub(r"\{[^}/]+\}", "{X}", path)   # {id} → {X}
-        normalized = re.sub(r":[^/]+", "{X}", normalized)    # :id  → {X}
+        normalized = re.sub(r"\{[^}/]+\}", "{X}", path)
+        normalized = re.sub(r":[^/]+", "{X}", normalized)
         return normalized
-    
+
+    def _resolve_custom_auth_headers(self, method: str, path: str, details: Optional[Dict]) -> Dict[str, str]:
+        """
+        Resolve custom auth headers para um endpoint, combinando:
+        1. Detecção automática dos parâmetros OpenAPI (headers required com x-*)
+        2. Override manual do .env (CUSTOM_AUTH_HEADERS) — prioridade alta
+        """
+        custom = {}
+        if details:
+            auto_detected = self._detect_custom_auth_headers_from_openapi(details)
+            custom.update(auto_detected)
+        endpoint_key = f"{method.upper()} {path}"
+        if endpoint_key in self.custom_auth_headers_env:
+            custom.update(self.custom_auth_headers_env[endpoint_key])
+        if not custom:
+            for candidate in self._path_candidates(path):
+                candidate_key = f"{method.upper()} {candidate}"
+                if candidate_key in self.custom_auth_headers_env:
+                    custom.update(self.custom_auth_headers_env[candidate_key])
+                    break
+        return custom
+
     def enrich_endpoint(self, endpoint: Dict) -> Dict:
-        """Adiciona informações do OpenAPI a um endpoint"""
         path = endpoint.get('path', '')
         method = endpoint.get('method', '')
-        
-        # Busca no OpenAPI
+
+        details = None
         if self.openapi_data:
             paths = self.openapi_data.get('paths', {})
             method_lower = method.lower()
-
-            # Tenta match com tolerância de prefixo/versão
-            details = None
             for candidate in self._path_candidates(path):
                 norm_candidate = self._normalize_path(candidate)
                 for spec_path, spec_methods in paths.items():
@@ -563,42 +533,34 @@ class OpenAPIEnricher:
                 if details:
                     break
 
-            if details:
-                endpoint['summary'] = details.get('summary')
-                endpoint['description'] = details.get('description')
-                # Armazena parâmetros do OpenAPI para uso na análise de vulnerabilidades
-                endpoint['openapi_parameters'] = details.get('parameters', [])
-        
-        # Busca exemplo real
-        example_filename = self._make_example_filename(method, path)
-        example_path = self.examples_dir / example_filename
-        if example_path.exists():
-            try:
-                with open(example_path, 'r', encoding='utf-8') as f:
-                    endpoint['realistic_examples'] = {
-                        "valid_request": json.load(f),
-                        "valid_response": None
-                    }
-            except Exception:
-                pass
-        
-        # Busca roles do Krakend
+        if details:
+            endpoint['summary'] = details.get('summary')
+            endpoint['description'] = details.get('description')
+            endpoint['openapi_parameters'] = details.get('parameters', [])
+
+            example_filename = self._make_example_filename(method, path)
+            example_path = self.examples_dir / example_filename
+            if example_path.exists():
+                try:
+                    with open(example_path, 'r', encoding='utf-8') as f:
+                        endpoint['realistic_examples'] = {
+                            "valid_request": json.load(f),
+                            "valid_response": None
+                        }
+                except Exception:
+                    pass
+
         roles = []
         norm_path_candidates = [self._normalize_path(p) for p in self._path_candidates(path)]
-        
-        # Tenta match exato
         if (path, method) in self.krakend_roles:
             roles = self.krakend_roles[(path, method)]
         else:
-            # Tenta match por path normalizado
             for (k_path, k_method), k_roles in self.krakend_roles.items():
                 if k_method == method and self._normalize_path(k_path) in norm_path_candidates:
                     roles = k_roles
                     break
-        
         endpoint['roles'] = roles
 
-        # Marca misconfiguration de gateway (JWKS inseguro)
         disable_jwk = False
         if (path, method) in self.krakend_disable_jwk:
             disable_jwk = True
@@ -607,18 +569,21 @@ class OpenAPIEnricher:
                 if is_disabled and k_method == method and self._normalize_path(k_path) in norm_path_candidates:
                     disable_jwk = True
                     break
-
         endpoint['gateway_disable_jwk_security'] = disable_jwk
-        
+
+        # NOVO: Custom auth headers
+        custom_headers = self._resolve_custom_auth_headers(method, path, details)
+        if custom_headers:
+            endpoint['custom_auth_headers'] = custom_headers
+            print(f"   🔑 Custom auth headers: {list(custom_headers.keys())}")
+
         return endpoint
 
     def _enrich_krakend_only(self, endpoint: Dict) -> Dict:
-        """Aplica roles + disable_jwk do KrakenD sem depender de OpenAPI."""
         path = endpoint.get('path', '')
         method = endpoint.get('method', '')
         norm_candidates = [self._normalize_path(p) for p in self._path_candidates(path)]
 
-        # Roles
         roles = []
         if (path, method) in self.krakend_roles:
             roles = self.krakend_roles[(path, method)]
@@ -629,7 +594,6 @@ class OpenAPIEnricher:
                     break
         endpoint['roles'] = roles
 
-        # disable_jwk_security
         disable_jwk = False
         if (path, method) in self.krakend_disable_jwk:
             disable_jwk = True
@@ -640,18 +604,55 @@ class OpenAPIEnricher:
                     break
         endpoint['gateway_disable_jwk_security'] = disable_jwk
 
+        # NOVO: Custom auth headers (sem OpenAPI)
+        endpoint_key = f"{method.upper()} {path}"
+        if endpoint_key in self.custom_auth_headers_env:
+            endpoint['custom_auth_headers'] = self.custom_auth_headers_env[endpoint_key]
+
+        return endpoint
+
+
+    def _enrich_krakend_only(self, endpoint: Dict) -> Dict:
+        path = endpoint.get('path', '')
+        method = endpoint.get('method', '')
+        norm_candidates = [self._normalize_path(p) for p in self._path_candidates(path)]
+
+        roles = []
+        if (path, method) in self.krakend_roles:
+            roles = self.krakend_roles[(path, method)]
+        else:
+            for (k_path, k_method), k_roles in self.krakend_roles.items():
+                if k_method == method and self._normalize_path(k_path) in norm_candidates:
+                    roles = k_roles
+                    break
+        endpoint['roles'] = roles
+
+        disable_jwk = False
+        if (path, method) in self.krakend_disable_jwk:
+            disable_jwk = True
+        else:
+            for (k_path, k_method), is_disabled in self.krakend_disable_jwk.items():
+                if is_disabled and k_method == method and self._normalize_path(k_path) in norm_candidates:
+                    disable_jwk = True
+                    break
+        endpoint['gateway_disable_jwk_security'] = disable_jwk
+
+        # Custom auth headers (sem OpenAPI, apenas do .env)
+        endpoint_key = f"{method.upper()} {path}"
+        if endpoint_key in self.custom_auth_headers_env:
+            endpoint['custom_auth_headers'] = self.custom_auth_headers_env[endpoint_key]
+
         return endpoint
 
 
 class LocalLLMAnalyzer:
     """Analisador de segurança com LLM + Heurística"""
-    
+
     def __init__(self, model: str = "codellama:7b", backend: str = "gatiator", llm_url: str = None):
         self.model = model
         self.backend = backend
         self.vuln_db = VulnerabilityDatabase()
         self.adv_detector = AdvancedVulnerabilityDetector()
-        
         if llm_url:
             self.llm_url = llm_url
         elif backend == "gatiator":
@@ -660,7 +661,7 @@ class LocalLLMAnalyzer:
             self.llm_url = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434/v1/chat/completions")
         else:
             raise ValueError(f"Backend LLM desconhecido: {backend}")
-    
+
     def _get_pii_patterns(self):
         try:
             patterns_path = Path(__file__).parent.parent.parent / "pii_patterns.json"
@@ -670,7 +671,7 @@ class LocalLLMAnalyzer:
         except Exception:
             pass
         return ['cpf', 'cnpj', 'email', 'telefone', 'celular', 'nome', 'documento']
-    
+
     def _infer_tags(self, endpoint: Dict) -> List[str]:
         path = endpoint.get('path', '').lower()
         method = endpoint.get('method', '').upper()
@@ -690,11 +691,10 @@ class LocalLLMAnalyzer:
         if method == 'DELETE':
             tags.append("delete-operation")
         return tags
-    
+
     def _infer_purpose(self, endpoint: Dict) -> str:
         path = endpoint.get('path', '').lower()
         method = endpoint.get('method', '').upper()
-        
         if 'user' in path or 'conta' in path:
             if method == 'GET':
                 return "Consulta de usuários/contas"
@@ -704,30 +704,23 @@ class LocalLLMAnalyzer:
                 return "Atualização de usuários/contas"
             elif method == 'DELETE':
                 return "Remoção de usuários/contas"
-        
         if 'auth' in path or 'login' in path:
             return "Autenticação de usuários"
-        
         if 'documento' in path:
             return "Gerenciamento de documentos"
-        
         if 'fluxo' in path:
             return "Gerenciamento de fluxos de trabalho"
-        
         return f"Operação {method} no recurso {path}"
-    
+
     def _simple_heuristic_analysis(self, endpoint: Dict) -> Dict:
-        """Análise heurística completa"""
         path = endpoint.get('path', '').lower()
         method = endpoint.get('method', '').upper()
-        
-        # Detecta PII
+
         pii_fields = []
         for pattern in self._get_pii_patterns():
             if pattern in path:
                 pii_fields.append(pattern)
-        
-        # Detecta autenticação
+
         auth_required = True
         auth_type = "jwt"
         if 'public' in path or 'health' in path or 'metrics' in path or 'swagger' in path:
@@ -735,15 +728,13 @@ class LocalLLMAnalyzer:
             auth_type = "none"
         elif 'login' in path or 'auth' in path:
             auth_type = "basic"
-        
-        # Detecta vulnerabilidades
+
         vulnerabilities = self.adv_detector.detect_vulnerabilities(endpoint, auth_required)
-        
-        # Calcula risco
+
         risk_level = "baixo"
         risk_reason = "Endpoint sem dados sensíveis aparentes"
         risk_score = 0.1
-        
+
         if vulnerabilities:
             for vuln in vulnerabilities:
                 vuln_info = self.vuln_db.get_vulnerability_info(vuln)
@@ -774,7 +765,7 @@ class LocalLLMAnalyzer:
             risk_level = "médio"
             risk_score = 0.5
             risk_reason = "Contém parâmetro de ID (possível BOLA)"
-        
+
         return {
             "pii_fields": pii_fields,
             "auth_required": auth_required,
@@ -790,27 +781,16 @@ class LocalLLMAnalyzer:
             "critical_resource": risk_level == "alto",
             "tags": self._infer_tags(endpoint)
         }
-    
-    def _cross_validate_vulns(self, llm_vulns: List[str], endpoint: Dict) -> List[str]:
-        """
-        Filtra vulnerabilidades retornadas pelo LLM exigindo evidência mínima
-        no path ou chamadas de código perigosas reais no contexto.
-        Usa padrões conservadores para evitar falsos positivos por palavras
-        genéricas em comentários swagger.
-        """
-        path    = endpoint.get('path', '').lower()
-        context = str(endpoint.get('context', '')).lower()
-        method  = endpoint.get('method', '').upper()
 
-        # Apenas a parte de código (após o último bloco de comentário swagger */
-        # se existir), para não confundir descições com chamadas reais.
+    def _cross_validate_vulns(self, llm_vulns: List[str], endpoint: Dict) -> List[str]:
+        path = endpoint.get('path', '').lower()
+        context = str(endpoint.get('context', '')).lower()
+        method = endpoint.get('method', '').upper()
         code_only = context
         if '*/' in context:
             code_only = context[context.rfind('*/') + 2:]
 
         def _bola_direct_access(p: str) -> bool:
-            """Mesmo critério de detect_vulnerabilities: BOLA só quando :id é terminal
-            ou seguido diretamente de outro parâmetro (recurso aninhado)."""
             segs = p.strip('/').split('/')
             for idx, s in enumerate(segs):
                 if re.match(r'^:(id|user_id|account_id|document_id)\b', s):
@@ -821,125 +801,86 @@ class LocalLLMAnalyzer:
             return False
 
         evidence = {
-            # Path com acesso direto a recurso por ID (exclui sub-ações estáticas)
             'bola': _bola_direct_access(path),
-
-            # Path explicitamente administrativo OU código verifica role/permissão
-            'bfla': bool(re.search(r'/admin|/internal/|/manage/', path)) or
+            'bfla': bool(re.search(r'/admin|/internal|/manage/', path)) or
                     bool(re.search(r'req\.user\.role|hasrole\(|checkpermission\(|isadmin\(', code_only)),
-
-            # Código usa input do usuário diretamente em query SQL/ORM
             'injection': bool(re.search(
                 r'req\.query\.\w|req\.params\.\w.*(?:sql|query|find|where)|'
                 r'knex\.|sequelize\.|typeorm\.|\.raw\(|query\(`|query\(\s*["\']', code_only)),
-
-            # Código faz requisição HTTP com dado do usuário
             'ssrf': bool(re.search(
                 r'fetch\((?:req\.|.*req\b)|axios\.(?:get|post|put|patch|delete)\((?:req\.|.*req\b)|'
                 r'http\.(?:get|post)\((?:req\.|.*req\b)|got\((?:req\.|.*req\b)', code_only)),
-
-            # Endpoint sem autenticação (determinado na análise heurística de contexto)
             'broken_auth': bool(re.search(r'public|health|metrics|swagger|no.?auth|unauthenticated', path)) and
                            method in ('POST', 'PUT', 'PATCH', 'DELETE'),
-
-            # Código aplica req.body diretamente a update/save sem filtro
             'mass_assignment': bool(re.search(
                 r'\.save\(req\.body|object\.assign\(.*req\.body|'
                 r'update\(.*req\.body|\.create\(req\.body|\.\.\.(req\.body)', code_only)),
-
-            # Path com sufixo de debug/test/dev
             'security_misconfiguration': bool(re.search(
                 r'/debug|/test-|/dev-|/private|/internal/', path)),
-
-            # Path de autenticação/OTP com método que cria/altera dados
             'rate_limiting_absence': bool(re.search(
                 r'/login|/auth|/register|/otp|/reset.?password|/forgot', path)) and
                                      method in ('POST', 'PUT', 'PATCH'),
-
-            # Código usa parser XML real
             'xxe': bool(re.search(
                 r'xml2js|xmlparser|libxml|domparser|parsestring.*xml|\.xml\b', code_only)),
-
-            # Código faz redirect com dado do usuário
             'open_redirect': bool(re.search(
                 r'res\.redirect\(req\.|res\.redirect\(.*query\.|res\.redirect\(.*param', code_only)),
-
-            # Path de webhook/callback que consome serviço externo
             'unsafe_consumption': bool(re.search(r'/webhook|/callback', path)) or
                                   bool(re.search(
                                       r'fetch\(.*req\.|axios\.\w+\(.*req\.', code_only)),
         }
-
         kept, discarded = [], []
         for vuln in llm_vulns:
             if evidence.get(vuln, False):
                 kept.append(vuln)
             else:
                 discarded.append(vuln)
-
         if discarded:
             print(f"   🔍 LLM cross-validate: descartados sem evidência → {discarded}")
-
         return kept
 
     def analyze_endpoint(self, endpoint: Dict, code_context: str = "", max_retries: int = 2) -> Dict:
-        """Analisa endpoint com fallback para heurística"""
         for attempt in range(max_retries):
             try:
                 result = self._call_llm(endpoint, code_context)
                 if result and 'error' not in result:
-                    # Normaliza vulnerabilidades
                     llm_vulns = result.get('vulnerabilities', [])
                     if isinstance(llm_vulns, list):
                         clean_vulns = []
                         valid_vulns = ['bola', 'bfla', 'injection', 'ssrf', 'broken_auth',
-                                      'mass_assignment', 'security_misconfiguration',
-                                      'rate_limiting_absence', 'xxe', 'open_redirect', 'unsafe_consumption']
+                                       'mass_assignment', 'security_misconfiguration',
+                                       'rate_limiting_absence', 'xxe', 'open_redirect', 'unsafe_consumption']
                         for v in llm_vulns:
                             if isinstance(v, str):
                                 vuln_clean = v.lower().strip().replace(' ', '_')
                                 if vuln_clean in valid_vulns:
                                     clean_vulns.append(vuln_clean)
-                        # Cross-valida com evidências do path/contexto
                         clean_vulns = self._cross_validate_vulns(clean_vulns, endpoint)
                         result['vulnerabilities'] = clean_vulns
                     else:
                         result['vulnerabilities'] = []
-                    
-                    # Enriquece com OWASP/SANS
                     result['vulnerabilities_detailed'] = self.vuln_db.enrich_vulnerabilities(result['vulnerabilities'])
                     result['owasp_summary'] = self.vuln_db.get_owasp_summary(result['vulnerabilities'])
                     result['sans_summary'] = self.vuln_db.get_sans_summary(result['vulnerabilities'])
-                    
                     if 'risk_score' not in result:
                         result['risk_score'] = 0.9 if result.get('risk_level') == 'alto' else (0.5 if result.get('risk_level') == 'médio' else 0.1)
                     if 'tags' not in result:
                         result['tags'] = self._infer_tags(endpoint)
                     if 'business_purpose' not in result:
                         result['business_purpose'] = self._infer_purpose(endpoint)
-                    
                     return result
             except Exception as e:
                 print(f"   ⚠️  Tentativa {attempt + 1} falhou: {e}")
                 time.sleep(1)
-        
         print("   🔄 Usando análise heurística (fallback)")
         return self._simple_heuristic_analysis(endpoint)
-    
+
     def _call_llm(self, endpoint: Dict, code_context: str = "") -> Dict:
-        """Chama o backend LLM"""
-        # Usa o contexto de código do endpoint se não foi fornecido explicitamente
         effective_context = code_context or endpoint.get('context', '')
-        # Limita o contexto a 1500 caracteres para não estourar o contexto do LLM
         if effective_context:
             effective_context = effective_context[:1500]
-
         context_section = f"""
 Código-fonte relevante (trecho real do arquivo):
-```
-{effective_context}
-```
-""" if effective_context else ""
+{effective_context}""" if effective_context else ""
 
         prompt = f"""Responda apenas com JSON. Analise o endpoint abaixo com base no código-fonte fornecido.
 Endpoint: {endpoint.get('method', '')} {endpoint.get('path', '')}
@@ -948,25 +889,21 @@ Instruções:
 - Liste em "vulnerabilities" APENAS as vulnerabilidades confirmadas pelo código acima.
 - Se o código não evidenciar a vulnerabilidade, NÃO a inclua.
 - Se não houver código suficiente para análise, retorne "vulnerabilities": [].
-
 Formato exato (responda SOMENTE este JSON):
 {{"pii_fields":[],"auth_required":false,"auth_type":"jwt","risk_level":"baixo","risk_reason":"","vulnerabilities":[],"business_purpose":"","critical_resource":false}}
-
 Valores válidos para vulnerabilities: bola, bfla, injection, ssrf, broken_auth, mass_assignment, security_misconfiguration, rate_limiting_absence, xxe, open_redirect, unsafe_consumption"""
-        
+
         payload = {"model": self.model, "messages": [{"role": "user", "content": prompt}]}
         headers = {"Content-Type": "application/json"}
         if self.backend == "gatiator":
             headers["Authorization"] = "Bearer qualquer"
-        
+
         try:
             response = requests.post(self.llm_url, json=payload, headers=headers, timeout=30)
             if response.status_code != 200:
                 return {"error": f"Status {response.status_code}"}
-            
             data = response.json()
             content = data.get("choices", [{}])[0].get("message", {}).get("content", "")
-            
             start = content.find('{')
             end = content.rfind('}') + 1
             if start != -1 and end > start:
@@ -977,18 +914,17 @@ Valores válidos para vulnerabilities: bola, bfla, injection, ssrf, broken_auth,
 
 
 def generate_enhanced_report(endpoints: List[Dict], output_file: Path):
-    """Gera relatório Markdown com OWASP e SANS"""
+    """Gera relatório Markdown com OWASP e SANS diretamente no local especificado"""
     total = len(endpoints)
     if total == 0:
         print("⚠️ Nenhum endpoint para gerar relatório")
         return
-    
+
     high_risk = sum(1 for e in endpoints if e.get('risk_level') == 'alto')
     medium_risk = sum(1 for e in endpoints if e.get('risk_level') == 'médio')
     low_risk = sum(1 for e in endpoints if e.get('risk_level') == 'baixo')
     has_pii = sum(1 for e in endpoints if e.get('pii_fields'))
-    
-    # Coleta vulnerabilidades
+
     owasp_map = {}
     sans_map = {}
     for e in endpoints:
@@ -1004,7 +940,7 @@ def generate_enhanced_report(endpoints: List[Dict], output_file: Path):
                 if cwe_id not in sans_map:
                     sans_map[cwe_id] = {'count': 0, 'rank': vuln['sans']['rank']}
                 sans_map[cwe_id]['count'] += 1
-    
+
     report = f"""# Relatório de Análise de Segurança de API
 
 ## 📊 Resumo
@@ -1024,19 +960,16 @@ def generate_enhanced_report(endpoints: List[Dict], output_file: Path):
 """
     for owasp_id, info in sorted(owasp_map.items()):
         report += f"| {owasp_id} | {info['name']} | {info['count']} |\n"
-    
     if not owasp_map:
         report += "| Nenhuma vulnerabilidade OWASP detectada | - | 0 |\n"
-    
+
     report += "\n## 📊 SANS Top 25\n\n| Rank | CWE | Endpoints afetados |\n|------|-----|-------------------|\n"
     for cwe_id, info in sorted(sans_map.items(), key=lambda x: x[1]['rank']):
         report += f"| {info['rank']} | {cwe_id} | {info['count']} |\n"
-    
     if not sans_map:
         report += "| Nenhuma vulnerabilidade SANS detectada | - | 0 |\n"
-    
+
     report += "\n## 🔴 Endpoints de Alto Risco\n\n| Método | Path | Vulnerabilidades |\n|--------|------|------------------|\n"
-    high_risk_count = 0
     for e in endpoints:
         if e.get('risk_level') == 'alto':
             if e.get('vulnerabilities'):
@@ -1046,21 +979,69 @@ def generate_enhanced_report(endpoints: List[Dict], output_file: Path):
             else:
                 vulns = 'sem mapeamento explícito'
             report += f"| {e.get('method', '')} | `{e.get('path', '')}` | {vulns} |\n"
-            high_risk_count += 1
-    
     if high_risk == 0:
         report += "| Nenhum endpoint de alto risco detectado | - | - |\n"
-    
-    report += f"\n---\n*Relatório gerado por step5_analyzer_unified.py em {datetime.now().strftime('%d/%m/%Y %H:%M:%S')}*\n"
-    
+
+    report += f"\n---\n*Relatório gerado por step4_analyzer_and_enricher.py em {datetime.now().strftime('%d/%m/%Y %H:%M:%S')}*\n"
+    output_file.parent.mkdir(parents=True, exist_ok=True)
     with open(output_file, 'w', encoding='utf-8') as f:
         f.write(report)
     print(f"📊 Relatório salvo em: {output_file}")
 
 
-def find_latest_scan_endpoints(base_dir: str = "output") -> Optional[str]:
+def generate_summary_markdown(endpoints: List[Dict], output_file: Path, full_data: Dict) -> None:
+    """Gera resumo markdown do mapeamento de endpoints no local especificado"""
+    metadata = full_data.get('metadata', {})
+    total = len(endpoints)
+    endpoints_with_data = sum(1 for e in endpoints if e.get('realistic_examples'))
+    methods_count = {}
+    for e in endpoints:
+        method = e.get('method', 'unknown')
+        methods_count[method] = methods_count.get(method, 0) + 1
+
+    markdown = f"""# Mapeamento de Endpoints - API
+
+## 📊 Resumo
+
+| Métrica | Valor |
+|---------|-------|
+| **Total de endpoints** | {total} |
+| **Com dados de exemplo** | {endpoints_with_data} |
+| **Data da análise** | {datetime.now().strftime('%d/%m/%Y %H:%M:%S')} |
+| **Projeto** | {metadata.get('project_name', 'N/A')} |
+
+## 📈 Distribuição por Método HTTP
+
+| Método | Quantidade |
+|--------|------------|
+"""
+    for method, count in sorted(methods_count.items()):
+        markdown += f"| {method} | {count} |\n"
+
+    markdown += """
+## 📋 Lista de Endpoints
+
+| Método | Path | Resumo | Exemplo |
+|--------|------|--------|---------|
+"""
+    for e in endpoints:
+        method = e.get('method', '')
+        path = e.get('path', '')
+        summary = e.get('summary', '') or e.get('description', '') or e.get('business_purpose', '')
+        has_example = '✅' if e.get('realistic_examples') else '❌'
+        markdown += f"| {method} | `{path}` | {summary[:80]} | {has_example} |\n"
+
+    markdown += f"\n---\n*Gerado automaticamente por step4_analyzer_and_enricher.py em {datetime.now().strftime('%d/%m/%Y %H:%M:%S')}*\n"
+    output_file.parent.mkdir(parents=True, exist_ok=True)
+    with open(output_file, 'w', encoding='utf-8') as f:
+        f.write(markdown)
+    print(f"📝 Resumo salvo em: {output_file}")
+
+
+def find_latest_scan_endpoints(base_dir: Union[str, Path]) -> Optional[str]:
     """Procura o all_endpoints.json do scan mais recente"""
     import glob
+    base_dir = str(base_dir)
     if not os.path.isdir(base_dir):
         return None
     scan_dirs = glob.glob(os.path.join(base_dir, "scan_*"))
@@ -1075,20 +1056,31 @@ def find_latest_scan_endpoints(base_dir: str = "output") -> Optional[str]:
 
 
 def analyze_project_endpoints(endpoints_file: Union[str, Path] = None,
-                             endpoints: List[Dict] = None,
-                             openapi_file: Union[str, Path] = None,
-                             model: str = "codellama:7b",
-                             use_llm: bool = True,
-                             backend: str = "gatiator",
-                             llm_url: str = None,
-                             limit: int = None) -> Dict[str, Any]:
+                              endpoints: List[Dict] = None,
+                              openapi_file: Union[str, Path] = None,
+                              model: str = "codellama:7b",
+                              use_llm: bool = True,
+                              backend: str = "gatiator",
+                              llm_url: str = None,
+                              limit: int = None,
+                              output_dir: Path = None,
+                              env_file: Optional[str] = None) -> Dict[str, Any]:
     """Função principal unificada"""
-    # Carrega endpoints do scan
+    pipeline_tests_dir = Path(__file__).parent / "tests"
+    pipeline_tests_dir.mkdir(parents=True, exist_ok=True)
+
     if endpoints_file:
         with open(endpoints_file, 'r', encoding='utf-8') as f:
-            endpoints = json.load(f)
+            full_data = json.load(f)
+        if isinstance(full_data, dict) and 'endpoints' in full_data:
+            endpoints = full_data['endpoints']
+        else:
+            endpoints = full_data
+        full_data = {'endpoints': endpoints}
     elif not endpoints:
         raise ValueError("Forneça endpoints_file ou endpoints")
+    else:
+        full_data = {'endpoints': endpoints}
 
     total_available = len(endpoints)
     if limit is not None:
@@ -1096,40 +1088,38 @@ def analyze_project_endpoints(endpoints_file: Union[str, Path] = None,
 
     print(f"\n📁 Carregados {total_available} endpoints do scan" + (f" (limitado a {limit})" if limit is not None else ""))
     print(f"🤖 Modo: {'Híbrido (LLM + Heurística)' if use_llm else 'Heurística pura'}")
-    
     if openapi_file:
         print(f"📄 Enriquecendo com OpenAPI: {openapi_file}")
-    
-    # Inicializa componentes
+    print(f"📁 Diretório de saída (.md): {output_dir}")
+    print(f"📁 Diretório de salvamento (JSON): {pipeline_tests_dir}")
+
     analyzer_backend = backend if use_llm else "gatiator"
     analyzer = LocalLLMAnalyzer(model=model, backend=analyzer_backend, llm_url=llm_url)
-    enricher = OpenAPIEnricher(Path(openapi_file) if openapi_file else None)
-    
-    # Analisa e enriquece cada endpoint
+    enricher = OpenAPIEnricher(
+        Path(openapi_file) if openapi_file else None,
+        output_dir=output_dir,
+        env_file=env_file
+    )
+
     start_time = time.time()
     enriched = []
     total = len(endpoints)
-    
+
     for i, endpoint in enumerate(endpoints, 1):
         print(f"\n📊 {i}/{total}: {endpoint.get('method', '')} {endpoint.get('path', '')}")
-        
-        # Enriquece com OpenAPI/KrakenD ANTES da análise de segurança,
-        # para que detect_vulnerabilities tenha acesso a openapi_parameters.
+
         if openapi_file:
             endpoint = enricher.enrich_endpoint(endpoint)
         else:
             endpoint = enricher._enrich_krakend_only(endpoint)
 
-        # Análise de segurança (já usa o endpoint enriquecido)
         if use_llm:
             security_analysis = analyzer.analyze_endpoint(endpoint)
         else:
             security_analysis = analyzer._simple_heuristic_analysis(endpoint)
-        
-        # Merge dos resultados de segurança no endpoint já enriquecido
+
         enriched_endpoint = {**endpoint, **security_analysis}
 
-        # Regra explícita: disable_jwk_security=true → broken_auth + misconfiguration + risco alto
         if enriched_endpoint.get('gateway_disable_jwk_security'):
             vulns = list(enriched_endpoint.get('vulnerabilities', []))
             changed = False
@@ -1142,13 +1132,10 @@ def analyze_project_endpoints(endpoints_file: Union[str, Path] = None,
                 enriched_endpoint['vulnerabilities_detailed'] = analyzer.vuln_db.enrich_vulnerabilities(vulns)
                 enriched_endpoint['owasp_summary'] = analyzer.vuln_db.get_owasp_summary(vulns)
                 enriched_endpoint['sans_summary'] = analyzer.vuln_db.get_sans_summary(vulns)
-            # Força risco alto — bypass de validação JWT é crítico independente do nível anterior
-            enriched_endpoint['risk_level'] = 'alto'
-            enriched_endpoint['risk_score'] = max(float(enriched_endpoint.get('risk_score', 0.1)), 0.85)
-            enriched_endpoint['risk_reason'] = 'Gateway com disable_jwk_security=true: bypass de validação JWT possível'
+                enriched_endpoint['risk_level'] = 'alto'
+                enriched_endpoint['risk_score'] = max(float(enriched_endpoint.get('risk_score', 0.1)), 0.85)
+                enriched_endpoint['risk_reason'] = 'Gateway com disable_jwk_security=true: bypass de validação JWT possível'
 
-        # Guarda de coerência: evita "alto" sem evidências explícitas de vulnerabilidade.
-        # Exceção: regra crítica de gateway (disable_jwk_security) já tratada acima.
         if (
             enriched_endpoint.get('risk_level') == 'alto'
             and not enriched_endpoint.get('gateway_disable_jwk_security')
@@ -1159,19 +1146,16 @@ def analyze_project_endpoints(endpoints_file: Union[str, Path] = None,
             if method in {'POST', 'PUT', 'PATCH', 'DELETE'}:
                 enriched_endpoint['risk_level'] = 'médio'
                 enriched_endpoint['risk_score'] = min(float(enriched_endpoint.get('risk_score', 0.9)), 0.5)
-                enriched_endpoint['risk_reason'] = 'Risco ajustado por coerência: sem vulnerabilidades/PII explícitas (operação de escrita)'
+                enriched_endpoint['risk_reason'] = 'Risco adjusted por coerência: sem vulnerabilidades/PII explícitas (operação de escrita)'
             else:
                 enriched_endpoint['risk_level'] = 'baixo'
                 enriched_endpoint['risk_score'] = min(float(enriched_endpoint.get('risk_score', 0.9)), 0.1)
                 enriched_endpoint['risk_reason'] = 'Risco ajustado por coerência: sem vulnerabilidades/PII explícitas'
 
-        # Guarda de coerência complementar: se houver vulnerabilidades, o risco
-        # não pode permanecer "baixo" sem justificativa.
         vulns_present = bool(enriched_endpoint.get('vulnerabilities'))
         if vulns_present and enriched_endpoint.get('risk_level') == 'baixo':
             detailed = enriched_endpoint.get('vulnerabilities_detailed', []) or []
             severities = {str(v.get('severity', '')).lower() for v in detailed if isinstance(v, dict)}
-
             if 'critical' in severities or 'high' in severities:
                 enriched_endpoint['risk_level'] = 'alto'
                 enriched_endpoint['risk_score'] = max(float(enriched_endpoint.get('risk_score', 0.1)), 0.85)
@@ -1180,28 +1164,25 @@ def analyze_project_endpoints(endpoints_file: Union[str, Path] = None,
                 enriched_endpoint['risk_level'] = 'médio'
                 enriched_endpoint['risk_score'] = max(float(enriched_endpoint.get('risk_score', 0.1)), 0.5)
                 enriched_endpoint['risk_reason'] = 'Risco ajustado por coerência: vulnerabilidades detectadas'
-        
+
         enriched.append(enriched_endpoint)
-        
+
         vuln_count = len(enriched_endpoint.get('vulnerabilities', []))
         owasp_count = len(enriched_endpoint.get('owasp_summary', []))
         print(f"   ✅ Vulns: {vuln_count} | Risco: {enriched_endpoint.get('risk_level', '?')} | OWASP: {owasp_count}")
-    
+
     elapsed = time.time() - start_time
-    
-    # Salva resultados
-    tests_dir = Path("src/application/pipeline/tests")
-    output_dir = Path("output")
-    tests_dir.mkdir(parents=True, exist_ok=True)
-    output_dir.mkdir(parents=True, exist_ok=True)
-    
-    json_output = tests_dir / "enriched_endpoints.json"
+
+    json_output = pipeline_tests_dir / "enriched_endpoints.json"
     with open(json_output, 'w', encoding='utf-8') as f:
         json.dump(enriched, f, indent=2, ensure_ascii=False)
-    
+
     report_file = output_dir / "final_security_report.md"
     generate_enhanced_report(enriched, report_file)
-    
+
+    summary_file = output_dir / "test_api_summary.md"
+    generate_summary_markdown(enriched, summary_file, full_data)
+
     stats = {
         "total": len(enriched),
         "high_risk": sum(1 for e in enriched if e.get('risk_level') == 'alto'),
@@ -1211,70 +1192,70 @@ def analyze_project_endpoints(endpoints_file: Union[str, Path] = None,
         "has_openapi": bool(openapi_file),
         "analysis_time_seconds": elapsed
     }
-    
+
     print(f"\n⏱️ Tempo de análise: {elapsed:.2f} segundos")
     print(f"💾 JSON salvo em: {json_output}")
     print(f"📊 Relatório salvo em: {report_file}")
-    
+    print(f"📝 Resumo salvo em: {summary_file}")
+
     return {"summary": stats, "endpoints": enriched, "high_risk_endpoints": [e for e in enriched if e.get('risk_level') == 'alto']}
 
 
 def main():
-    import sys
-    import argparse
-    
     parser = argparse.ArgumentParser(
         description="Analisador UNIFICADO de segurança e enriquecimento de API",
-        formatter_class=argparse.RawDescriptionHelpFormatter,
-        epilog="""
-EXEMPLOS:
-  # Apenas análise de segurança (mais rápido)
-  python3 step5_analyzer_unified.py output/scan_*/all_endpoints.json --no-llm
-  
-  # Com enriquecimento OpenAPI
-  python3 step5_analyzer_unified.py output/scan_*/all_endpoints.json --openapi docs/openapi.yaml --no-llm
-  
-  # Modo completo (LLM + OpenAPI)
-  python3 step5_analyzer_unified.py output/scan_*/all_endpoints.json --openapi docs/openapi.yaml --llm-backend ollama
-"""
+        formatter_class=argparse.RawDescriptionHelpFormatter
     )
-    
     parser.add_argument("endpoints_file", nargs="?", help="Caminho para all_endpoints.json (opcional: busca automático)")
     parser.add_argument("--openapi", "-o", help="Arquivo OpenAPI/Swagger (JSON ou YAML) para enriquecimento")
     parser.add_argument("--llm-backend", choices=["gatiator", "ollama", "none"], default="none", help="Backend LLM")
     parser.add_argument("--llm-model", default="codellama:7b", help="Modelo LLM")
     parser.add_argument("--no-llm", action="store_true", help="Usa apenas heurística (recomendado para CI/CD)")
-    parser.add_argument("--limit", "-n", type=int, default=None, metavar="N",
-                        help="Analisa apenas os primeiros N endpoints (útil para validação rápida)")
-    
+    parser.add_argument("--limit", "-n", type=int, default=None, metavar="N", help="Analisa apenas os primeiros N endpoints")
+    parser.add_argument("--output-dir", "-d", default=None, help="Diretório para saída (subpasta da raiz)")
+    add_env_arg(parser)
+    parser.add_argument("--verbose", action="store_true", help="Exibe logs detalhados")
+
     args = parser.parse_args()
-    
-    # Encontra arquivo de endpoints
+    load_environment(env_file=args.env_file, verbose=args.verbose)
+
+    project_root = Path(__file__).resolve().parent.parent.parent.parent
+
+    if args.output_dir:
+        output_dir = (project_root / args.output_dir).resolve()
+    else:
+        env_output_dir = os.getenv("REPORTS_DIR", "output")
+        output_dir = (project_root / env_output_dir).resolve()
+    output_dir.mkdir(parents=True, exist_ok=True)
+
     if args.endpoints_file:
         endpoints_path = args.endpoints_file
     else:
-        endpoints_path = find_latest_scan_endpoints()
+        endpoints_path = find_latest_scan_endpoints(output_dir)
         if not endpoints_path:
-            print("❌ Nenhum arquivo all_endpoints.json encontrado em output/scan_*/")
-            print("💡 Execute primeiro: python3 step4_scanner.py /caminho/do/projeto")
+            endpoints_path = find_latest_scan_endpoints(project_root / "output")
+        if not endpoints_path:
+            print(f"❌ Nenhum arquivo all_endpoints.json encontrado em {output_dir} ou na raiz.")
+            print("💡 Execute primeiro o passo de escaneamento.")
             sys.exit(1)
         print(f"🔍 Usando scan mais recente: {endpoints_path}")
-    
+
     use_llm = not args.no_llm and args.llm_backend != "none"
 
     if args.limit is not None:
         print(f"⚠️  Modo validação: analisando apenas os primeiros {args.limit} endpoints (--limit {args.limit})")
-    
+
     results = analyze_project_endpoints(
         endpoints_file=endpoints_path,
         openapi_file=args.openapi,
         model=args.llm_model,
         use_llm=use_llm,
         backend=args.llm_backend if use_llm else "none",
-        limit=args.limit
+        limit=args.limit,
+        output_dir=output_dir,
+        env_file=args.env_file
     )
-    
-    # Resumo final
+
     print("\n" + "="*60)
     print("📈 RESUMO FINAL DA ANÁLISE")
     print("="*60)
@@ -1282,10 +1263,8 @@ EXEMPLOS:
     print(f"Endpoints de ALTO risco          : {results['summary']['high_risk']}")
     print(f"Endpoints de MÉDIO risco         : {results['summary']['medium_risk']}")
     print(f"Endpoints de BAIXO risco         : {results['summary']['low_risk']}")
-    
     if results['summary']['high_risk'] > 0:
         print("\n⚠️  ATENÇÃO! Revise os endpoints de alto risco no relatório.")
-    
     print("="*60)
 
 

@@ -2,6 +2,7 @@ python-dotenv
 # Core dependencies
 tree-sitter>=0.20.0
 tree-sitter-typescript>=0.20.2
+tree_sitter_java>=0.23.5
 schemathesis>=4.15.2
 python-dotenv>=1.2.2
 openapi>=2.0.0

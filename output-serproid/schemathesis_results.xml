@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="utf-8"?>
+<testsuites disabled="0" errors="0" failures="4" tests="6" time="3.232018157998027">
+	<testsuite disabled="0" errors="0" failures="4" name="schemathesis" skipped="6" tests="6" time="3.232018157998027" hostname="serpro-1556850">
+		<testcase name="PUT /oauth/v1/oauth/applications/{clientId}" time="0.553603">
+			<failure type="failure" message="1. Test Case ID: nmSIkj
+
+- Undocumented HTTP status code
+
+    Received: 415
+    Documented: 200, 400, 401, 403, 404, 500
+
+[415] Unsupported Media Type:
+
+    `[{&quot;error_description&quot;:[&quot;RESTEASY003065: Cannot consume content type&quot;],&quot;error&quot;:&quot;Http exception&quot;}]`
+
+Reproduce with:
+
+    curl -X PUT 'https://hom.serproid.serpro.gov.br/oauth/v1/oauth/applications/0?token=%5BFiltered%5D&amp;x-schemathesis-unknown-property=42'"/>
+			<failure type="failure" message="1. Test Case ID: NRuJgE
+
+- API rejected schema-compliant request
+
+    Valid data should have been accepted
+    Expected: 2xx, 401, 403, 404, 409, 5xx
+
+[415] Unsupported Media Type:
+
+    `[{&quot;error_description&quot;:[&quot;RESTEASY003065: Cannot consume content type&quot;],&quot;error&quot;:&quot;Http exception&quot;}]`
+
+Reproduce with:
+
+    curl -X PUT -H 'Authorization: [Filtered]' https://hom.serproid.serpro.gov.br/oauth/v1/oauth/applications/0"/>
+			<skipped type="skipped">No examples in schema</skipped>
+		</testcase>
+		<testcase name="POST /oauth/v1/oauth/applications/{clientId}/activation" time="0.524230">
+			<failure type="failure" message="1. Test Case ID: x8ujcP
+
+- API rejected schema-compliant request
+
+    Valid data should have been accepted
+    Expected: 2xx, 401, 403, 404, 409, 5xx
+
+- Undocumented HTTP status code
+
+    Received: 412
+    Documented: 200, 400, 401, 403, 404, 500
+
+[412] Precondition Failed:
+
+    `{&quot;code&quot;:&quot;CLIENTE_OAUTH_NAO_IDENTIFICADO&quot;,&quot;msg&quot;:&quot;Não foi possível identificar a aplicação cliente.&quot;,&quot;debug&quot;:&quot;&quot;}`
+
+Reproduce with:
+
+    curl -X POST https://hom.serproid.serpro.gov.br/oauth/v1/oauth/applications/0/activation"/>
+			<skipped type="skipped">No examples in schema</skipped>
+		</testcase>
+		<testcase name="POST /oauth/v1/oauth/applications/{clientId}/redirect-uris" time="0.108455">
+			<failure type="failure" message="1. Test Case ID: a6mqj9
+
+- Undocumented HTTP status code
+
+    Received: 415
+    Documented: 200, 400, 401, 403, 404, 500
+
+[415] Unsupported Media Type:
+
+    `[{&quot;error_description&quot;:[&quot;RESTEASY003065: Cannot consume content type&quot;],&quot;error&quot;:&quot;Http exception&quot;}]`
+
+Reproduce with:
+
+    curl -X POST 'https://hom.serproid.serpro.gov.br/oauth/v1/oauth/applications/0/redirect-uris?token=%5BFiltered%5D&amp;x-schemathesis-unknown-property=42'"/>
+			<failure type="failure" message="1. Test Case ID: nuHLZl
+
+- API rejected schema-compliant request
+
+    Valid data should have been accepted
+    Expected: 2xx, 401, 403, 404, 409, 5xx
+
+[415] Unsupported Media Type:
+
+    `[{&quot;error_description&quot;:[&quot;RESTEASY003065: Cannot consume content type&quot;],&quot;error&quot;:&quot;Http exception&quot;}]`
+
+Reproduce with:
+
+    curl -X POST -H 'Authorization: [Filtered]' https://hom.serproid.serpro.gov.br/oauth/v1/oauth/applications/0/redirect-uris"/>
+			<skipped type="skipped">No examples in schema</skipped>
+		</testcase>
+		<testcase name="GET /oauth/v1/oauth/applications/{clientId}" time="0.959121">
+			<skipped type="skipped">No examples in schema</skipped>
+		</testcase>
+		<testcase name="DELETE /oauth/v1/oauth/applications/{clientId}/activation" time="0.967368">
+			<skipped type="skipped">No examples in schema</skipped>
+		</testcase>
+		<testcase name="DELETE /oauth/v1/oauth/applications/{clientId}/redirect-uris" time="0.119241">
+			<failure type="failure" message="1. Test Case ID: ya17X1
+
+- Undocumented HTTP status code
+
+    Received: 415
+    Documented: 200, 400, 401, 403, 404, 500
+
+[415] Unsupported Media Type:
+
+    `[{&quot;error_description&quot;:[&quot;RESTEASY003065: Cannot consume content type&quot;],&quot;error&quot;:&quot;Http exception&quot;}]`
+
+Reproduce with:
+
+    curl -X DELETE 'https://hom.serproid.serpro.gov.br/oauth/v1/oauth/applications/0/redirect-uris?token=%5BFiltered%5D&amp;x-schemathesis-unknown-property=42'"/>
+			<failure type="failure" message="1. Test Case ID: dy4MOw
+
+- API rejected schema-compliant request
+
+    Valid data should have been accepted
+    Expected: 2xx, 401, 403, 404, 409, 5xx
+
+[415] Unsupported Media Type:
+
+    `[{&quot;error_description&quot;:[&quot;RESTEASY003065: Cannot consume content type&quot;],&quot;error&quot;:&quot;Http exception&quot;}]`
+
+Reproduce with:
+
+    curl -X DELETE -H 'Authorization: [Filtered]' https://hom.serproid.serpro.gov.br/oauth/v1/oauth/applications/0/redirect-uris"/>
+			<skipped type="skipped">No examples in schema</skipped>
+		</testcase>
+	</testsuite>
+</testsuites>

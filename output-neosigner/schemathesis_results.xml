@@ -1,0 +1,1658 @@
+<?xml version="1.0" encoding="utf-8"?>
+<testsuites disabled="0" errors="0" failures="62" tests="67" time="6.449702000012621">
+	<testsuite disabled="0" errors="0" failures="62" name="schemathesis" skipped="33" tests="67" time="6.449702000012621" hostname="serpro-1556850">
+		<testcase name="POST /api/v1/clientes" time="0.107393">
+			<failure type="failure" message="1. Test Case ID: cauIAI
+
+- Server error
+
+[500] Internal Server Error:
+
+    &lt;EMPTY&gt;
+
+Reproduce with:
+
+    curl -X POST -H 'Authorization: [Filtered]' -H 'Content-Type: application/json' -d '{&quot;contratante&quot;: {&quot;tipoCliente&quot;: &quot;TRIBUNAL&quot;, &quot;nome&quot;: &quot;Tribunal de Justi\u00e7a&quot;, &quot;identificador&quot;: &quot;12345678000199&quot;, &quot;biovalid&quot;: true, &quot;aceitaWhatsapp&quot;: false, &quot;tecnicosProducao&quot;: [{&quot;nome&quot;: &quot;T\u00e9cnico 1&quot;, &quot;email&quot;: &quot;tecnico1@empresa.com&quot;, &quot;telefone&quot;: &quot;+5511999999999&quot;, &quot;paisIso3&quot;: &quot;BRA&quot;, &quot;cpf&quot;: &quot;12345678901&quot;}], &quot;estrangeiro&quot;: false}}' 'http://localhost/api/v1/clientes?nome=&amp;sigla=&amp;sortField=nome&amp;sortDirection=ASC&amp;limit=10&amp;offset=0'"/>
+			<failure type="failure" message="1. Test Case ID: FiKx9G
+
+- Missing header not rejected
+
+    Got 500 when missing required 'Authorization' header, expected 401
+
+[500] Internal Server Error:
+
+    &lt;EMPTY&gt;
+
+Reproduce with:
+
+    curl -X POST -H 'Content-Type: application/json' -d '{&quot;contratante&quot;: {&quot;tipoCliente&quot;: &quot;TRIBUNAL&quot;, &quot;nome&quot;: &quot;Tribunal de Justi\u00e7a&quot;, &quot;identificador&quot;: &quot;12345678000199&quot;, &quot;biovalid&quot;: true, &quot;aceitaWhatsapp&quot;: false, &quot;tecnicosProducao&quot;: [{&quot;nome&quot;: &quot;T\u00e9cnico 1&quot;, &quot;email&quot;: &quot;tecnico1@empresa.com&quot;, &quot;telefone&quot;: &quot;+5511999999999&quot;, &quot;paisIso3&quot;: &quot;BRA&quot;, &quot;cpf&quot;: &quot;12345678901&quot;}], &quot;estrangeiro&quot;: false}}' http://localhost/api/v1/clientes"/>
+		</testcase>
+		<testcase name="POST /api/v1/contas/perfil/{perfil}" time="0.028442">
+			<failure type="failure" message="1. Test Case ID: dAqcrR
+
+- Server error
+
+[500] Internal Server Error:
+
+    &lt;EMPTY&gt;
+
+Reproduce with:
+
+    curl -X POST -H 'Authorization: [Filtered]' -H 'Content-Type: application/json' -d '{&quot;nome&quot;: &quot;Gestor Exemplo&quot;, &quot;codigo&quot;: &quot;94287999045&quot;, &quot;tipoCodigo&quot;: &quot;CPF&quot;, &quot;tipoConta&quot;: &quot;PESSOA&quot;, &quot;email&quot;: &quot;gestor@empresa.com&quot;, &quot;celular&quot;: &quot;+5511999999999&quot;, &quot;perfil&quot;: {&quot;grupos&quot;: [&quot;c1a2b3c4-d5e6-7890-abcd-1234567890ef&quot;, &quot;d4e5f6a7-b8c9-0123-abcd-4567890fedcb&quot;], &quot;ativo&quot;: true}, &quot;webhook&quot;: {&quot;id&quot;: &quot;wh-123&quot;, &quot;idConta&quot;: &quot;c1a2b3c4-d5e6-7890-abcd-1234567890ef&quot;, &quot;url&quot;: &quot;https://api.exemplo.com/webhook&quot;, &quot;metodo&quot;: &quot;POST&quot;, &quot;apikey&quot;: {&quot;chave&quot;: &quot;x-api-key&quot;, &quot;valor&quot;: &quot;abcdef123456&quot;}, &quot;oauth2&quot;: {&quot;tokenUrl&quot;: &quot;https://api.exemplo.com/oauth/token&quot;, &quot;clientId&quot;: &quot;client-id-123&quot;, &quot;clientSecret&quot;: &quot;secret-abc&quot;, &quot;type&quot;: &quot;client_credentials&quot;, &quot;scope&quot;: &quot;read write&quot;}}}' http://localhost/api/v1/contas/perfil/GESTOR"/>
+			<failure type="failure" message="1. Test Case ID: WDpTP1
+
+- Missing header not rejected
+
+    Got 500 when missing required 'Authorization' header, expected 401
+
+[500] Internal Server Error:
+
+    &lt;EMPTY&gt;
+
+Reproduce with:
+
+    curl -X POST -H 'Content-Type: application/json' -d '{&quot;nome&quot;: &quot;Gestor Exemplo&quot;, &quot;codigo&quot;: &quot;94287999045&quot;, &quot;tipoCodigo&quot;: &quot;CPF&quot;, &quot;tipoConta&quot;: &quot;PESSOA&quot;, &quot;email&quot;: &quot;gestor@empresa.com&quot;, &quot;celular&quot;: &quot;+5511999999999&quot;, &quot;perfil&quot;: {&quot;grupos&quot;: [&quot;c1a2b3c4-d5e6-7890-abcd-1234567890ef&quot;, &quot;d4e5f6a7-b8c9-0123-abcd-4567890fedcb&quot;]}, &quot;webhook&quot;: {&quot;id&quot;: &quot;wh-123&quot;, &quot;idConta&quot;: &quot;c1a2b3c4-d5e6-7890-abcd-1234567890ef&quot;, &quot;url&quot;: &quot;https://api.exemplo.com/webhook&quot;, &quot;metodo&quot;: &quot;POST&quot;, &quot;apikey&quot;: {&quot;chave&quot;: &quot;x-api-key&quot;, &quot;valor&quot;: &quot;abcdef123456&quot;}, &quot;oauth2&quot;: {&quot;tokenUrl&quot;: &quot;https://api.exemplo.com/oauth/token&quot;, &quot;clientId&quot;: &quot;client-id-123&quot;, &quot;clientSecret&quot;: &quot;secret-abc&quot;, &quot;type&quot;: &quot;client_credentials&quot;, &quot;scope&quot;: &quot;read write&quot;}}}' http://localhost/api/v1/contas/perfil/INTERESSADO"/>
+		</testcase>
+		<testcase name="POST /api/v1/fluxos" time="0.025769">
+			<failure type="failure" message="1. Test Case ID: NaDXmh
+
+- Server error
+
+[500] Internal Server Error:
+
+    &lt;EMPTY&gt;
+
+Reproduce with:
+
+    curl -X POST -H 'Authorization: [Filtered]' -H 'Content-Type: application/json' -d '{&quot;dadosBasicos&quot;: {&quot;nome&quot;: &quot;Fluxo de Assinatura&quot;, &quot;descricao&quot;: &quot;Fluxo para assinatura de contratos&quot;, &quot;idRequisitante&quot;: &quot;6739f533-5bde-486a-a9b4-9af5605b51fb&quot;, &quot;idGrupo&quot;: &quot;a1b2c3d4-e5f6-7890-abcd-ef1234567890&quot;, &quot;idCliente&quot;: &quot;61637e59-fb59-468f-b008-b32f7c8a38fd&quot;, &quot;tipoAssinatura&quot;: &quot;ELETRONICA&quot;, &quot;status&quot;: &quot;CRIADO&quot;, &quot;sequencial&quot;: true, &quot;interrompeSeNegativo&quot;: false, &quot;biovalid&quot;: true, &quot;permiteSumarizacaoDocumentos&quot;: false, &quot;dataLimiteResposta&quot;: &quot;2026-05-01T23:59:59Z&quot;, &quot;prazoAlertaRespostaPendente&quot;: 24}}' http://localhost/api/v1/fluxos"/>
+			<failure type="failure" message="1. Test Case ID: xhfhO7
+
+- Missing header not rejected
+
+    Got 500 when missing required 'Authorization' header, expected 401
+
+[500] Internal Server Error:
+
+    &lt;EMPTY&gt;
+
+Reproduce with:
+
+    curl -X POST -H 'Content-Type: application/json' -d '{&quot;dadosBasicos&quot;: {&quot;nome&quot;: &quot;Fluxo de Assinatura&quot;, &quot;descricao&quot;: &quot;Fluxo para assinatura de contratos&quot;, &quot;idRequisitante&quot;: &quot;6739f533-5bde-486a-a9b4-9af5605b51fb&quot;, &quot;idGrupo&quot;: &quot;a1b2c3d4-e5f6-7890-abcd-ef1234567890&quot;, &quot;idCliente&quot;: &quot;61637e59-fb59-468f-b008-b32f7c8a38fd&quot;, &quot;tipoAssinatura&quot;: &quot;AVANCADA&quot;, &quot;status&quot;: &quot;CRIADO&quot;, &quot;sequencial&quot;: true, &quot;interrompeSeNegativo&quot;: false, &quot;biovalid&quot;: true, &quot;permiteSumarizacaoDocumentos&quot;: false, &quot;dataLimiteResposta&quot;: &quot;2026-05-01T23:59:59Z&quot;, &quot;prazoAlertaRespostaPendente&quot;: 24}}' http://localhost/api/v1/fluxos"/>
+		</testcase>
+		<testcase name="POST /api/v1/fluxos/adicionar" time="0.021305">
+			<failure type="failure" message="1. Test Case ID: Df1gsA
+
+- Server error
+
+[500] Internal Server Error:
+
+    &lt;EMPTY&gt;
+
+Reproduce with:
+
+    curl -X POST -H 'Authorization: [Filtered]' -H 'Content-Type: application/json' -d '{&quot;dadosBasicos&quot;: {&quot;nome&quot;: &quot;Fluxo de Assinatura&quot;, &quot;descricao&quot;: &quot;Fluxo para assinatura de contratos&quot;, &quot;idRequisitante&quot;: &quot;6739f533-5bde-486a-a9b4-9af5605b51fb&quot;, &quot;idGrupo&quot;: &quot;a1b2c3d4-e5f6-7890-abcd-ef1234567890&quot;, &quot;idCliente&quot;: &quot;61637e59-fb59-468f-b008-b32f7c8a38fd&quot;, &quot;tipoAssinatura&quot;: &quot;ELETRONICA&quot;, &quot;status&quot;: &quot;CRIADO&quot;, &quot;sequencial&quot;: true, &quot;interrompeSeNegativo&quot;: false, &quot;biovalid&quot;: true, &quot;permiteSumarizacaoDocumentos&quot;: false, &quot;dataLimiteResposta&quot;: &quot;2026-05-01T23:59:59Z&quot;, &quot;prazoAlertaRespostaPendente&quot;: 24}, &quot;documentos&quot;: [{&quot;uri&quot;: &quot;https://exemplo.com/documento.pdf&quot;, &quot;selos&quot;: [{&quot;codigoAssinante&quot;: &quot;98814195064&quot;, &quot;tipoCodigoAssinante&quot;: &quot;CPF&quot;, &quot;pagina&quot;: 1, &quot;x&quot;: 130, &quot;y&quot;: 130, &quot;largura&quot;: 200, &quot;altura&quot;: 80}]}], &quot;interessados&quot;: [{&quot;nome&quot;: &quot;Ariano Suassuna&quot;, &quot;codigo&quot;: &quot;98814195064&quot;, &quot;tipoCodigo&quot;: &quot;CPF&quot;, &quot;email&quot;: &quot;ariano@primeiro.com.br&quot;, &quot;celular&quot;: &quot;5585988885555&quot;, &quot;perfil&quot;: {&quot;papel&quot;: &quot;ASSINANTE&quot;, &quot;ordem&quot;: 1}}]}' http://localhost/api/v1/fluxos/adicionar"/>
+			<failure type="failure" message="1. Test Case ID: OtmwpJ
+
+- Missing header not rejected
+
+    Got 500 when missing required 'Authorization' header, expected 401
+
+[500] Internal Server Error:
+
+    &lt;EMPTY&gt;
+
+Reproduce with:
+
+    curl -X POST -H 'Content-Type: application/json' -d '{&quot;dadosBasicos&quot;: {&quot;nome&quot;: &quot;Fluxo de Assinatura&quot;, &quot;descricao&quot;: &quot;Fluxo para assinatura de contratos&quot;, &quot;idRequisitante&quot;: &quot;6739f533-5bde-486a-a9b4-9af5605b51fb&quot;, &quot;idGrupo&quot;: &quot;a1b2c3d4-e5f6-7890-abcd-ef1234567890&quot;, &quot;idCliente&quot;: &quot;61637e59-fb59-468f-b008-b32f7c8a38fd&quot;, &quot;tipoAssinatura&quot;: &quot;AVANCADA&quot;, &quot;status&quot;: &quot;CRIADO&quot;, &quot;sequencial&quot;: true, &quot;interrompeSeNegativo&quot;: false, &quot;biovalid&quot;: true, &quot;permiteSumarizacaoDocumentos&quot;: false, &quot;dataLimiteResposta&quot;: &quot;2026-05-01T23:59:59Z&quot;, &quot;prazoAlertaRespostaPendente&quot;: 24}, &quot;documentos&quot;: [{&quot;uri&quot;: &quot;https://exemplo.com/documento.pdf&quot;, &quot;selos&quot;: [{&quot;codigoAssinante&quot;: &quot;98814195064&quot;, &quot;tipoCodigoAssinante&quot;: &quot;CPF&quot;, &quot;pagina&quot;: 1, &quot;x&quot;: 130, &quot;y&quot;: 130, &quot;largura&quot;: 200, &quot;altura&quot;: 80}]}], &quot;interessados&quot;: [{&quot;nome&quot;: &quot;Ariano Suassuna&quot;, &quot;codigo&quot;: &quot;98814195064&quot;, &quot;tipoCodigo&quot;: &quot;CPF&quot;, &quot;email&quot;: &quot;ariano@primeiro.com.br&quot;, &quot;celular&quot;: &quot;5585988885555&quot;, &quot;perfil&quot;: {&quot;papel&quot;: &quot;ASSINANTE&quot;, &quot;ordem&quot;: 1}}]}' http://localhost/api/v1/fluxos/adicionar"/>
+		</testcase>
+		<testcase name="POST /api/v1/grupos" time="0.022046">
+			<failure type="failure" message="1. Test Case ID: uBAmdM
+
+- Server error
+
+[500] Internal Server Error:
+
+    &lt;EMPTY&gt;
+
+Reproduce with:
+
+    curl -X POST -H 'Authorization: [Filtered]' -H 'Content-Type: application/json' -d '{&quot;preferencias&quot;: {&quot;tipoAssinatura&quot;: {&quot;permiteAlteracao&quot;: true, &quot;tipo&quot;: &quot;ELETRONICA&quot;}}, &quot;nome&quot;: &quot;&quot;, &quot;idCliente&quot;: &quot;e3e70682-c209-1cac-a29f-6fbed82c07cd&quot;, &quot;descricao&quot;: &quot;&quot;, &quot;ativo&quot;: false, &quot;gestores&quot;: [], &quot;requisitantes&quot;: []}' http://localhost/api/v1/grupos"/>
+			<failure type="failure" message="1. Test Case ID: pRMWYd
+
+- Missing header not rejected
+
+    Got 500 when missing required 'Authorization' header, expected 401
+
+[500] Internal Server Error:
+
+    &lt;EMPTY&gt;
+
+Reproduce with:
+
+    curl -X POST -H 'Content-Type: application/json' -d '{&quot;nome&quot;: &quot;Grupo Jur\u00eddico&quot;, &quot;idCliente&quot;: &quot;61637e59-fb59-468f-b008-b32f7c8a38fd&quot;, &quot;descricao&quot;: &quot;Grupo respons\u00e1vel por contratos jur\u00eddicos.&quot;, &quot;ativo&quot;: true, &quot;gestores&quot;: [&quot;47d7c524-e1b3-4e7d-bcfb-2c203329570a&quot;], &quot;requisitantes&quot;: [&quot;6739f533-5bde-486a-a9b4-9af5605b51fb&quot;], &quot;preferencias&quot;: {&quot;tipoAssinatura&quot;: {&quot;permiteAlteracao&quot;: true, &quot;tipo&quot;: &quot;ELETRONICA&quot;}}}' http://localhost/api/v1/grupos"/>
+		</testcase>
+		<testcase name="POST /api/v1/verify-authentication" time="0.035800">
+			<failure type="failure" message="1. Test Case ID: DP7pjH
+
+- Undocumented HTTP status code
+
+    Received: 422
+    Documented: 200, 400, 401, 500
+
+[422] Unprocessable Content:
+
+    `{&quot;property&quot;:&quot;authenticatorResponse&quot;,&quot;message&quot;:&quot;Parâmetro 'authenticatorResponse' é obrigatório.&quot;,&quot;data&quot;:null}`
+
+Reproduce with:
+
+    curl -X POST -H 'Content-Type: application/json' -d '{&quot;id&quot;: &quot;&quot;, &quot;rawId&quot;: &quot;&quot;, &quot;response&quot;: {&quot;authenticatorData&quot;: &quot;&quot;, &quot;clientDataJSON&quot;: &quot;&quot;, &quot;signature&quot;: &quot;&quot;, &quot;userHandle&quot;: &quot;&quot;}, &quot;type&quot;: &quot;&quot;, &quot;clientExtensionResults&quot;: [null, null]}' http://localhost/api/v1/verify-authentication"/>
+			<failure type="failure" message="1. Test Case ID: LwfEOw
+
+- API rejected schema-compliant request
+
+    Valid data should have been accepted
+    Expected: 2xx, 401, 403, 404, 409, 5xx
+
+[422] Unprocessable Content:
+
+    `{&quot;property&quot;:&quot;authenticatorResponse&quot;,&quot;message&quot;:&quot;Parâmetro 'authenticatorResponse' é obrigatório.&quot;,&quot;data&quot;:null}`
+
+Reproduce with:
+
+    curl -X POST -H 'Authorization: [Filtered]' -H 'Content-Type: application/json' -d '{}' http://localhost/api/v1/verify-authentication"/>
+			<skipped type="skipped">No examples in schema</skipped>
+		</testcase>
+		<testcase name="POST /api/v1/verify-registration" time="0.037865">
+			<failure type="failure" message="1. Test Case ID: 6QhJMz
+
+- Undocumented HTTP status code
+
+    Received: 422
+    Documented: 200, 400, 401, 500
+
+[422] Unprocessable Content:
+
+    `{&quot;property&quot;:&quot;authenticatorResponse&quot;,&quot;message&quot;:&quot;Parâmetro 'authenticatorResponse' é obrigatório.&quot;,&quot;data&quot;:null}`
+
+Reproduce with:
+
+    curl -X POST -H 'Content-Type: application/json' -d '{&quot;id&quot;: &quot;&quot;, &quot;rawId&quot;: &quot;&quot;, &quot;response&quot;: {&quot;attestationObject&quot;: &quot;&quot;, &quot;clientDataJSON&quot;: &quot;&quot;}, &quot;type&quot;: &quot;&quot;, &quot;clientExtensionResults&quot;: [null, null]}' http://localhost/api/v1/verify-registration"/>
+			<failure type="failure" message="1. Test Case ID: C42CvJ
+
+- API rejected schema-compliant request
+
+    Valid data should have been accepted
+    Expected: 2xx, 401, 403, 404, 409, 5xx
+
+[422] Unprocessable Content:
+
+    `{&quot;property&quot;:&quot;authenticatorResponse&quot;,&quot;message&quot;:&quot;Parâmetro 'authenticatorResponse' é obrigatório.&quot;,&quot;data&quot;:null}`
+
+Reproduce with:
+
+    curl -X POST -H 'Authorization: [Filtered]' -H 'Content-Type: application/json' -d '{}' http://localhost/api/v1/verify-registration"/>
+			<skipped type="skipped">No examples in schema</skipped>
+		</testcase>
+		<testcase name="PUT /api/v1/login-sistema" time="0.057975">
+			<failure type="failure" message="1. Test Case ID: Ro5o56
+
+- Response violates schema
+
+    null is not of type &quot;object&quot;
+
+    Schema at /components/schemas/PhoneOutput:
+
+        {
+            &quot;type&quot;: &quot;object&quot;,
+            &quot;required&quot;: [
+                &quot;number&quot;,
+                &quot;nationalNumber&quot;,
+                &quot;countryCode&quot;,
+                &quot;region&quot;,
+                &quot;type&quot;,
+                &quot;mask&quot;
+            ],
+            &quot;properties&quot;: {
+                &quot;number&quot;: {
+                    &quot;type&quot;: &quot;string&quot;,
+                    &quot;example&quot;: &quot;+5511999999999&quot;
+                },
+                &quot;nationalNumber&quot;: {
+                    &quot;type&quot;: &quot;string&quot;,
+                    &quot;example&quot;: &quot;11999999999&quot;
+                },
+                &quot;countryCode&quot;: {
+                    &quot;type&quot;: &quot;string&quot;,
+                    &quot;example&quot;: &quot;55&quot;
+                },
+                &quot;region&quot;: {
+                    &quot;type&quot;: &quot;string&quot;,
+                    &quot;example&quot;: &quot;BR&quot;
+                },
+                &quot;type&quot;: {
+                    &quot;type&quot;: &quot;string&quot;,
+                    &quot;example&quot;: &quot;mobile&quot;
+                },
+                &quot;mask&quot;: {
+                    &quot;type&quot;: &quot;string&quot;,
+                    &quot;example&quot;: &quot;(11) 99999-9999&quot;
+                }
+            }
+        }
+
+    Value:
+
+        null
+
+- Response violates schema
+
+    null is not of type &quot;object&quot;
+
+    Schema at /components/schemas/WebhookOutput:
+
+        {
+            &quot;type&quot;: &quot;object&quot;,
+            &quot;required&quot;: [
+                &quot;id&quot;,
+                &quot;idConta&quot;,
+                &quot;url&quot;,
+                &quot;metodo&quot;,
+                &quot;apikey&quot;,
+                &quot;oauth2&quot;
+            ],
+            &quot;properties&quot;: {
+                &quot;id&quot;: {
+                    &quot;type&quot;: &quot;string&quot;,
+                    &quot;format&quot;: &quot;uuid&quot;,
+                    &quot;example&quot;: &quot;6739f533-5bde-486a-a9b4-9af5605b51fb&quot;
+                },
+                &quot;idConta&quot;: {
+                    &quot;type&quot;: &quot;string&quot;,
+                    &quot;format&quot;: &quot;uuid&quot;,
+                    &quot;example&quot;: &quot;b1c2d3e4-f5a6-7890-bcde-fa1234567890&quot;
+                },
+                &quot;url&quot;: {
+                    &quot;type&quot;: &quot;string&quot;,
+                    &quot;example&quot;: &quot;https://webhook.exemplo.com/endpoint&quot;
+                },
+                &quot;metodo&quot;: {
+                    &quot;type&quot;: &quot;string&quot;,
+                    &quot;example&quot;: &quot;POST&quot;
+                },
+                &quot;apikey&quot;: {
+                    &quot;$ref&quot;: &quot;#/components/schemas/ApikeyOutput&quot;
+                },
+                &quot;oauth2&quot;: {
+                    &quot;$ref&quot;: &quot;#/components/schemas/Oauth2Output&quot;
+                }
+            }
+        }
+
+    Value:
+
+        null
+
+- Response violates schema
+
+    null is not of type &quot;string&quot;
+
+    Schema at /components/schemas/RequisitanteOutput/properties/celular:
+
+        {
+            &quot;type&quot;: &quot;string&quot;,
+            &quot;example&quot;: &quot;+5511999999999&quot;
+        }
+
+    Value:
+
+        null
+
+[200] OK:
+
+    `{&quot;conta&quot;:{&quot;id&quot;:&quot;6739f533-5bde-486a-a9b4-9af5605b51fb&quot;,&quot;idCliente&quot;:&quot;61637e59-fb59-468f-b008-b32f7c8a38fd&quot;,&quot;nome&quot;:&quot;Sistema ABC&quot;,&quot;email&quot;:&quot;sistema_abc@primeiro.com.br&quot;,&quot;codigo&quot;:&quot;COD00ABC&quot;,&quot;tipoCodigo&quot;:&quot;GENERICO&quot;,&quot;celular&quot;:null,&quot;phone&quot;:null,&quot;tipoConta&quot;:&quot;SISTEMA&quot;,&quot;webhook&quot;:null,&quot;perfil&quot;:{&quot;nome&quot;:&quot;REQUISITANTE&quot;,&quot;ativo&quot;:true,&quot;grupos&quot;:[&quot;0eabb1d3-6a31-4067-b945-72fb9c5a0ac2&quot;,&quot;19677acb-74f4-4bc3-ab1c-d3e6ba4ad88d&quot;,&quot;a2b0255c-82ed-44b3-911d-3100e5758a65&quot;]}},&quot;token&quot;:&quot;eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6ImMwNTMxNjFkLTk4MmEtNDFjZC04ZWE5LWVlZDdmYmE1YjMxOCJ9.eyJpZCI6IjY3MzlmNTMzLTViZGUtNDg2YS1hOWI0LTlhZjU2MDViNTFmYiIsImVtYWlsIjoic2lzdGVtYV9hYmNAcHJpbWVpcm8uY29tLmJyIiwiaWRDbGllbnRlIjoiNjE2MzdlNTktZmI1OS00NjhmLWIwMDgtYjMyZjdjOGEzOGZkIiwicm9sZXMiOiJSRVFVSVNJVEFOVEUiLCJpYXQiOjE3ODIyNDAwMTEsImV4cCI6MTc4MjI0MTgxMSwiYXVkIjoibmVvc2lnbmVyIiwic3ViIjoiUEFTU0tFWSJ9.pPjJHxhgWFPy_ocMkzz7kb5grIfCAN37UAN91XNvU9Jj7hiQnKLEgVeuWuNG5knSnlYFsKhrdgjhPE9uCe3qP5lKoIWsIHp076R-hDwiUyT3ScT0exV2BJf1rSseh_6_8USTKhLj0mgAd8ih58DSIO7WbA6iuK4IApDFOmYLwu9TxrFcG_5vrk5LBE50u95RF0DB8LejLcvfwd_H9sycrGyfDJKJyyLHQLcT0tP_E2vjSnta7xAW3sQU-x1fglOYsrDlsr3nJ-FVYxwGqmZbeQHErTdkBJMpNH8a1QBjHpGmsy1cC-rvQbQI6kDf3yk3DteRTc_2bbEcl0qsTMfWwQ&quot;}`
+
+Reproduce with:
+
+    curl -X PUT -H 'x-chave-acesso-sistema: NjczOWY1MzMtNWJkZS00ODZhLWE5YjQtOWFmNTYwNWI1MWZiOmRjNjM2YzJjNDJkMGEyNTBlNTExODVhOWI0NDY4NGYwNDJiZThiN2VlOWRhNjkxZA==' -H 'Authorization: [Filtered]' http://localhost/api/v1/login-sistema"/>
+			<failure type="failure" message="1. Test Case ID: ese5xn
+
+- API rejected schema-compliant request
+
+    Valid data should have been accepted
+    Expected: 2xx, 401, 403, 404, 409, 5xx
+
+[422] Unprocessable Content:
+
+    `{&quot;property&quot;:&quot;x-chave-acesso-sistema&quot;,&quot;message&quot;:&quot;Parâmetro 'x-chave-acesso-sistema' é obrigatório.&quot;,&quot;data&quot;:null}`
+
+Reproduce with:
+
+    curl -X PUT -H 'x-chave-acesso-sistema;' http://localhost/api/v1/login-sistema"/>
+		</testcase>
+		<testcase name="PUT /api/v1/logout" time="0.035492">
+			<skipped type="skipped">No examples in schema</skipped>
+		</testcase>
+		<testcase name="PUT /api/v1/token" time="0.021085">
+			<failure type="failure" message="1. Test Case ID: IIs5oT
+
+- Undocumented HTTP status code
+
+    Received: 403
+    Documented: 200, 401, 500
+
+[403] Forbidden:
+
+    `{&quot;error&quot;:&quot;CSRF validation failed.&quot;}`
+
+Reproduce with:
+
+    curl -X PUT -H 'Authorization: [Filtered]' -H 'Cookie: [Filtered]' http://localhost/api/v1/token"/>
+			<failure type="failure" message="1. Test Case ID: yXS2HL
+
+- Server error
+
+- Missing header not rejected
+
+    Got 500 when missing required 'Authorization' header, expected 401
+
+[500] Internal Server Error:
+
+    &lt;EMPTY&gt;
+
+Reproduce with:
+
+    curl -X PUT http://localhost/api/v1/token"/>
+		</testcase>
+		<testcase name="GET /api/monitoracao/dlqs" time="0.013122">
+			<failure type="failure" message="1. Test Case ID: R6hwL4
+
+- Undocumented HTTP status code
+
+    Received: 404
+    Documented: 200
+
+[404] Not Found:
+
+    `404 page not found`
+
+Reproduce with:
+
+    curl -X GET 'http://localhost/api/monitoracao/dlqs?nomeCliente=&amp;data='"/>
+			<skipped type="skipped">No examples in schema</skipped>
+		</testcase>
+		<testcase name="GET /api/v1/authentication-options" time="0.039382">
+			<skipped type="skipped">No examples in schema</skipped>
+		</testcase>
+		<testcase name="GET /api/v1/clientes" time="0.016740">
+			<failure type="failure" message="1. Test Case ID: aDZK7M
+
+- Server error
+
+- Undocumented HTTP status code
+
+    Received: 500
+    Documented: 200, 401
+
+[500] Internal Server Error:
+
+    &lt;EMPTY&gt;
+
+Reproduce with:
+
+    curl -X GET -H 'Authorization: [Filtered]' -H 'Cookie: [Filtered]' 'http://localhost/api/v1/clientes?nome=&amp;sigla=&amp;ativo=true&amp;sortDirection=ASC&amp;limit=0&amp;offset=0'"/>
+			<skipped type="skipped">No examples in schema</skipped>
+		</testcase>
+		<testcase name="GET /api/v1/confirmacao-conta/{idConta}" time="0.040071">
+			<failure type="failure" message="1. Test Case ID: 8pFNxh
+
+- API rejected schema-compliant request
+
+    Valid data should have been accepted
+    Expected: 2xx, 401, 403, 404, 409, 5xx
+
+[422] Unprocessable Content:
+
+    `{&quot;property&quot;:&quot;idConta&quot;,&quot;message&quot;:&quot;Parâmetro 'idConta' é inválido.&quot;,&quot;data&quot;:null}`
+
+Reproduce with:
+
+    curl -X GET -H 'Authorization: [Filtered]' -H 'Cookie: [Filtered]' http://localhost/api/v1/confirmacao-conta/0"/>
+			<skipped type="skipped">No examples in schema</skipped>
+		</testcase>
+		<testcase name="GET /api/v1/contas" time="0.019224">
+			<failure type="failure" message="1. Test Case ID: gzmwvo
+
+- Server error
+
+[500] Internal Server Error:
+
+    &lt;EMPTY&gt;
+
+Reproduce with:
+
+    curl -X GET -H 'Authorization: [Filtered]' -H 'Cookie: [Filtered]' http://localhost/api/v1/contas"/>
+		</testcase>
+		<testcase name="GET /api/v1/contas/codigo/{codigo}" time="0.020017">
+			<failure type="failure" message="1. Test Case ID: ayh648
+
+- Server error
+
+[500] Internal Server Error:
+
+    &lt;EMPTY&gt;
+
+Reproduce with:
+
+    curl -X GET -H 'Authorization: [Filtered]' -H 'Cookie: [Filtered]' http://localhost/api/v1/contas/codigo/0"/>
+			<failure type="failure" message="1. Test Case ID: EDpoNB
+
+- Missing header not rejected
+
+    Got 500 when missing required 'Authorization' header, expected 401
+
+[500] Internal Server Error:
+
+    &lt;EMPTY&gt;
+
+Reproduce with:
+
+    curl -X GET -H 'Cookie: [Filtered]' http://localhost/api/v1/contas/codigo/0"/>
+		</testcase>
+		<testcase name="GET /api/v1/contas/id/{id}" time="0.020591">
+			<failure type="failure" message="1. Test Case ID: rG3PAY
+
+- Server error
+
+[500] Internal Server Error:
+
+    &lt;EMPTY&gt;
+
+Reproduce with:
+
+    curl -X GET -H 'Authorization: [Filtered]' -H 'Cookie: [Filtered]' http://localhost/api/v1/contas/id/e3e70682-c209-1cac-a29f-6fbed82c07cd"/>
+			<failure type="failure" message="1. Test Case ID: 0rey0p
+
+- Missing header not rejected
+
+    Got 500 when missing required 'Authorization' header, expected 401
+
+[500] Internal Server Error:
+
+    &lt;EMPTY&gt;
+
+Reproduce with:
+
+    curl -X GET -H 'Cookie: [Filtered]' http://localhost/api/v1/contas/id/e3e70682-c209-1cac-a29f-6fbed82c07cd"/>
+		</testcase>
+		<testcase name="GET /api/v1/contas/perfil/{perfil}" time="0.022179">
+			<failure type="failure" message="1. Test Case ID: zFgzuy
+
+- Server error
+
+[500] Internal Server Error:
+
+    &lt;EMPTY&gt;
+
+Reproduce with:
+
+    curl -X GET -H 'Authorization: [Filtered]' -H 'Cookie: [Filtered]' http://localhost/api/v1/contas/perfil/GESTOR"/>
+			<failure type="failure" message="1. Test Case ID: SIJbtZ
+
+- Missing header not rejected
+
+    Got 500 when missing required 'Authorization' header, expected 401
+
+[500] Internal Server Error:
+
+    &lt;EMPTY&gt;
+
+Reproduce with:
+
+    curl -X GET -H 'Cookie: [Filtered]' http://localhost/api/v1/contas/perfil/INTERESSADO"/>
+		</testcase>
+		<testcase name="GET /api/v1/controlador/hello" time="1.916456">
+			<skipped type="skipped">No examples in schema</skipped>
+		</testcase>
+		<testcase name="GET /api/v1/controlador/meu-ip" time="0.038131">
+			<skipped type="skipped">No examples in schema</skipped>
+		</testcase>
+		<testcase name="GET /api/v1/fluxos" time="0.014299">
+			<failure type="failure" message="1. Test Case ID: hMm3PM
+
+- Server error
+
+[500] Internal Server Error:
+
+    &lt;EMPTY&gt;
+
+Reproduce with:
+
+    curl -X GET -H 'Authorization: [Filtered]' -H 'Cookie: [Filtered]' 'http://localhost/api/v1/fluxos?nome=&amp;propriedade=MEUS&amp;sortField=&amp;sortDirection=ASC&amp;limit=0&amp;offset=0'"/>
+			<skipped type="skipped">No examples in schema</skipped>
+		</testcase>
+		<testcase name="GET /api/v1/fluxos-interessado" time="0.014237">
+			<failure type="failure" message="1. Test Case ID: 85PQeM
+
+- Server error
+
+[500] Internal Server Error:
+
+    &lt;EMPTY&gt;
+
+Reproduce with:
+
+    curl -X GET -H 'Authorization: [Filtered]' -H 'Cookie: [Filtered]' 'http://localhost/api/v1/fluxos-interessado?nome=&amp;pendentes=true&amp;sortField=&amp;sortDirection=ASC&amp;limit=0&amp;offset=0'"/>
+			<skipped type="skipped">No examples in schema</skipped>
+		</testcase>
+		<testcase name="GET /api/v1/fluxos/arquivados" time="0.015172">
+			<failure type="failure" message="1. Test Case ID: Dg8v0u
+
+- Server error
+
+[500] Internal Server Error:
+
+    &lt;EMPTY&gt;
+
+Reproduce with:
+
+    curl -X GET -H 'Authorization: [Filtered]' -H 'Cookie: [Filtered]' 'http://localhost/api/v1/fluxos/arquivados?nome=&amp;sortDirection=ASC&amp;limit=0&amp;offset=0'"/>
+			<skipped type="skipped">No examples in schema</skipped>
+		</testcase>
+		<testcase name="GET /api/v1/getlink" time="0.044293">
+			<failure type="failure" message="1. Test Case ID: fkwdgq
+
+- API accepts invalid authentication
+
+    Expected 401, got `200 OK` for `GET /api/v1/getlink` (generated auth likely invalid)
+
+[200] OK:
+
+    `{&quot;linkUrl&quot;:&quot;http://localhost/r/4f85d55d-3cf0-4256-99f2-54bd1640b254?t=eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6ImMwNTMxNjFkLTk4MmEtNDFjZC04ZWE5LWVlZDdmYmE1YjMxOCJ9.eyJpZENvbnRhIjoiYzVmNWY0NGEtZjkyNi00N2JmLTg2ZjktMzgxYjEyZmUyNDBkIiwiaWRGbHV4byI6IjRmODVkNTVkLTNjZjAtNDI1Ni05OWYyLTU0YmQxNjQwYjI1NCIsImlhdCI6MTcxNDE1NDQ2MywiYXVkIjoibmVvc2lnbmVyLWludCJ9.tyttfMwlWkaK-V1qb4ohhvy6AJTMK77Den7EjuIvrSSrrHlvPYYtXtPXBhg7vixNHsoq8OIB8qPoZRW0zUNTQrrqy2ZWleDwoIlT2wJqnqfONKOyxkWE0invXopgw-WhrDEo9NN_6RGuBB_gPmtv_4C3OFbcY0_vfH2J2I6NC-38Raj2kAf7JQya2CpAmpScXjFo9rtSD_wUWdVHpLXaw3p9r4CV0nf4R_6M8tIe5ttGLHdx-8O--Uso_Lfz0MeA57mj5D2OyST-FtW4oQWIexQ60U0JJiKGheAKpuOWJzl37YyTcapzBRwk-hUunkrVg_dTQ5Rk08OxGLuJN4Q9yg&quot;,&quot;ativo&quot;:true}`
+
+Reproduce with:
+
+    curl -X GET -H 'Authorization: [Filtered]' -H 'Cookie: [Filtered]' 'http://localhost/api/v1/getlink?email=emmanuel.ferro%40serpro.gov.br&amp;idcliente=1ae08e30-d3d9-4230-be09-200663596bdf&amp;idfluxo=4f85d55d-3cf0-4256-99f2-54bd1640b254'"/>
+			<failure type="failure" message="1. Test Case ID: o2jMoL
+
+- API accepted schema-violating request
+
+    Invalid data should have been rejected
+    Expected: 400, 401, 403, 404, 406, 422, 428, 5xx
+    Invalid component: Missing `Authorization` at header
+
+- Missing header not rejected
+
+    Got 200 when missing required 'Authorization' header, expected 401
+
+[200] OK:
+
+    `{&quot;linkUrl&quot;:&quot;http://localhost/r/4f85d55d-3cf0-4256-99f2-54bd1640b254?t=eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6ImMwNTMxNjFkLTk4MmEtNDFjZC04ZWE5LWVlZDdmYmE1YjMxOCJ9.eyJpZENvbnRhIjoiYzVmNWY0NGEtZjkyNi00N2JmLTg2ZjktMzgxYjEyZmUyNDBkIiwiaWRGbHV4byI6IjRmODVkNTVkLTNjZjAtNDI1Ni05OWYyLTU0YmQxNjQwYjI1NCIsImlhdCI6MTcxNDE1NDQ2MywiYXVkIjoibmVvc2lnbmVyLWludCJ9.tyttfMwlWkaK-V1qb4ohhvy6AJTMK77Den7EjuIvrSSrrHlvPYYtXtPXBhg7vixNHsoq8OIB8qPoZRW0zUNTQrrqy2ZWleDwoIlT2wJqnqfONKOyxkWE0invXopgw-WhrDEo9NN_6RGuBB_gPmtv_4C3OFbcY0_vfH2J2I6NC-38Raj2kAf7JQya2CpAmpScXjFo9rtSD_wUWdVHpLXaw3p9r4CV0nf4R_6M8tIe5ttGLHdx-8O--Uso_Lfz0MeA57mj5D2OyST-FtW4oQWIexQ60U0JJiKGheAKpuOWJzl37YyTcapzBRwk-hUunkrVg_dTQ5Rk08OxGLuJN4Q9yg&quot;,&quot;ativo&quot;:true}`
+
+Reproduce with:
+
+    curl -X GET -H 'Cookie: [Filtered]' 'http://localhost/api/v1/getlink?email=emmanuel.ferro%40serpro.gov.br&amp;idcliente=1ae08e30-d3d9-4230-be09-200663596bdf&amp;idfluxo=4f85d55d-3cf0-4256-99f2-54bd1640b254'"/>
+			<failure type="failure" message="1. Test Case ID: T5R5f3
+
+- API rejected schema-compliant request
+
+    Valid data should have been accepted
+    Expected: 2xx, 401, 403, 404, 409, 5xx
+
+[422] Unprocessable Content:
+
+    `{&quot;property&quot;:&quot;idCliente&quot;,&quot;message&quot;:&quot;Parâmetro 'idCliente' é obrigatório.&quot;,&quot;data&quot;:null}`
+
+Reproduce with:
+
+    curl -X GET -H 'Authorization: [Filtered]' -H 'Cookie: [Filtered]' 'http://localhost/api/v1/getlink?email=&amp;idcliente=&amp;idfluxo='"/>
+		</testcase>
+		<testcase name="GET /api/v1/grupos-gestor-mais-requisitante" time="0.016453">
+			<failure type="failure" message="1. Test Case ID: kARdCF
+
+- Server error
+
+[500] Internal Server Error:
+
+    &lt;EMPTY&gt;
+
+Reproduce with:
+
+    curl -X GET -H 'Authorization: [Filtered]' -H 'Cookie: [Filtered]' 'http://localhost/api/v1/grupos-gestor-mais-requisitante?nome=&amp;x-schemathesis-unknown-property=42'"/>
+			<skipped type="skipped">No examples in schema</skipped>
+		</testcase>
+		<testcase name="GET /api/v1/grupos-requisitante" time="0.015426">
+			<failure type="failure" message="1. Test Case ID: 0GyI2F
+
+- Server error
+
+- Missing header not rejected
+
+    Got 500 when missing required 'Authorization' header, expected 401
+
+[500] Internal Server Error:
+
+    &lt;EMPTY&gt;
+
+Reproduce with:
+
+    curl -X GET -H 'Cookie: [Filtered]' 'http://localhost/api/v1/grupos-requisitante?nome='"/>
+			<skipped type="skipped">No examples in schema</skipped>
+		</testcase>
+		<testcase name="GET /api/v1/listar-contas/{email}" time="0.052029">
+			<failure type="failure" message="1. Test Case ID: SfMA8T
+
+- API rejected schema-compliant request
+
+    Valid data should have been accepted
+    Expected: 2xx, 401, 403, 404, 409, 5xx
+
+- Undocumented HTTP status code
+
+    Received: 422
+    Documented: 200, 401, 500
+
+[422] Unprocessable Content:
+
+    `{&quot;property&quot;:&quot;email&quot;,&quot;message&quot;:&quot;Parâmetro 'email' é inválido.&quot;,&quot;data&quot;:null}`
+
+Reproduce with:
+
+    curl -X GET -H 'Authorization: [Filtered]' -H 'Cookie: [Filtered]' http://localhost/api/v1/listar-contas/0"/>
+			<skipped type="skipped">No examples in schema</skipped>
+		</testcase>
+		<testcase name="GET /api/v1/resposta/{id}" time="0.014988">
+			<failure type="failure" message="1. Test Case ID: v8gb8p
+
+- Server error
+
+- Missing header not rejected
+
+    Got 500 when missing required 'Authorization' header, expected 401
+
+[500] Internal Server Error:
+
+    &lt;EMPTY&gt;
+
+Reproduce with:
+
+    curl -X GET -H 'Cookie: [Filtered]' http://localhost/api/v1/resposta/e3e70682-c209-1cac-a29f-6fbed82c07cd"/>
+			<skipped type="skipped">No examples in schema</skipped>
+		</testcase>
+		<testcase name="GET /api/v1/respostas-gerencial" time="0.017005">
+			<failure type="failure" message="1. Test Case ID: RgDOk8
+
+- Server error
+
+[500] Internal Server Error:
+
+    &lt;EMPTY&gt;
+
+Reproduce with:
+
+    curl -X GET -H 'Authorization: [Filtered]' -H 'Cookie: [Filtered]' 'http://localhost/api/v1/respostas-gerencial?dataInicio=2000-01-01T00%3A00%3A00Z&amp;sortDirection=ASC&amp;limit=100&amp;offset=0'"/>
+			<skipped type="skipped">No examples in schema</skipped>
+		</testcase>
+		<testcase name="GET /api/v1/webhook/validar/{idRequisitante}" time="0.023812">
+			<failure type="failure" message="1. Test Case ID: bRHXOL
+
+- API rejected schema-compliant request
+
+    Valid data should have been accepted
+    Expected: 2xx, 401, 403, 404, 409, 5xx
+
+[422] Unprocessable Content:
+
+    `{&quot;property&quot;:&quot;idRequisitante&quot;,&quot;message&quot;:&quot;Parâmetro 'idRequisitante' é inválido.&quot;,&quot;data&quot;:null}`
+
+Reproduce with:
+
+    curl -X GET -H 'Authorization: [Filtered]' -H 'Cookie: [Filtered]' http://localhost/api/v1/webhook/validar/0"/>
+			<failure type="failure" message="1. Test Case ID: EEZigA
+
+- Server error
+
+- Missing header not rejected
+
+    Got 500 when missing required 'Authorization' header, expected 401
+
+[500] Internal Server Error:
+
+    &lt;EMPTY&gt;
+
+Reproduce with:
+
+    curl -X GET -H 'Cookie: [Filtered]' http://localhost/api/v1/webhook/validar/0"/>
+		</testcase>
+		<testcase name="PATCH /api/v1/contas/reenviar-credenciais-sistema" time="0.023564">
+			<failure type="failure" message="1. Test Case ID: 77p0Yd
+
+- Undocumented HTTP status code
+
+    Received: 403
+    Documented: 204, 400, 401, 422, 500
+
+[403] Forbidden:
+
+    `{&quot;error&quot;:&quot;CSRF validation failed.&quot;}`
+
+Reproduce with:
+
+    curl -X PATCH -H 'Authorization: [Filtered]' -H 'Content-Type: application/json' -H 'Cookie: [Filtered]' -d '{&quot;idConta&quot;: &quot;c1a2b3c4-d5e6-7890-abcd-1234567890ef&quot;, &quot;idCliente&quot;: &quot;d4e5f6a7-b8c9-0123-abcd-4567890fedcb&quot;}' http://localhost/api/v1/contas/reenviar-credenciais-sistema"/>
+			<failure type="failure" message="1. Test Case ID: CHLzBR
+
+- Server error
+
+- Missing header not rejected
+
+    Got 500 when missing required 'Authorization' header, expected 401
+
+[500] Internal Server Error:
+
+    &lt;EMPTY&gt;
+
+Reproduce with:
+
+    curl -X PATCH -H 'Content-Type: application/json' -H 'Cookie: [Filtered]' -d '{&quot;idConta&quot;: &quot;c1a2b3c4-d5e6-7890-abcd-1234567890ef&quot;, &quot;idCliente&quot;: &quot;d4e5f6a7-b8c9-0123-abcd-4567890fedcb&quot;}' http://localhost/api/v1/contas/reenviar-credenciais-sistema"/>
+		</testcase>
+		<testcase name="PATCH /api/v1/enviar-otp" time="0.055640">
+			<failure type="failure" message="1. Test Case ID: wYhLrH
+
+- Undocumented HTTP status code
+
+    Received: 403
+    Documented: 200, 401, 422, 500
+
+[403] Forbidden:
+
+    `{&quot;error&quot;:&quot;CSRF validation failed.&quot;}`
+
+Reproduce with:
+
+    curl -X PATCH -H 'Authorization: [Filtered]' -H 'Content-Type: application/json' -H 'Cookie: [Filtered]' -d '{&quot;idConta&quot;: &quot;47d7c524-e1b3-4e7d-bcfb-2c203329570a&quot;, &quot;tipoCanal&quot;: &quot;EMAIL&quot;}' http://localhost/api/v1/enviar-otp"/>
+			<failure type="failure" message="1. Test Case ID: s33WIL
+
+- Server error
+
+[500] Internal Server Error:
+
+    `{&quot;property&quot;:&quot;&quot;,&quot;message&quot;:&quot;canal.trim is not a function&quot;}`
+
+Reproduce with:
+
+    curl -X PATCH -H 'Content-Type: application/json' -H 'Cookie: [Filtered]' -d '{&quot;idConta&quot;: &quot;47d7c524-e1b3-4e7d-bcfb-2c203329570a&quot;, &quot;tipoCanal&quot;: {}}' http://localhost/api/v1/enviar-otp"/>
+			<failure type="failure" message="1. Test Case ID: DcAGmS
+
+- API rejected schema-compliant request
+
+    Valid data should have been accepted
+    Expected: 2xx, 401, 403, 404, 409, 5xx
+
+[422] Unprocessable Content:
+
+    `{&quot;property&quot;:&quot;idConta&quot;,&quot;message&quot;:&quot;Parâmetro 'idConta' é obrigatório.&quot;,&quot;data&quot;:null}`
+
+Reproduce with:
+
+    curl -X PATCH -H 'Authorization: [Filtered]' -H 'Content-Type: application/json' -H 'Cookie: [Filtered]' -d '{}' http://localhost/api/v1/enviar-otp"/>
+		</testcase>
+		<testcase name="PATCH /api/v1/fluxos/arquivar" time="0.019756">
+			<failure type="failure" message="1. Test Case ID: Xtr4po
+
+- Server error
+
+[500] Internal Server Error:
+
+    &lt;EMPTY&gt;
+
+Reproduce with:
+
+    curl -X PUT -H 'Cookie: [Filtered]' http://localhost/api/v1/fluxos/arquivar"/>
+			<failure type="failure" message="1. Test Case ID: gKhuFF
+
+- API rejected schema-compliant request
+
+    Valid data should have been accepted
+    Expected: 2xx, 401, 403, 404, 409, 5xx
+
+- Undocumented HTTP status code
+
+    Received: 405
+    Documented: 201, 500
+
+[405] Method Not Allowed:
+
+    `405 method not allowed`
+
+Reproduce with:
+
+    curl -X PATCH -H 'Authorization: [Filtered]' -H 'Cookie: [Filtered]' http://localhost/api/v1/fluxos/arquivar"/>
+			<skipped type="skipped">No examples in schema</skipped>
+		</testcase>
+		<testcase name="PATCH /api/v1/fluxos/finalizar" time="0.088749">
+			<failure type="failure" message="1. Test Case ID: L8iQQp
+
+- Server error
+
+[500] Internal Server Error:
+
+    &lt;EMPTY&gt;
+
+Reproduce with:
+
+    curl -X PUT -H 'Cookie: [Filtered]' http://localhost/api/v1/fluxos/finalizar"/>
+			<failure type="failure" message="1. Test Case ID: s6E2O1
+
+- API rejected schema-compliant request
+
+    Valid data should have been accepted
+    Expected: 2xx, 401, 403, 404, 409, 5xx
+
+- Undocumented HTTP status code
+
+    Received: 405
+    Documented: 201, 500
+
+[405] Method Not Allowed:
+
+    `405 method not allowed`
+
+Reproduce with:
+
+    curl -X PATCH -H 'Authorization: [Filtered]' -H 'Cookie: [Filtered]' http://localhost/api/v1/fluxos/finalizar"/>
+			<skipped type="skipped">No examples in schema</skipped>
+		</testcase>
+		<testcase name="PATCH /api/v1/notificar" time="0.034499">
+			<failure type="failure" message="1. Test Case ID: xQkpJV
+
+- Undocumented HTTP status code
+
+    Received: 404
+    Documented: 201, 500
+
+[404] Not Found:
+
+    `404 page not found`
+
+Reproduce with:
+
+    curl -X PATCH -H 'Cookie: [Filtered]' http://localhost/api/v1/notificar"/>
+			<skipped type="skipped">No examples in schema</skipped>
+		</testcase>
+		<testcase name="PATCH /api/v1/reenviar-links" time="0.022261">
+			<failure type="failure" message="1. Test Case ID: NvyKV9
+
+- Undocumented HTTP status code
+
+    Received: 403
+    Documented: 204, 401, 422, 500
+
+[403] Forbidden:
+
+    `{&quot;error&quot;:&quot;CSRF validation failed.&quot;}`
+
+Reproduce with:
+
+    curl -X PATCH -H 'Authorization: [Filtered]' -H 'Content-Type: application/json' -H 'Cookie: [Filtered]' -d '{&quot;idFluxo&quot;: &quot;b7e6a1c2-1234-4f56-9abc-1234567890ab&quot;, &quot;interessados&quot;: [{&quot;codigo&quot;: &quot;12345678900&quot;, &quot;tipoCodigo&quot;: &quot;CPF&quot;, &quot;perfil&quot;: {&quot;papel&quot;: &quot;ASSINANTE&quot;}}]}' http://localhost/api/v1/reenviar-links"/>
+			<failure type="failure" message="1. Test Case ID: Y6m1Ob
+
+- Server error
+
+- Missing header not rejected
+
+    Got 500 when missing required 'Authorization' header, expected 401
+
+[500] Internal Server Error:
+
+    &lt;EMPTY&gt;
+
+Reproduce with:
+
+    curl -X PATCH -H 'Content-Type: application/json' -H 'Cookie: [Filtered]' -d '{&quot;idFluxo&quot;: &quot;b7e6a1c2-1234-4f56-9abc-1234567890ab&quot;, &quot;interessados&quot;: [{&quot;codigo&quot;: &quot;12345678900&quot;, &quot;tipoCodigo&quot;: &quot;CPF&quot;, &quot;perfil&quot;: {&quot;papel&quot;: &quot;ASSINANTE&quot;}}]}' http://localhost/api/v1/reenviar-links"/>
+		</testcase>
+		<testcase name="PATCH /api/v1/verificar-certificado" time="0.024510">
+			<failure type="failure" message="1. Test Case ID: zgIY2V
+
+- API rejected schema-compliant request
+
+    Valid data should have been accepted
+    Expected: 2xx, 401, 403, 404, 409, 5xx
+
+- Undocumented HTTP status code
+
+    Received: 422
+    Documented: 200, 500
+
+[422] Unprocessable Content:
+
+    `{&quot;property&quot;:&quot;token&quot;,&quot;message&quot;:&quot;Parâmetro 'token' é obrigatório.&quot;,&quot;data&quot;:null}`
+
+Reproduce with:
+
+    curl -X PATCH -H 'Authorization: [Filtered]' -H 'Cookie: [Filtered]' http://localhost/api/v1/verificar-certificado"/>
+			<failure type="failure" message="1. Test Case ID: CzJ4Ld
+
+- Missing header not rejected
+
+    Got 422 when missing required 'Authorization' header, expected 401
+
+[422] Unprocessable Content:
+
+    `{&quot;property&quot;:&quot;token&quot;,&quot;message&quot;:&quot;Parâmetro 'token' é obrigatório.&quot;,&quot;data&quot;:null}`
+
+Reproduce with:
+
+    curl -X PATCH -H 'Cookie: [Filtered]' http://localhost/api/v1/verificar-certificado"/>
+		</testcase>
+		<testcase name="PUT /api/v1/contas/perfil/{perfil}/{id}" time="0.026220">
+			<failure type="failure" message="1. Test Case ID: zJbEEF
+
+- Undocumented HTTP status code
+
+    Received: 403
+    Documented: 200, 401, 404, 422, 500
+
+[403] Forbidden:
+
+    `{&quot;error&quot;:&quot;CSRF validation failed.&quot;}`
+
+Reproduce with:
+
+    curl -X PUT -H 'Authorization: [Filtered]' -H 'Content-Type: application/json' -H 'Cookie: [Filtered]' -d '{&quot;nome&quot;: &quot;Gestor Exemplo&quot;, &quot;codigo&quot;: &quot;94287999045&quot;, &quot;tipoCodigo&quot;: &quot;CPF&quot;, &quot;tipoConta&quot;: &quot;PESSOA&quot;, &quot;email&quot;: &quot;gestor@empresa.com&quot;, &quot;celular&quot;: &quot;+5511999999999&quot;, &quot;perfil&quot;: {&quot;grupos&quot;: [&quot;c1a2b3c4-d5e6-7890-abcd-1234567890ef&quot;, &quot;d4e5f6a7-b8c9-0123-abcd-4567890fedcb&quot;], &quot;ativo&quot;: true}, &quot;webhook&quot;: {&quot;id&quot;: &quot;wh-123&quot;, &quot;idConta&quot;: &quot;c1a2b3c4-d5e6-7890-abcd-1234567890ef&quot;, &quot;url&quot;: &quot;https://api.exemplo.com/webhook&quot;, &quot;metodo&quot;: &quot;POST&quot;, &quot;apikey&quot;: {&quot;chave&quot;: &quot;x-api-key&quot;, &quot;valor&quot;: &quot;abcdef123456&quot;}, &quot;oauth2&quot;: {&quot;tokenUrl&quot;: &quot;https://api.exemplo.com/oauth/token&quot;, &quot;clientId&quot;: &quot;client-id-123&quot;, &quot;clientSecret&quot;: &quot;secret-abc&quot;, &quot;type&quot;: &quot;client_credentials&quot;, &quot;scope&quot;: &quot;read write&quot;}}}' http://localhost/api/v1/contas/perfil/GESTOR/e3e70682-c209-1cac-a29f-6fbed82c07cd"/>
+			<failure type="failure" message="1. Test Case ID: 4HhBX6
+
+- Server error
+
+- Missing header not rejected
+
+    Got 500 when missing required 'Authorization' header, expected 401
+
+[500] Internal Server Error:
+
+    &lt;EMPTY&gt;
+
+Reproduce with:
+
+    curl -X PUT -H 'Content-Type: application/json' -H 'Cookie: [Filtered]' -d '{&quot;nome&quot;: &quot;Gestor Exemplo&quot;, &quot;codigo&quot;: &quot;94287999045&quot;, &quot;tipoCodigo&quot;: &quot;CPF&quot;, &quot;tipoConta&quot;: &quot;PESSOA&quot;, &quot;email&quot;: &quot;gestor@empresa.com&quot;, &quot;celular&quot;: &quot;+5511999999999&quot;, &quot;perfil&quot;: {&quot;grupos&quot;: [&quot;c1a2b3c4-d5e6-7890-abcd-1234567890ef&quot;, &quot;d4e5f6a7-b8c9-0123-abcd-4567890fedcb&quot;]}, &quot;webhook&quot;: {&quot;id&quot;: &quot;wh-123&quot;, &quot;idConta&quot;: &quot;c1a2b3c4-d5e6-7890-abcd-1234567890ef&quot;, &quot;url&quot;: &quot;https://api.exemplo.com/webhook&quot;, &quot;metodo&quot;: &quot;POST&quot;, &quot;apikey&quot;: {&quot;chave&quot;: &quot;x-api-key&quot;, &quot;valor&quot;: &quot;abcdef123456&quot;}, &quot;oauth2&quot;: {&quot;tokenUrl&quot;: &quot;https://api.exemplo.com/oauth/token&quot;, &quot;clientId&quot;: &quot;client-id-123&quot;, &quot;clientSecret&quot;: &quot;secret-abc&quot;, &quot;type&quot;: &quot;client_credentials&quot;, &quot;scope&quot;: &quot;read write&quot;}}}' http://localhost/api/v1/contas/perfil/INTERESSADO/e3e70682-c209-1cac-a29f-6fbed82c07cd"/>
+		</testcase>
+		<testcase name="GET /api/v1/clientes/{id}" time="0.021460">
+			<failure type="failure" message="1. Test Case ID: K4Sbze
+
+- Server error
+
+- Missing header not rejected
+
+    Got 500 when missing required 'Authorization' header, expected 401
+
+- Undocumented HTTP status code
+
+    Received: 500
+    Documented: 200, 401, 422
+
+[500] Internal Server Error:
+
+    &lt;EMPTY&gt;
+
+Reproduce with:
+
+    curl -X GET -H 'Cookie: [Filtered]' http://localhost/api/v1/clientes/f8126aed-6877-4ead-beb5-38327aa0dcd0"/>
+		</testcase>
+		<testcase name="GET /api/v1/grupos/id/{id}" time="0.033641">
+			<failure type="failure" message="1. Test Case ID: OsQwqD
+
+- Server error
+
+[500] Internal Server Error:
+
+    &lt;EMPTY&gt;
+
+Reproduce with:
+
+    curl -X GET -H 'Cookie: [Filtered]' http://localhost/api/v1/grupos/id/e3e70682-c209-1cac-a29f-6fbed82c07cd"/>
+			<skipped type="skipped">No examples in schema</skipped>
+		</testcase>
+		<testcase name="PUT /api/v1/clientes/{id}" time="0.026577">
+			<failure type="failure" message="1. Test Case ID: e81iwD
+
+- Undocumented HTTP status code
+
+    Received: 403
+    Documented: 200, 400, 401, 422
+
+[403] Forbidden:
+
+    `{&quot;error&quot;:&quot;CSRF validation failed.&quot;}`
+
+Reproduce with:
+
+    curl -X PUT -H 'Authorization: [Filtered]' -H 'Content-Type: application/json' -H 'Cookie: [Filtered]' -d '{&quot;nome&quot;: &quot;Tribunal Editado&quot;, &quot;sigla&quot;: &quot;TR-EDITADO&quot;, &quot;ativo&quot;: false, &quot;biovalid&quot;: true, &quot;aceitaWhatsapp&quot;: false}' http://localhost/api/v1/clientes/f8126aed-6877-4ead-beb5-38327aa0dcd0"/>
+			<failure type="failure" message="1. Test Case ID: Ka4YTD
+
+- Server error
+
+- Missing header not rejected
+
+    Got 500 when missing required 'Authorization' header, expected 401
+
+- Undocumented HTTP status code
+
+    Received: 500
+    Documented: 200, 400, 401, 422
+
+[500] Internal Server Error:
+
+    &lt;EMPTY&gt;
+
+Reproduce with:
+
+    curl -X PUT -H 'Content-Type: application/json' -H 'Cookie: [Filtered]' -d '{&quot;nome&quot;: &quot;Tribunal Editado&quot;, &quot;sigla&quot;: &quot;TR-EDITADO&quot;, &quot;ativo&quot;: false, &quot;biovalid&quot;: true, &quot;aceitaWhatsapp&quot;: false}' http://localhost/api/v1/clientes/f8126aed-6877-4ead-beb5-38327aa0dcd0"/>
+		</testcase>
+		<testcase name="PUT /api/v1/fluxos/{id}" time="0.017697">
+			<failure type="failure" message="1. Test Case ID: ralyak
+
+- Server error
+
+- Missing header not rejected
+
+    Got 500 when missing required 'Authorization' header, expected 401
+
+[500] Internal Server Error:
+
+    &lt;EMPTY&gt;
+
+Reproduce with:
+
+    curl -X PUT -H 'Content-Type: application/json' -H 'Cookie: [Filtered]' -d '{&quot;dadosBasicos&quot;: {}, &quot;documentos&quot;: [], &quot;interessados&quot;: []}' http://localhost/api/v1/fluxos/e3e70682-c209-1cac-a29f-6fbed82c07cd"/>
+			<skipped type="skipped">No examples in schema</skipped>
+		</testcase>
+		<testcase name="PUT /api/v1/grupos/{id}" time="0.049482">
+			<failure type="failure" message="1. Test Case ID: EgFmgs
+
+- Undocumented HTTP status code
+
+    Received: 403
+    Documented: 200, 401, 422, 500
+
+[403] Forbidden:
+
+    `{&quot;error&quot;:&quot;CSRF validation failed.&quot;}`
+
+Reproduce with:
+
+    curl -X PUT -H 'Authorization: [Filtered]' -H 'Content-Type: application/json' -H 'Cookie: [Filtered]' -d '{&quot;preferencias&quot;: {&quot;tipoAssinatura&quot;: {&quot;permiteAlteracao&quot;: true, &quot;tipo&quot;: &quot;ELETRONICA&quot;}}, &quot;nome&quot;: &quot;&quot;, &quot;idCliente&quot;: &quot;e3e70682-c209-1cac-a29f-6fbed82c07cd&quot;, &quot;descricao&quot;: &quot;&quot;, &quot;ativo&quot;: false, &quot;gestores&quot;: [], &quot;requisitantes&quot;: []}' http://localhost/api/v1/grupos/e3e70682-c209-1cac-a29f-6fbed82c07cd"/>
+			<failure type="failure" message="1. Test Case ID: eSpbll
+
+- Server error
+
+[500] Internal Server Error:
+
+    &lt;EMPTY&gt;
+
+Reproduce with:
+
+    curl -X PUT -H 'Content-Type: application/json' -H 'Cookie: [Filtered]' -d '{&quot;nome&quot;: &quot;Grupo de Assinatura&quot;, &quot;idCliente&quot;: &quot;e3e70682-c209-1cac-a29f-6fbed82c07cd&quot;, &quot;descricao&quot;: &quot;Grupo respons\u00e1vel por assinaturas de contratos.&quot;, &quot;ativo&quot;: true, &quot;gestores&quot;: [&quot;6739f533-5bde-486a-a9b4-9af5605b51fb&quot;], &quot;requisitantes&quot;: [&quot;b1c2d3e4-f5a6-7890-bcde-fa1234567890&quot;], &quot;preferencias&quot;: {}}' http://localhost/api/v1/grupos/e3e70682-c209-1cac-a29f-6fbed82c07cd"/>
+		</testcase>
+		<testcase name="GET /api/v1/fluxo/{id}" time="0.014649">
+			<failure type="failure" message="1. Test Case ID: sCAZ5q
+
+- Server error
+
+- Missing header not rejected
+
+    Got 500 when missing required 'Authorization' header, expected 401
+
+[500] Internal Server Error:
+
+    &lt;EMPTY&gt;
+
+Reproduce with:
+
+    curl -X GET -H 'Cookie: [Filtered]' http://localhost/api/v1/fluxo/e3e70682-c209-1cac-a29f-6fbed82c07cd"/>
+			<skipped type="skipped">No examples in schema</skipped>
+		</testcase>
+		<testcase name="GET /api/v1/fluxos/{id}/hashes-documentos/{algoritmo}" time="0.015667">
+			<failure type="failure" message="1. Test Case ID: dtWnOY
+
+- Server error
+
+- Missing header not rejected
+
+    Got 500 when missing required 'Authorization' header, expected 401
+
+[500] Internal Server Error:
+
+    &lt;EMPTY&gt;
+
+Reproduce with:
+
+    curl -X GET -H 'Cookie: [Filtered]' http://localhost/api/v1/fluxos/e3e70682-c209-1cac-a29f-6fbed82c07cd/hashes-documentos/0"/>
+			<skipped type="skipped">No examples in schema</skipped>
+		</testcase>
+		<testcase name="GET /api/v1/fluxos/{id}/interessados" time="0.017762">
+			<failure type="failure" message="1. Test Case ID: LaGwzd
+
+- Server error
+
+[500] Internal Server Error:
+
+    &lt;EMPTY&gt;
+
+Reproduce with:
+
+    curl -X GET -H 'Authorization: [Filtered]' -H 'Cookie: [Filtered]' 'http://localhost/api/v1/fluxos/e3e70682-c209-1cac-a29f-6fbed82c07cd/interessados?sortField=&amp;x-schemathesis-unknown-property=42'"/>
+			<skipped type="skipped">No examples in schema</skipped>
+		</testcase>
+		<testcase name="GET /api/v1/fluxos/{id}/sumario" time="0.015386">
+			<failure type="failure" message="1. Test Case ID: t7h8s8
+
+- Server error
+
+- Missing header not rejected
+
+    Got 500 when missing required 'Authorization' header, expected 401
+
+[500] Internal Server Error:
+
+    &lt;EMPTY&gt;
+
+Reproduce with:
+
+    curl -X GET -H 'Cookie: [Filtered]' http://localhost/api/v1/fluxos/e3e70682-c209-1cac-a29f-6fbed82c07cd/sumario"/>
+			<skipped type="skipped">No examples in schema</skipped>
+		</testcase>
+		<testcase name="GET /api/v1/grupos" time="0.015648">
+			<failure type="failure" message="1. Test Case ID: zcsM4F
+
+- Server error
+
+[500] Internal Server Error:
+
+    &lt;EMPTY&gt;
+
+Reproduce with:
+
+    curl -X GET -H 'Authorization: [Filtered]' -H 'Cookie: [Filtered]' 'http://localhost/api/v1/grupos?ativo=true&amp;nome=&amp;id=&amp;limit=0&amp;offset=0'"/>
+			<skipped type="skipped">No examples in schema</skipped>
+		</testcase>
+		<testcase name="PATCH /api/v1/fluxos/{id}/arquivar" time="0.016824">
+			<failure type="failure" message="1. Test Case ID: 5xh1r6
+
+- Server error
+
+- Missing header not rejected
+
+    Got 500 when missing required 'Authorization' header, expected 401
+
+[500] Internal Server Error:
+
+    &lt;EMPTY&gt;
+
+Reproduce with:
+
+    curl -X PATCH -H 'Cookie: [Filtered]' http://localhost/api/v1/fluxos/e3e70682-c209-1cac-a29f-6fbed82c07cd/arquivar"/>
+			<skipped type="skipped">No examples in schema</skipped>
+		</testcase>
+		<testcase name="PATCH /api/v1/fluxos/{id}/assinar" time="0.023837">
+			<failure type="failure" message="1. Test Case ID: oV88DV
+
+- Undocumented HTTP status code
+
+    Received: 403
+    Documented: 200, 401, 422, 500
+
+[403] Forbidden:
+
+    `{&quot;error&quot;:&quot;CSRF validation failed.&quot;}`
+
+Reproduce with:
+
+    curl -X PATCH -H 'Authorization: [Filtered]' -H 'Content-Type: application/json' -H 'Cookie: [Filtered]' -d '{&quot;parecer&quot;: &quot;Aprovado&quot;}' http://localhost/api/v1/fluxos/e3e70682-c209-1cac-a29f-6fbed82c07cd/assinar"/>
+			<failure type="failure" message="1. Test Case ID: tDGObz
+
+- Server error
+
+- Missing header not rejected
+
+    Got 500 when missing required 'Authorization' header, expected 401
+
+[500] Internal Server Error:
+
+    &lt;EMPTY&gt;
+
+Reproduce with:
+
+    curl -X PATCH -H 'Content-Type: application/json' -H 'Cookie: [Filtered]' -d '{&quot;parecer&quot;: &quot;Aprovado&quot;}' http://localhost/api/v1/fluxos/e3e70682-c209-1cac-a29f-6fbed82c07cd/assinar"/>
+		</testcase>
+		<testcase name="PATCH /api/v1/fluxos/{id}/assinar-bird-id" time="0.022563">
+			<failure type="failure" message="1. Test Case ID: oqKzAs
+
+- Undocumented HTTP status code
+
+    Received: 403
+    Documented: 200, 401, 422, 500
+
+[403] Forbidden:
+
+    `{&quot;error&quot;:&quot;CSRF validation failed.&quot;}`
+
+Reproduce with:
+
+    curl -X PATCH -H 'Authorization: [Filtered]' -H 'Content-Type: application/json' -H 'Cookie: [Filtered]' -d '{&quot;code&quot;: &quot;birdid-xyz&quot;, &quot;codeVerifier&quot;: &quot;verifier-bird&quot;, &quot;redirect&quot;: &quot;https://callback.birdid&quot;}' http://localhost/api/v1/fluxos/e3e70682-c209-1cac-a29f-6fbed82c07cd/assinar-bird-id"/>
+			<failure type="failure" message="1. Test Case ID: EJxEet
+
+- Server error
+
+- Missing header not rejected
+
+    Got 500 when missing required 'Authorization' header, expected 401
+
+[500] Internal Server Error:
+
+    &lt;EMPTY&gt;
+
+Reproduce with:
+
+    curl -X PATCH -H 'Content-Type: application/json' -H 'Cookie: [Filtered]' -d '{&quot;code&quot;: &quot;birdid-xyz&quot;, &quot;codeVerifier&quot;: &quot;verifier-bird&quot;, &quot;redirect&quot;: &quot;https://callback.birdid&quot;}' http://localhost/api/v1/fluxos/e3e70682-c209-1cac-a29f-6fbed82c07cd/assinar-bird-id"/>
+		</testcase>
+		<testcase name="PATCH /api/v1/fluxos/{id}/assinar-certisign" time="0.025350">
+			<failure type="failure" message="1. Test Case ID: UC1KZC
+
+- Undocumented HTTP status code
+
+    Received: 403
+    Documented: 200, 401, 422, 500
+
+[403] Forbidden:
+
+    `{&quot;error&quot;:&quot;CSRF validation failed.&quot;}`
+
+Reproduce with:
+
+    curl -X PATCH -H 'Authorization: [Filtered]' -H 'Content-Type: application/json' -H 'Cookie: [Filtered]' -d '{&quot;code&quot;: &quot;certisign-xyz&quot;, &quot;codeVerifier&quot;: &quot;verifier-certisign&quot;, &quot;redirect&quot;: &quot;https://callback.certisign&quot;}' http://localhost/api/v1/fluxos/e3e70682-c209-1cac-a29f-6fbed82c07cd/assinar-certisign"/>
+			<failure type="failure" message="1. Test Case ID: 7vbuEL
+
+- Server error
+
+- Missing header not rejected
+
+    Got 500 when missing required 'Authorization' header, expected 401
+
+[500] Internal Server Error:
+
+    &lt;EMPTY&gt;
+
+Reproduce with:
+
+    curl -X PATCH -H 'Content-Type: application/json' -H 'Cookie: [Filtered]' -d '{&quot;code&quot;: &quot;certisign-xyz&quot;, &quot;codeVerifier&quot;: &quot;verifier-certisign&quot;, &quot;redirect&quot;: &quot;https://callback.certisign&quot;}' http://localhost/api/v1/fluxos/e3e70682-c209-1cac-a29f-6fbed82c07cd/assinar-certisign"/>
+		</testcase>
+		<testcase name="PATCH /api/v1/fluxos/{id}/assinar-desktop/{algoritmo}" time="0.025806">
+			<failure type="failure" message="1. Test Case ID: Xxw7SX
+
+- Undocumented HTTP status code
+
+    Received: 403
+    Documented: 200, 401, 422, 500
+
+[403] Forbidden:
+
+    `{&quot;error&quot;:&quot;CSRF validation failed.&quot;}`
+
+Reproduce with:
+
+    curl -X PATCH -H 'Authorization: [Filtered]' -H 'Content-Type: application/json' -H 'Cookie: [Filtered]' -d '{&quot;documentos&quot;: [{&quot;nome&quot;: &quot;doc1.pdf&quot;, &quot;hash&quot;: &quot;abc123&quot;}, {&quot;nome&quot;: &quot;doc2.pdf&quot;, &quot;hash&quot;: &quot;def456&quot;}]}' http://localhost/api/v1/fluxos/e3e70682-c209-1cac-a29f-6fbed82c07cd/assinar-desktop/0"/>
+			<failure type="failure" message="1. Test Case ID: 9X94H2
+
+- Server error
+
+- Missing header not rejected
+
+    Got 500 when missing required 'Authorization' header, expected 401
+
+[500] Internal Server Error:
+
+    &lt;EMPTY&gt;
+
+Reproduce with:
+
+    curl -X PATCH -H 'Content-Type: application/json' -H 'Cookie: [Filtered]' -d '{&quot;documentos&quot;: [{&quot;nome&quot;: &quot;doc1.pdf&quot;, &quot;hash&quot;: &quot;abc123&quot;}, {&quot;nome&quot;: &quot;doc2.pdf&quot;, &quot;hash&quot;: &quot;def456&quot;}]}' http://localhost/api/v1/fluxos/e3e70682-c209-1cac-a29f-6fbed82c07cd/assinar-desktop/0"/>
+		</testcase>
+		<testcase name="PATCH /api/v1/fluxos/{id}/assinar-ds-cloud" time="0.083636">
+			<failure type="failure" message="1. Test Case ID: H8K4jg
+
+- Undocumented HTTP status code
+
+    Received: 403
+    Documented: 200, 401, 422, 500
+
+[403] Forbidden:
+
+    `{&quot;error&quot;:&quot;CSRF validation failed.&quot;}`
+
+Reproduce with:
+
+    curl -X PATCH -H 'Authorization: [Filtered]' -H 'Content-Type: application/json' -H 'Cookie: [Filtered]' -d '{&quot;code&quot;: &quot;dscloud-xyz&quot;, &quot;codeVerifier&quot;: &quot;verifier-dscloud&quot;, &quot;redirect&quot;: &quot;https://callback.dscloud&quot;}' http://localhost/api/v1/fluxos/e3e70682-c209-1cac-a29f-6fbed82c07cd/assinar-ds-cloud"/>
+			<failure type="failure" message="1. Test Case ID: ynyD7k
+
+- Server error
+
+- Missing header not rejected
+
+    Got 500 when missing required 'Authorization' header, expected 401
+
+[500] Internal Server Error:
+
+    &lt;EMPTY&gt;
+
+Reproduce with:
+
+    curl -X PATCH -H 'Content-Type: application/json' -H 'Cookie: [Filtered]' -d '{&quot;code&quot;: &quot;dscloud-xyz&quot;, &quot;codeVerifier&quot;: &quot;verifier-dscloud&quot;, &quot;redirect&quot;: &quot;https://callback.dscloud&quot;}' http://localhost/api/v1/fluxos/e3e70682-c209-1cac-a29f-6fbed82c07cd/assinar-ds-cloud"/>
+		</testcase>
+		<testcase name="PATCH /api/v1/fluxos/{id}/assinar-safe-id" time="0.025363">
+			<failure type="failure" message="1. Test Case ID: P7B2gO
+
+- Undocumented HTTP status code
+
+    Received: 403
+    Documented: 200, 401, 422, 500
+
+[403] Forbidden:
+
+    `{&quot;error&quot;:&quot;CSRF validation failed.&quot;}`
+
+Reproduce with:
+
+    curl -X PATCH -H 'Authorization: [Filtered]' -H 'Content-Type: application/json' -H 'Cookie: [Filtered]' -d '{&quot;code&quot;: &quot;safeid-xyz&quot;, &quot;codeVerifier&quot;: &quot;verifier-safe&quot;, &quot;redirect&quot;: &quot;https://callback.safeid&quot;}' http://localhost/api/v1/fluxos/e3e70682-c209-1cac-a29f-6fbed82c07cd/assinar-safe-id"/>
+			<failure type="failure" message="1. Test Case ID: 2YATjj
+
+- Server error
+
+- Missing header not rejected
+
+    Got 500 when missing required 'Authorization' header, expected 401
+
+[500] Internal Server Error:
+
+    &lt;EMPTY&gt;
+
+Reproduce with:
+
+    curl -X PATCH -H 'Content-Type: application/json' -H 'Cookie: [Filtered]' -d '{&quot;code&quot;: &quot;safeid-xyz&quot;, &quot;codeVerifier&quot;: &quot;verifier-safe&quot;, &quot;redirect&quot;: &quot;https://callback.safeid&quot;}' http://localhost/api/v1/fluxos/e3e70682-c209-1cac-a29f-6fbed82c07cd/assinar-safe-id"/>
+		</testcase>
+		<testcase name="PATCH /api/v1/fluxos/{id}/assinar-serpro-id" time="0.024088">
+			<failure type="failure" message="1. Test Case ID: yd9I7W
+
+- Undocumented HTTP status code
+
+    Received: 403
+    Documented: 200, 401, 422, 500
+
+[403] Forbidden:
+
+    `{&quot;error&quot;:&quot;CSRF validation failed.&quot;}`
+
+Reproduce with:
+
+    curl -X PATCH -H 'Authorization: [Filtered]' -H 'Content-Type: application/json' -H 'Cookie: [Filtered]' -d '{&quot;code&quot;: &quot;abc123&quot;, &quot;codeVerifier&quot;: &quot;verifier123&quot;, &quot;redirect&quot;: &quot;https://callback.url&quot;}' http://localhost/api/v1/fluxos/e3e70682-c209-1cac-a29f-6fbed82c07cd/assinar-serpro-id"/>
+			<failure type="failure" message="1. Test Case ID: kQZjuY
+
+- Server error
+
+- Missing header not rejected
+
+    Got 500 when missing required 'Authorization' header, expected 401
+
+[500] Internal Server Error:
+
+    &lt;EMPTY&gt;
+
+Reproduce with:
+
+    curl -X PATCH -H 'Content-Type: application/json' -H 'Cookie: [Filtered]' -d '{&quot;code&quot;: &quot;abc123&quot;, &quot;codeVerifier&quot;: &quot;verifier123&quot;, &quot;redirect&quot;: &quot;https://callback.url&quot;}' http://localhost/api/v1/fluxos/e3e70682-c209-1cac-a29f-6fbed82c07cd/assinar-serpro-id"/>
+		</testcase>
+		<testcase name="PATCH /api/v1/fluxos/{id}/assinar-syn-id" time="0.023725">
+			<failure type="failure" message="1. Test Case ID: TERQ0p
+
+- Undocumented HTTP status code
+
+    Received: 403
+    Documented: 200, 401, 422, 500
+
+[403] Forbidden:
+
+    `{&quot;error&quot;:&quot;CSRF validation failed.&quot;}`
+
+Reproduce with:
+
+    curl -X PATCH -H 'Authorization: [Filtered]' -H 'Content-Type: application/json' -H 'Cookie: [Filtered]' -d '{&quot;code&quot;: &quot;synid-xyz&quot;, &quot;codeVerifier&quot;: &quot;verifier-synid&quot;, &quot;redirect&quot;: &quot;https://callback.synid&quot;}' http://localhost/api/v1/fluxos/e3e70682-c209-1cac-a29f-6fbed82c07cd/assinar-syn-id"/>
+			<failure type="failure" message="1. Test Case ID: 5p5SWB
+
+- Server error
+
+- Missing header not rejected
+
+    Got 500 when missing required 'Authorization' header, expected 401
+
+[500] Internal Server Error:
+
+    &lt;EMPTY&gt;
+
+Reproduce with:
+
+    curl -X PATCH -H 'Content-Type: application/json' -H 'Cookie: [Filtered]' -d '{&quot;code&quot;: &quot;synid-xyz&quot;, &quot;codeVerifier&quot;: &quot;verifier-synid&quot;, &quot;redirect&quot;: &quot;https://callback.synid&quot;}' http://localhost/api/v1/fluxos/e3e70682-c209-1cac-a29f-6fbed82c07cd/assinar-syn-id"/>
+		</testcase>
+		<testcase name="PATCH /api/v1/fluxos/{id}/assinar-vidaas" time="0.025428">
+			<failure type="failure" message="1. Test Case ID: LTDuLX
+
+- Undocumented HTTP status code
+
+    Received: 403
+    Documented: 200, 401, 422, 500
+
+[403] Forbidden:
+
+    `{&quot;error&quot;:&quot;CSRF validation failed.&quot;}`
+
+Reproduce with:
+
+    curl -X PATCH -H 'Authorization: [Filtered]' -H 'Content-Type: application/json' -H 'Cookie: [Filtered]' -d '{&quot;code&quot;: &quot;vidaas-xyz&quot;, &quot;codeVerifier&quot;: &quot;verifier-vidaas&quot;, &quot;redirect&quot;: &quot;https://callback.vidaas&quot;}' http://localhost/api/v1/fluxos/e3e70682-c209-1cac-a29f-6fbed82c07cd/assinar-vidaas"/>
+			<failure type="failure" message="1. Test Case ID: 9Hwphv
+
+- Server error
+
+- Missing header not rejected
+
+    Got 500 when missing required 'Authorization' header, expected 401
+
+[500] Internal Server Error:
+
+    &lt;EMPTY&gt;
+
+Reproduce with:
+
+    curl -X PATCH -H 'Content-Type: application/json' -H 'Cookie: [Filtered]' -d '{&quot;code&quot;: &quot;vidaas-xyz&quot;, &quot;codeVerifier&quot;: &quot;verifier-vidaas&quot;, &quot;redirect&quot;: &quot;https://callback.vidaas&quot;}' http://localhost/api/v1/fluxos/e3e70682-c209-1cac-a29f-6fbed82c07cd/assinar-vidaas"/>
+		</testcase>
+		<testcase name="PATCH /api/v1/fluxos/{id}/cancelar" time="0.016274">
+			<failure type="failure" message="1. Test Case ID: UKWrrV
+
+- Server error
+
+- Missing header not rejected
+
+    Got 500 when missing required 'Authorization' header, expected 401
+
+[500] Internal Server Error:
+
+    &lt;EMPTY&gt;
+
+Reproduce with:
+
+    curl -X PATCH -H 'Cookie: [Filtered]' http://localhost/api/v1/fluxos/e3e70682-c209-1cac-a29f-6fbed82c07cd/cancelar"/>
+			<skipped type="skipped">No examples in schema</skipped>
+		</testcase>
+		<testcase name="PATCH /api/v1/fluxos/{id}/finalizar" time="0.016682">
+			<failure type="failure" message="1. Test Case ID: YqRCrn
+
+- Server error
+
+- Missing header not rejected
+
+    Got 500 when missing required 'Authorization' header, expected 401
+
+[500] Internal Server Error:
+
+    &lt;EMPTY&gt;
+
+Reproduce with:
+
+    curl -X PATCH -H 'Cookie: [Filtered]' http://localhost/api/v1/fluxos/e3e70682-c209-1cac-a29f-6fbed82c07cd/finalizar"/>
+			<skipped type="skipped">No examples in schema</skipped>
+		</testcase>
+		<testcase name="PATCH /api/v1/fluxos/{id}/iniciar" time="0.017198">
+			<failure type="failure" message="1. Test Case ID: 7SotRk
+
+- Server error
+
+- Missing header not rejected
+
+    Got 500 when missing required 'Authorization' header, expected 401
+
+[500] Internal Server Error:
+
+    &lt;EMPTY&gt;
+
+Reproduce with:
+
+    curl -X PATCH -H 'Cookie: [Filtered]' http://localhost/api/v1/fluxos/e3e70682-c209-1cac-a29f-6fbed82c07cd/iniciar"/>
+			<skipped type="skipped">No examples in schema</skipped>
+		</testcase>
+		<testcase name="PATCH /api/v1/fluxos/{id}/rejeitar" time="0.021441">
+			<failure type="failure" message="1. Test Case ID: aYI3HR
+
+- Undocumented HTTP status code
+
+    Received: 403
+    Documented: 200, 401, 422, 500
+
+[403] Forbidden:
+
+    `{&quot;error&quot;:&quot;CSRF validation failed.&quot;}`
+
+Reproduce with:
+
+    curl -X PATCH -H 'Authorization: [Filtered]' -H 'Content-Type: application/json' -H 'Cookie: [Filtered]' -d '{&quot;parecer&quot;: &quot;Aprovado com ressalvas&quot;}' http://localhost/api/v1/fluxos/e3e70682-c209-1cac-a29f-6fbed82c07cd/rejeitar"/>
+			<failure type="failure" message="1. Test Case ID: uGzaSm
+
+- Server error
+
+- Missing header not rejected
+
+    Got 500 when missing required 'Authorization' header, expected 401
+
+[500] Internal Server Error:
+
+    &lt;EMPTY&gt;
+
+Reproduce with:
+
+    curl -X PATCH -H 'Content-Type: application/json' -H 'Cookie: [Filtered]' -d '{&quot;parecer&quot;: &quot;Aprovado com ressalvas&quot;}' http://localhost/api/v1/fluxos/e3e70682-c209-1cac-a29f-6fbed82c07cd/rejeitar"/>
+		</testcase>
+		<testcase name="PATCH /api/v1/fluxos/{id}/revisao" time="0.025230">
+			<failure type="failure" message="1. Test Case ID: tf8qir
+
+- Undocumented HTTP status code
+
+    Received: 403
+    Documented: 200, 401, 422, 500
+
+[403] Forbidden:
+
+    `{&quot;error&quot;:&quot;CSRF validation failed.&quot;}`
+
+Reproduce with:
+
+    curl -X PATCH -H 'Authorization: [Filtered]' -H 'Content-Type: application/json' -H 'Cookie: [Filtered]' -d '{&quot;parecer&quot;: &quot;Revis\u00e3o parcial&quot;}' http://localhost/api/v1/fluxos/e3e70682-c209-1cac-a29f-6fbed82c07cd/revisao"/>
+			<failure type="failure" message="1. Test Case ID: DyVry4
+
+- Server error
+
+- Missing header not rejected
+
+    Got 500 when missing required 'Authorization' header, expected 401
+
+[500] Internal Server Error:
+
+    &lt;EMPTY&gt;
+
+Reproduce with:
+
+    curl -X PATCH -H 'Content-Type: application/json' -H 'Cookie: [Filtered]' -d '{&quot;parecer&quot;: &quot;Revis\u00e3o parcial&quot;}' http://localhost/api/v1/fluxos/e3e70682-c209-1cac-a29f-6fbed82c07cd/revisao"/>
+		</testcase>
+		<testcase name="PATCH /api/v1/fluxos/{id}/revisar" time="0.022995">
+			<failure type="failure" message="1. Test Case ID: E3XJTp
+
+- Undocumented HTTP status code
+
+    Received: 403
+    Documented: 200, 401, 422, 500
+
+[403] Forbidden:
+
+    `{&quot;error&quot;:&quot;CSRF validation failed.&quot;}`
+
+Reproduce with:
+
+    curl -X PATCH -H 'Authorization: [Filtered]' -H 'Content-Type: application/json' -H 'Cookie: [Filtered]' -d '{&quot;parecer&quot;: &quot;Revisado e aprovado&quot;}' http://localhost/api/v1/fluxos/e3e70682-c209-1cac-a29f-6fbed82c07cd/revisar"/>
+			<failure type="failure" message="1. Test Case ID: i4V9jX
+
+- Server error
+
+- Missing header not rejected
+
+    Got 500 when missing required 'Authorization' header, expected 401
+
+[500] Internal Server Error:
+
+    &lt;EMPTY&gt;
+
+Reproduce with:
+
+    curl -X PATCH -H 'Content-Type: application/json' -H 'Cookie: [Filtered]' -d '{&quot;parecer&quot;: &quot;Revisado e aprovado&quot;}' http://localhost/api/v1/fluxos/e3e70682-c209-1cac-a29f-6fbed82c07cd/revisar"/>
+		</testcase>
+		<testcase name="DELETE /api/v1/documentos/{id}" time="0.015199">
+			<failure type="failure" message="1. Test Case ID: MrApoG
+
+- Server error
+
+- Missing header not rejected
+
+    Got 500 when missing required 'Authorization' header, expected 401
+
+[500] Internal Server Error:
+
+    &lt;EMPTY&gt;
+
+Reproduce with:
+
+    curl -X DELETE -H 'Cookie: [Filtered]' http://localhost/api/v1/documentos/e3e70682-c209-1cac-a29f-6fbed82c07cd"/>
+			<skipped type="skipped">No examples in schema</skipped>
+		</testcase>
+		<testcase name="DELETE /api/v1/fluxo/{id}" time="0.015533">
+			<failure type="failure" message="1. Test Case ID: E8iRem
+
+- Server error
+
+- Missing header not rejected
+
+    Got 500 when missing required 'Authorization' header, expected 401
+
+[500] Internal Server Error:
+
+    &lt;EMPTY&gt;
+
+Reproduce with:
+
+    curl -X DELETE -H 'Cookie: [Filtered]' http://localhost/api/v1/fluxo/e3e70682-c209-1cac-a29f-6fbed82c07cd"/>
+			<skipped type="skipped">No examples in schema</skipped>
+		</testcase>
+		<testcase name="Stateful tests" time="2.712562"/>
+	</testsuite>
+</testsuites>

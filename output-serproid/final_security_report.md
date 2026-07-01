@@ -35,4 +35,4 @@
 | DELETE | `/applications/{clientId}/redirect-uris` | ssrf, open_redirect |
 
 ---
-*Relatório gerado por step4_analyzer_and_enricher.py em 23/06/2026 10:46:07*
+*Relatório gerado por step4_analyzer_and_enricher.py em 24/06/2026 10:59:06*

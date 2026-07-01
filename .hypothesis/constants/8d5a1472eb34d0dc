@@ -1,0 +1,4 @@
+# file: /home/s231991563/projetos/gtsa/src/application/pipeline/schemathesis_hooks.py
+# hypothesis_version: 6.152.3
+
+['.env', '/', '/api/token', '/v\\d+(?=/|$)', ':[^/]+', '=', 'API_BASE_URL', 'AUTH_COOKIE_NAME', 'Authorization', 'Bearer ', 'Cookie', 'DELETE', 'ENV_FILE', 'GET /authorize/code', 'Origin', 'PATCH', 'POST', 'POST /authorize/deny', 'PUT', 'REQUISITANTE', 'TOKEN_GESTOR', 'TOKEN_REQUISITANTE', '\\{[^}/]+\\}', 'auth_loader.py', 'auth_token', 'custom_headers', 'http://localhost', 'roles', 'utils', '{X}']

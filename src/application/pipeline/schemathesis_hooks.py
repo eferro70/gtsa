@@ -416,10 +416,6 @@ ENDPOINT_AUTH_INFO = {
         "roles": [],
         "custom_headers": {}
     },
-    "GET /api/confirmacao-interessado/:email/:idConta": {
-        "roles": [],
-        "custom_headers": {}
-    },
     "POST /api/grupos": {
         "roles": [
             "ADMINISTRADOR",
@@ -477,33 +473,75 @@ ENDPOINT_AUTH_INFO = {
     }
 }
 
-PLACEHOLDERS = ['{id}', '{algoritmo}', '{perfil}', '{codigo}',
-                '{email}', '{idConta}', '{idRequisitante}', '{idFluxo}']
+import re as _re
+
+def _canonical_path(path):
+    """Normaliza um path para comparação: remove prefixo de versão
+    (ex: /v1, /v2), converte tanto {param} quanto :param em um
+    marcador genérico, e remove barras finais."""
+    p = _re.sub(r'/v\d+(?=/|$)', '', path)
+    p = _re.sub(r'\{[^}/]+\}', '{X}', p)
+    p = _re.sub(r':[^/]+', '{X}', p)
+    return p.rstrip('/')
+
+_CANONICAL_AUTH_INFO = {}
+for _ep_key, _info in ENDPOINT_AUTH_INFO.items():
+    _parts = _ep_key.split(' ', 1)
+    if len(_parts) == 2:
+        _cmethod, _cpath = _parts[0].upper(), _canonical_path(_parts[1])
+        _CANONICAL_AUTH_INFO[(_cmethod, _cpath)] = _info
 
 def _lookup_auth(method, path):
-    """Busca info de auth por match exato ou por prefixo normalizado."""
-    key = f'{method.upper()} {path}'
-    if key in ENDPOINT_AUTH_INFO:
-        return ENDPOINT_AUTH_INFO[key]
-    for ep_key, info in ENDPOINT_AUTH_INFO.items():
-        parts = ep_key.split(' ', 1)
-        if len(parts) != 2 or parts[0] != method.upper():
-            continue
-        base = parts[1]
-        for ph in PLACEHOLDERS:
-            base = base.replace(ph, '')
-        base = base.rstrip('/')
-        if base and (path == parts[1] or path.startswith(base + '/') or path.startswith(base)):
-            return info
-    return None
+    """Busca info de auth comparando formas canônicas dos paths,
+    pois ENDPOINT_AUTH_INFO (vindo do scan do código-fonte) e o path
+    enviado pelo Schemathesis (vindo da spec OpenAPI) podem usar
+    prefixos de versão e sintaxes de placeholder diferentes
+    (ex: /api/fluxos/:id vs /api/v1/fluxos/{id})."""
+    key = (method.upper(), _canonical_path(path))
+    return _CANONICAL_AUTH_INFO.get(key)
+
+# Endpoints que exigem o cookie de sessão mesmo sem checagem de role
+# (ex: endpoints de refresh/renovação que apenas decodificam o token
+# atual para emitir um novo, sem exigir uma role específica). O KrakenD
+# reporta roles=[] para esses casos, então o fallback genérico (Modo 4)
+# nunca tentaria montar o Cookie — por isso a regra explícita abaixo.
+FORCE_COOKIE_PATHS = {
+    ('PUT', '/api/token'),
+}
 
 @schemathesis.hook
 def map_headers(context, headers):
     """Injeta autenticação condicional baseada em enriched_endpoints.json."""
+    # Na fase Stateful, o Schemathesis pode passar um objeto interno
+    # (ex: GeneratedValue) que não suporta atribuição de item direta
+    # como um dict normal. Convertendo explicitamente para dict aqui
+    # evita 'TypeError: ... object does not support item assignment'.
     if headers is None:
         headers = {}
+    elif not isinstance(headers, dict):
+        try:
+            headers = dict(headers)
+        except (TypeError, ValueError):
+            headers = {}
     path = context.operation.path
     method = context.operation.method
+
+    canon_key = (method.upper(), _canonical_path(path))
+    if canon_key in FORCE_COOKIE_PATHS:
+        cookie_name = os.getenv('AUTH_COOKIE_NAME', 'auth_token')
+        token = None
+        if 'Cookie' in _AUTH_HEADERS:
+            ch = _AUTH_HEADERS.get('Cookie', '')
+            if '=' in ch:
+                token = ch.split('=', 1)[1]
+        if not token:
+            token = os.getenv('TOKEN_REQUISITANTE') or os.getenv('TOKEN_GESTOR')
+        if token:
+            headers['Cookie'] = f'{cookie_name}={token}'
+            headers.pop('Authorization', None)
+            headers['Origin'] = os.getenv('API_BASE_URL', 'http://localhost')
+        return headers
+
     info = _lookup_auth(method, path)
 
     if info:
@@ -560,7 +598,14 @@ def map_query(context, query):
     path = context.operation.path
     if path in _QUERY_FIXTURES:
         base = dict(_QUERY_FIXTURES[path])
+        # Na fase Stateful, 'query' pode vir como um objeto interno
+        # (ex: GeneratedValue) que não é iterável como um dict normal.
+        # Convertendo explicitamente evita
+        # 'TypeError: ... object is not iterable'.
         if query:
-            base.update(query)
+            try:
+                base.update(dict(query))
+            except (TypeError, ValueError):
+                pass
         return base
     return query

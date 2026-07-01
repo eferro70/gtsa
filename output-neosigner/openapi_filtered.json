@@ -50,6 +50,25 @@
           }
         }
       },
+      "NotFoundError": {
+        "description": "Not Found",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "message": {
+                  "type": "string",
+                  "example": "<par\u00e2metro> n\u00e3o encontrado."
+                }
+              }
+            },
+            "example": {
+              "message": "<par\u00e2metro> n\u00e3o encontrado."
+            }
+          }
+        }
+      },
       "UnprocessableEntityError": {
         "description": "Unprocessable Entity",
         "content": {
@@ -217,6 +236,7 @@
               },
               "tecnicosProducao": {
                 "type": "array",
+                "minItems": 1,
                 "items": {
                   "type": "object",
                   "properties": {
@@ -325,13 +345,13 @@
           "celular": "+5511999999999",
           "perfil": {
             "grupos": [
-              "c1a2b3c4-d5e6-7890-abcd-1234567890ef",
+              "a2b0255c-82ed-44b3-911d-3100e5758a65",
               "d4e5f6a7-b8c9-0123-abcd-4567890fedcb"
             ]
           },
           "webhook": {
             "id": "wh-123",
-            "idConta": "c1a2b3c4-d5e6-7890-abcd-1234567890ef",
+            "idConta": "f053f8bd-ee76-46bd-a99f-c0c10b7b44a0",
             "url": "https://api.exemplo.com/webhook",
             "metodo": "POST",
             "apikey": {
@@ -353,9 +373,9 @@
         "properties": {
           "id": {
             "type": "string",
-            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
             "description": "Identificador da conta",
-            "example": "c1a2b3c4-d5e6-7890-abcd-1234567890ef"
+            "example": "f053f8bd-ee76-46bd-a99f-c0c10b7b44a0"
           },
           "nome": {
             "type": "string",
@@ -372,7 +392,7 @@
           },
           "idCliente": {
             "type": "string",
-            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
             "description": "Identificador do cliente",
             "example": "d4e5f6a7-b8c9-0123-abcd-4567890fedcb"
           },
@@ -387,7 +407,7 @@
           "id"
         ],
         "example": {
-          "id": "c1a2b3c4-d5e6-7890-abcd-1234567890ef",
+          "id": "f053f8bd-ee76-46bd-a99f-c0c10b7b44a0",
           "nome": "Gestor Editado",
           "email": "novoemail@empresa.com",
           "celular": "+5511988888888",
@@ -395,12 +415,12 @@
           "perfil": {
             "ativo": true,
             "grupos": [
-              "c1a2b3c4-d5e6-7890-abcd-1234567890ef"
+              "a2b0255c-82ed-44b3-911d-3100e5758a65"
             ]
           },
           "webhook": {
             "id": "wh-123",
-            "idConta": "c1a2b3c4-d5e6-7890-abcd-1234567890ef",
+            "idConta": "f053f8bd-ee76-46bd-a99f-c0c10b7b44a0",
             "url": "https://api.exemplo.com/webhook",
             "metodo": "POST",
             "apikey": {
@@ -433,7 +453,7 @@
         },
         "example": {
           "grupos": [
-            "c1a2b3c4-d5e6-7890-abcd-1234567890ef",
+            "a2b0255c-82ed-44b3-911d-3100e5758a65",
             "d4e5f6a7-b8c9-0123-abcd-4567890fedcb"
           ],
           "ativo": true
@@ -450,7 +470,7 @@
           "idConta": {
             "type": "string",
             "description": "Identificador da conta",
-            "example": "c1a2b3c4-d5e6-7890-abcd-1234567890ef"
+            "example": "f053f8bd-ee76-46bd-a99f-c0c10b7b44a0"
           },
           "url": {
             "type": "string",
@@ -531,13 +551,13 @@
         "properties": {
           "idConta": {
             "type": "string",
-            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
             "description": "Identificador da conta",
-            "example": "c1a2b3c4-d5e6-7890-abcd-1234567890ef"
+            "example": "f053f8bd-ee76-46bd-a99f-c0c10b7b44a0"
           },
           "idCliente": {
             "type": "string",
-            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
             "description": "Identificador do cliente",
             "example": "d4e5f6a7-b8c9-0123-abcd-4567890fedcb"
           }
@@ -802,26 +822,26 @@
           },
           "idRequisitante": {
             "type": "string",
-            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
             "description": "ID da conta do requisitante",
             "example": "6739f533-5bde-486a-a9b4-9af5605b51fb"
           },
           "idGrupo": {
             "type": "string",
-            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
             "description": "ID do grupo respons\u00e1vel pelo fluxo",
             "example": "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
           },
           "idCliente": {
             "type": "string",
-            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
             "description": "ID do cliente",
             "example": "61637e59-fb59-468f-b008-b32f7c8a38fd"
           },
           "tipoAssinatura": {
             "type": "string",
-            "description": "Tipo de assinatura (ex: ELETRONICA, AVANCADA, QUALIFICADA)",
-            "example": "ELETRONICA"
+            "description": "Tipo de assinatura (ex: AVANCADA, QUALIFICADA)",
+            "example": "AVANCADA"
           },
           "status": {
             "type": "string",
@@ -900,7 +920,7 @@
         "example": {
           "tipoAssinatura": {
             "permiteAlteracao": true,
-            "tipo": "ELETRONICA"
+            "tipo": "AVANCADA"
           }
         }
       },
@@ -918,7 +938,7 @@
           },
           "idCliente": {
             "type": "string",
-            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
             "description": "(Opcional) ID do cliente ao qual o grupo pertence."
           },
           "descricao": {
@@ -962,7 +982,7 @@
           "preferencias": {
             "tipoAssinatura": {
               "permiteAlteracao": true,
-              "tipo": "ELETRONICA"
+              "tipo": "AVANCADA"
             }
           }
         }
@@ -981,7 +1001,7 @@
           },
           "idCliente": {
             "type": "string",
-            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
             "description": "(Opcional) ID do cliente ao qual o grupo pertence."
           },
           "descricao": {
@@ -1025,7 +1045,7 @@
           "preferencias": {
             "tipoAssinatura": {
               "permiteAlteracao": true,
-              "tipo": "ELETRONICA"
+              "tipo": "AVANCADA"
             }
           }
         }
@@ -1038,7 +1058,7 @@
         "properties": {
           "id": {
             "type": "string",
-            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
             "description": "ID do grupo a ser buscado."
           }
         },
@@ -1631,14 +1651,24 @@
             "example": "+5511999999999"
           },
           "phone": {
-            "$ref": "#/components/schemas/PhoneOutput"
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/PhoneOutput"
+              }
+            ],
+            "nullable": true
           },
           "tipoConta": {
             "type": "string",
             "example": "USUARIO"
           },
           "webhook": {
-            "$ref": "#/components/schemas/WebhookOutput"
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/WebhookOutput"
+              }
+            ],
+            "nullable": true
           }
         }
       },
@@ -1678,17 +1708,20 @@
           },
           "celular": {
             "type": "string",
+            "nullable": true,
             "example": "+5511999999999"
           },
           "phone": {
-            "$ref": "#/components/schemas/PhoneOutput"
+            "$ref": "#/components/schemas/PhoneOutput",
+            "nullable": true
           },
           "tipoConta": {
             "type": "string",
             "example": "USUARIO"
           },
           "webhook": {
-            "$ref": "#/components/schemas/WebhookOutput"
+            "$ref": "#/components/schemas/WebhookOutput",
+            "nullable": true
           }
         }
       },
@@ -2534,17 +2567,28 @@
           },
           "celular": {
             "type": "string",
+            "nullable": true,
             "example": "+5511999999999"
           },
           "phone": {
-            "$ref": "#/components/schemas/PhoneOutput"
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/PhoneOutput"
+              }
+            ],
+            "nullable": true
           },
           "tipoConta": {
             "type": "string",
             "example": "SISTEMA"
           },
           "webhook": {
-            "$ref": "#/components/schemas/WebhookOutput"
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/WebhookOutput"
+              }
+            ],
+            "nullable": true
           },
           "perfil": {
             "$ref": "#/components/schemas/PerfilOutput"
@@ -3470,6 +3514,9 @@
           "401": {
             "description": "N\u00e3o autorizado"
           },
+          "422": {
+            "$ref": "#/components/responses/UnprocessableEntityError"
+          },
           "500": {
             "description": "Internal Server Error"
           }
@@ -3630,6 +3677,9 @@
           "401": {
             "$ref": "#/components/responses/UnauthorizedError"
           },
+          "422": {
+            "$ref": "#/components/responses/UnprocessableEntityError"
+          },
           "500": {
             "description": "Internal Server Error"
           }
@@ -3665,6 +3715,9 @@
                 }
               }
             }
+          },
+          "400": {
+            "description": "Requisi\u00e7\u00e3o inv\u00e1lida"
           },
           "401": {
             "$ref": "#/components/responses/UnauthorizedError"
@@ -3715,7 +3768,7 @@
           }
         },
         "responses": {
-          "200": {
+          "201": {
             "description": "OTP enviado com sucesso",
             "content": {
               "application/json": {
@@ -3724,6 +3777,9 @@
                 }
               }
             }
+          },
+          "400": {
+            "description": "Requisi\u00e7\u00e3o inv\u00e1lida"
           },
           "401": {
             "$ref": "#/components/responses/UnauthorizedError"
@@ -3813,6 +3869,9 @@
           "401": {
             "$ref": "#/components/responses/UnauthorizedError"
           },
+          "422": {
+            "$ref": "#/components/responses/UnprocessableEntityError"
+          },
           "500": {
             "description": "Internal Server Error"
           }
@@ -3863,7 +3922,7 @@
             "description": "N\u00e3o autorizado"
           },
           "404": {
-            "description": "Link inv\u00e1lido ou expirado"
+            "$ref": "#/components/responses/NotFoundError"
           },
           "500": {
             "description": "Internal Server Error"
@@ -3901,6 +3960,9 @@
                 "description": "Cookie de autentica\u00e7\u00e3o HTTP-only (`neosigner-auth` ou `__Host-neosigner-auth`, conforme ambiente)."
               }
             }
+          },
+          "422": {
+            "$ref": "#/components/responses/UnprocessableEntityError"
           },
           "500": {
             "description": "Erro inesperado ao processar a requisi\u00e7\u00e3o."
@@ -4045,6 +4107,9 @@
               }
             }
           },
+          "400": {
+            "description": "Requisi\u00e7\u00e3o inv\u00e1lida"
+          },
           "401": {
             "$ref": "#/components/responses/UnauthorizedError"
           }
@@ -4073,6 +4138,9 @@
         "responses": {
           "201": {
             "description": "Cliente criado com sucesso"
+          },
+          "400": {
+            "description": "Requisi\u00e7\u00e3o inv\u00e1lida"
           },
           "401": {
             "$ref": "#/components/responses/UnauthorizedError"
@@ -4243,6 +4311,9 @@
               }
             }
           },
+          "400": {
+            "description": "Requisi\u00e7\u00e3o inv\u00e1lida"
+          },
           "401": {
             "$ref": "#/components/responses/UnauthorizedError"
           },
@@ -4349,7 +4420,7 @@
             "required": true,
             "schema": {
               "type": "string",
-              "format": "uuid",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
               "description": "ID da conta a ser alterada"
             }
           },
@@ -4390,11 +4461,14 @@
               }
             }
           },
+          "400": {
+            "description": "Requisi\u00e7\u00e3o inv\u00e1lida"
+          },
           "401": {
             "$ref": "#/components/responses/UnauthorizedError"
           },
           "404": {
-            "description": "Conta n\u00e3o encontrada"
+            "$ref": "#/components/responses/NotFoundError"
           },
           "422": {
             "$ref": "#/components/responses/UnprocessableEntityError"
@@ -4423,7 +4497,7 @@
             "required": true,
             "schema": {
               "type": "string",
-              "format": "uuid"
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
             },
             "description": "ID da conta"
           },
@@ -4449,11 +4523,14 @@
               }
             }
           },
+          "400": {
+            "description": "Requisi\u00e7\u00e3o inv\u00e1lida"
+          },
           "401": {
             "$ref": "#/components/responses/UnauthorizedError"
           },
           "404": {
-            "description": "Conta n\u00e3o encontrada"
+            "$ref": "#/components/responses/NotFoundError"
           },
           "500": {
             "description": "Erro interno do servidor"
@@ -4530,8 +4607,14 @@
               }
             }
           },
+          "400": {
+            "description": "Requisi\u00e7\u00e3o inv\u00e1lida"
+          },
           "401": {
             "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "422": {
+            "$ref": "#/components/responses/UnprocessableEntityError"
           },
           "500": {
             "description": "Erro interno do servidor"
@@ -4625,11 +4708,17 @@
               }
             }
           },
+          "400": {
+            "description": "Requisi\u00e7\u00e3o inv\u00e1lida"
+          },
           "401": {
             "$ref": "#/components/responses/UnauthorizedError"
           },
           "404": {
-            "description": "Conta ou pessoa n\u00e3o encontrada"
+            "$ref": "#/components/responses/NotFoundError"
+          },
+          "422": {
+            "$ref": "#/components/responses/UnprocessableEntityError"
           },
           "500": {
             "description": "Erro interno do servidor"
@@ -4656,7 +4745,7 @@
                 "$ref": "#/components/schemas/ReenviarCredenciaisSistemaInput"
               },
               "example": {
-                "idConta": "c1a2b3c4-d5e6-7890-abcd-1234567890ef",
+                "idConta": "f053f8bd-ee76-46bd-a99f-c0c10b7b44a0",
                 "idCliente": "d4e5f6a7-b8c9-0123-abcd-4567890fedcb"
               }
             }
@@ -4713,6 +4802,9 @@
                 }
               }
             }
+          },
+          "404": {
+            "description": "Nenhuma notifica\u00e7\u00e3o habilitada na vari\u00e1vel de ambiente `TIPOS_DE_ALERTAS`"
           },
           "500": {
             "description": "Erro ao processar vari\u00e1vel de ambiente ou execu\u00e7\u00e3o das notifica\u00e7\u00f5es"
@@ -4869,7 +4961,7 @@
             "required": true,
             "schema": {
               "type": "string",
-              "format": "uuid"
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
             },
             "description": "ID do documento"
           }
@@ -4878,11 +4970,14 @@
           "204": {
             "description": "Documento removido com sucesso"
           },
+          "400": {
+            "description": "Requisi\u00e7\u00e3o inv\u00e1lida"
+          },
           "401": {
             "$ref": "#/components/responses/UnauthorizedError"
           },
           "404": {
-            "description": "Documento n\u00e3o encontrado"
+            "$ref": "#/components/responses/NotFoundError"
           },
           "422": {
             "$ref": "#/components/responses/UnprocessableEntityError"
@@ -4933,6 +5028,9 @@
                 }
               }
             }
+          },
+          "400": {
+            "description": "Requisi\u00e7\u00e3o inv\u00e1lida"
           },
           "401": {
             "$ref": "#/components/responses/UnauthorizedError"
@@ -5048,6 +5146,9 @@
           "401": {
             "$ref": "#/components/responses/UnauthorizedError"
           },
+          "422": {
+            "$ref": "#/components/responses/UnprocessableEntityError"
+          },
           "500": {
             "description": "Internal Server Error"
           }
@@ -5087,6 +5188,9 @@
               }
             }
           },
+          "400": {
+            "description": "Requisi\u00e7\u00e3o inv\u00e1lida"
+          },
           "401": {
             "$ref": "#/components/responses/UnauthorizedError"
           },
@@ -5118,7 +5222,7 @@
             "required": true,
             "schema": {
               "type": "string",
-              "format": "uuid"
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
             },
             "description": "ID do fluxo"
           }
@@ -5168,6 +5272,9 @@
               }
             }
           },
+          "400": {
+            "description": "Requisi\u00e7\u00e3o inv\u00e1lida"
+          },
           "401": {
             "$ref": "#/components/responses/UnauthorizedError"
           },
@@ -5199,7 +5306,7 @@
             "required": true,
             "schema": {
               "type": "string",
-              "format": "uuid"
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
             }
           }
         ],
@@ -5207,11 +5314,14 @@
           "204": {
             "description": "Fluxo excluido com sucesso"
           },
+          "400": {
+            "description": "Requisi\u00e7\u00e3o inv\u00e1lida"
+          },
           "401": {
             "$ref": "#/components/responses/UnauthorizedError"
           },
           "404": {
-            "description": "Fluxo nao encontrado"
+            "$ref": "#/components/responses/NotFoundError"
           },
           "500": {
             "description": "Internal Server Error"
@@ -5236,7 +5346,7 @@
             "required": true,
             "schema": {
               "type": "string",
-              "format": "uuid"
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
             }
           }
         ],
@@ -5258,11 +5368,14 @@
               }
             }
           },
+          "400": {
+            "description": "Requisi\u00e7\u00e3o inv\u00e1lida"
+          },
           "401": {
             "$ref": "#/components/responses/UnauthorizedError"
           },
           "404": {
-            "description": "Fluxo nao encontrado"
+            "$ref": "#/components/responses/NotFoundError"
           },
           "500": {
             "description": "Internal Server Error"
@@ -5289,7 +5402,7 @@
             "required": true,
             "schema": {
               "type": "string",
-              "format": "uuid"
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
             }
           }
         ],
@@ -5342,7 +5455,7 @@
             "required": true,
             "schema": {
               "type": "string",
-              "format": "uuid"
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
             }
           }
         ],
@@ -5400,7 +5513,7 @@
             "required": true,
             "schema": {
               "type": "string",
-              "format": "uuid"
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
             }
           }
         ],
@@ -5453,7 +5566,7 @@
             "required": true,
             "schema": {
               "type": "string",
-              "format": "uuid"
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
             }
           }
         ],
@@ -5498,7 +5611,7 @@
             "required": true,
             "schema": {
               "type": "string",
-              "format": "uuid"
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
             }
           },
           {
@@ -5506,7 +5619,11 @@
             "name": "algoritmo",
             "required": true,
             "schema": {
-              "type": "string"
+              "type": "string",
+              "enum": [
+                "SHA-256",
+                "SHA-512"
+              ]
             },
             "description": "Algoritmo de hash"
           }
@@ -5523,8 +5640,14 @@
               }
             }
           },
+          "400": {
+            "description": "Requisi\u00e7\u00e3o inv\u00e1lida"
+          },
           "401": {
             "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
           },
           "500": {
             "description": "Internal Server Error"
@@ -5607,6 +5730,9 @@
           "401": {
             "$ref": "#/components/responses/UnauthorizedError"
           },
+          "422": {
+            "$ref": "#/components/responses/UnprocessableEntityError"
+          },
           "500": {
             "description": "Internal Server Error"
           }
@@ -5632,7 +5758,7 @@
             "required": true,
             "schema": {
               "type": "string",
-              "format": "uuid"
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
             }
           },
           {
@@ -5675,6 +5801,9 @@
               }
             }
           },
+          "400": {
+            "description": "Requisi\u00e7\u00e3o inv\u00e1lida"
+          },
           "401": {
             "$ref": "#/components/responses/UnauthorizedError"
           },
@@ -5702,7 +5831,7 @@
             "required": true,
             "schema": {
               "type": "string",
-              "format": "uuid"
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
             }
           }
         ],
@@ -5724,11 +5853,14 @@
               }
             }
           },
+          "400": {
+            "description": "Requisi\u00e7\u00e3o inv\u00e1lida"
+          },
           "401": {
             "$ref": "#/components/responses/UnauthorizedError"
           },
           "404": {
-            "description": "Fluxo nao encontrado"
+            "$ref": "#/components/responses/NotFoundError"
           },
           "500": {
             "description": "Internal Server Error"
@@ -5759,7 +5891,7 @@
               "type": "array",
               "items": {
                 "type": "string",
-                "format": "uuid"
+                "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
               }
             },
             "style": "form",
@@ -5844,12 +5976,12 @@
                         "properties": {
                           "idResposta": {
                             "type": "string",
-                            "format": "uuid",
+                            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
                             "description": "ID \u00fanico da resposta do interessado"
                           },
                           "idGrupo": {
                             "type": "string",
-                            "format": "uuid",
+                            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
                             "description": "ID do grupo do fluxo"
                           },
                           "nomeGrupo": {
@@ -5858,7 +5990,7 @@
                           },
                           "idFluxo": {
                             "type": "string",
-                            "format": "uuid",
+                            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
                             "description": "ID do fluxo"
                           },
                           "nomeFluxo": {
@@ -5894,7 +6026,7 @@
                           },
                           "idConta": {
                             "type": "string",
-                            "format": "uuid",
+                            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
                             "description": "ID da conta do interessado"
                           },
                           "nomeInteressado": {
@@ -6075,7 +6207,7 @@
             "required": true,
             "schema": {
               "type": "string",
-              "format": "uuid"
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
             }
           }
         ],
@@ -6096,11 +6228,14 @@
               }
             }
           },
+          "400": {
+            "description": "Requisi\u00e7\u00e3o inv\u00e1lida"
+          },
           "401": {
             "$ref": "#/components/responses/UnauthorizedError"
           },
           "404": {
-            "description": "Sumario nao encontrado"
+            "$ref": "#/components/responses/NotFoundError"
           },
           "500": {
             "description": "Internal Server Error"
@@ -6168,6 +6303,9 @@
                 }
               }
             }
+          },
+          "400": {
+            "description": "Requisi\u00e7\u00e3o inv\u00e1lida"
           },
           "401": {
             "$ref": "#/components/responses/UnauthorizedError"
@@ -6309,7 +6447,7 @@
             "required": true,
             "schema": {
               "type": "string",
-              "format": "uuid"
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
             },
             "description": "ID do grupo"
           }
@@ -6363,6 +6501,9 @@
               }
             }
           },
+          "400": {
+            "description": "Requisi\u00e7\u00e3o inv\u00e1lida"
+          },
           "401": {
             "$ref": "#/components/responses/UnauthorizedError"
           },
@@ -6388,7 +6529,7 @@
             "required": true,
             "schema": {
               "type": "string",
-              "format": "uuid"
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
             },
             "description": "ID do grupo"
           }
@@ -6415,8 +6556,14 @@
               }
             }
           },
+          "400": {
+            "description": "Requisi\u00e7\u00e3o inv\u00e1lida"
+          },
           "401": {
             "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
           },
           "422": {
             "$ref": "#/components/responses/UnprocessableEntityError"
@@ -6799,7 +6946,7 @@
                 "properties": {
                   "idFluxo": {
                     "type": "string",
-                    "format": "uuid",
+                    "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
                     "description": "ID do fluxo para reenviar os links"
                   },
                   "interessados": {
@@ -6845,6 +6992,9 @@
         "responses": {
           "204": {
             "description": "Links reenviados com sucesso"
+          },
+          "400": {
+            "description": "Requisi\u00e7\u00e3o inv\u00e1lida"
           },
           "401": {
             "$ref": "#/components/responses/UnauthorizedError"
@@ -6943,6 +7093,9 @@
                 }
               }
             }
+          },
+          "404": {
+            "description": "Nenhum job encontrado nas DLQs com os filtros aplicados"
           }
         }
       }
@@ -6965,7 +7118,7 @@
             "required": true,
             "schema": {
               "type": "string",
-              "format": "uuid"
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
             }
           }
         ],
@@ -7017,8 +7170,14 @@
               }
             }
           },
+          "400": {
+            "description": "Requisi\u00e7\u00e3o inv\u00e1lida"
+          },
           "401": {
             "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "404": {
+            "description": "Fluxo n\u00e3o encontrado"
           },
           "422": {
             "$ref": "#/components/responses/UnprocessableEntityError"
@@ -7047,7 +7206,7 @@
             "required": true,
             "schema": {
               "type": "string",
-              "format": "uuid"
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
             }
           }
         ],
@@ -7099,8 +7258,14 @@
               }
             }
           },
+          "400": {
+            "description": "Requisi\u00e7\u00e3o inv\u00e1lida"
+          },
           "401": {
             "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "404": {
+            "description": "Fluxo n\u00e3o encontrado"
           },
           "422": {
             "$ref": "#/components/responses/UnprocessableEntityError"
@@ -7129,7 +7294,7 @@
             "required": true,
             "schema": {
               "type": "string",
-              "format": "uuid"
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
             }
           }
         ],
@@ -7181,8 +7346,14 @@
               }
             }
           },
+          "400": {
+            "description": "Requisi\u00e7\u00e3o inv\u00e1lida"
+          },
           "401": {
             "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "404": {
+            "description": "Fluxo n\u00e3o encontrado"
           },
           "422": {
             "$ref": "#/components/responses/UnprocessableEntityError"
@@ -7211,7 +7382,7 @@
             "required": true,
             "schema": {
               "type": "string",
-              "format": "uuid"
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
             }
           }
         ],
@@ -7258,8 +7429,14 @@
               }
             }
           },
+          "400": {
+            "description": "Requisi\u00e7\u00e3o inv\u00e1lida"
+          },
           "401": {
             "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "404": {
+            "description": "Fluxo n\u00e3o encontrado"
           },
           "422": {
             "$ref": "#/components/responses/UnprocessableEntityError"
@@ -7288,7 +7465,7 @@
             "required": true,
             "schema": {
               "type": "string",
-              "format": "uuid"
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
             }
           }
         ],
@@ -7335,8 +7512,14 @@
               }
             }
           },
+          "400": {
+            "description": "Requisi\u00e7\u00e3o inv\u00e1lida"
+          },
           "401": {
             "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "404": {
+            "description": "Fluxo n\u00e3o encontrado"
           },
           "422": {
             "$ref": "#/components/responses/UnprocessableEntityError"
@@ -7365,7 +7548,7 @@
             "required": true,
             "schema": {
               "type": "string",
-              "format": "uuid"
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
             }
           }
         ],
@@ -7412,8 +7595,14 @@
               }
             }
           },
+          "400": {
+            "description": "Requisi\u00e7\u00e3o inv\u00e1lida"
+          },
           "401": {
             "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "404": {
+            "description": "Fluxo n\u00e3o encontrado"
           },
           "422": {
             "$ref": "#/components/responses/UnprocessableEntityError"
@@ -7442,7 +7631,7 @@
             "required": true,
             "schema": {
               "type": "string",
-              "format": "uuid"
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
             }
           }
         ],
@@ -7489,8 +7678,14 @@
               }
             }
           },
+          "400": {
+            "description": "Requisi\u00e7\u00e3o inv\u00e1lida"
+          },
           "401": {
             "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "404": {
+            "description": "Fluxo n\u00e3o encontrado"
           },
           "422": {
             "$ref": "#/components/responses/UnprocessableEntityError"
@@ -7519,7 +7714,7 @@
             "required": true,
             "schema": {
               "type": "string",
-              "format": "uuid"
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
             }
           }
         ],
@@ -7566,8 +7761,14 @@
               }
             }
           },
+          "400": {
+            "description": "Requisi\u00e7\u00e3o inv\u00e1lida"
+          },
           "401": {
             "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "404": {
+            "description": "Fluxo n\u00e3o encontrado"
           },
           "422": {
             "$ref": "#/components/responses/UnprocessableEntityError"
@@ -7596,7 +7797,7 @@
             "required": true,
             "schema": {
               "type": "string",
-              "format": "uuid"
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
             }
           }
         ],
@@ -7643,8 +7844,14 @@
               }
             }
           },
+          "400": {
+            "description": "Requisi\u00e7\u00e3o inv\u00e1lida"
+          },
           "401": {
             "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "404": {
+            "description": "Fluxo n\u00e3o encontrado"
           },
           "422": {
             "$ref": "#/components/responses/UnprocessableEntityError"
@@ -7673,7 +7880,7 @@
             "required": true,
             "schema": {
               "type": "string",
-              "format": "uuid"
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
             }
           }
         ],
@@ -7720,8 +7927,14 @@
               }
             }
           },
+          "400": {
+            "description": "Requisi\u00e7\u00e3o inv\u00e1lida"
+          },
           "401": {
             "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "404": {
+            "description": "Fluxo n\u00e3o encontrado"
           },
           "422": {
             "$ref": "#/components/responses/UnprocessableEntityError"
@@ -7750,7 +7963,7 @@
             "required": true,
             "schema": {
               "type": "string",
-              "format": "uuid"
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
             }
           }
         ],
@@ -7797,8 +8010,14 @@
               }
             }
           },
+          "400": {
+            "description": "Requisi\u00e7\u00e3o inv\u00e1lida"
+          },
           "401": {
             "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "404": {
+            "description": "Fluxo n\u00e3o encontrado"
           },
           "422": {
             "$ref": "#/components/responses/UnprocessableEntityError"
@@ -7827,7 +8046,7 @@
             "required": true,
             "schema": {
               "type": "string",
-              "format": "uuid"
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
             }
           },
           {
@@ -7835,7 +8054,11 @@
             "name": "algoritmo",
             "required": true,
             "schema": {
-              "type": "string"
+              "type": "string",
+              "enum": [
+                "SHA-256",
+                "SHA-512"
+              ]
             },
             "description": "Algoritmo de hash utilizado"
           }
@@ -7885,8 +8108,14 @@
               }
             }
           },
+          "400": {
+            "description": "Requisi\u00e7\u00e3o inv\u00e1lida"
+          },
           "401": {
             "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "404": {
+            "description": "Fluxo n\u00e3o encontrado"
           },
           "422": {
             "$ref": "#/components/responses/UnprocessableEntityError"

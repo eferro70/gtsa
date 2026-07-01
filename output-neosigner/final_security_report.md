@@ -4,11 +4,11 @@
 
 | Métrica | Valor |
 |---------|-------|
-| **Total de endpoints** | 74 |
-| **Alto risco** | 6 (8.1%) |
-| **Médio risco** | 50 (67.6%) |
-| **Baixo risco** | 18 (24.3%) |
-| **Com dados PII** | 5 (6.8%) |
+| **Total de endpoints** | 73 |
+| **Alto risco** | 5 (6.8%) |
+| **Médio risco** | 50 (68.5%) |
+| **Baixo risco** | 18 (24.7%) |
+| **Com dados PII** | 4 (5.5%) |
 
 ## 🛡️ OWASP API Top 10 2023
 
@@ -31,7 +31,6 @@
 | GET | `/api/webhook/validar/:idRequisitante` | ssrf, unsafe_consumption |
 | GET | `/api/fluxos/:id/hashes-documentos/:algoritmo` | sem mapeamento explícito (Contém PII: documento) |
 | GET | `/api/listar-contas/:email` | sem mapeamento explícito (Contém PII: email) |
-| GET | `/api/confirmacao-interessado/:email/:idConta` | sem mapeamento explícito (Contém PII: email) |
 
 ---
-*Relatório gerado por step4_analyzer_and_enricher.py em 23/06/2026 15:40:10*
+*Relatório gerado por step4_analyzer_and_enricher.py em 01/07/2026 10:49:54*

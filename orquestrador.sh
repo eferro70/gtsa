@@ -100,6 +100,11 @@ main() {
     # INICIO DO PIPELINE
     ##############################################################################
 
+    # Limpar dados da execução anterior
+    log "🧹 Limpando diretório de relatórios: $REPORTS_DIR"
+    rm -rf "$REPORTS_DIR"
+    mkdir -p "$REPORTS_DIR"
+
     # Passo 1: Scan inicial
     run_step 1 "Scan do projeto" \
         python3 src/application/pipeline/step1_scan.py -i "$API_SOURCE" \

@@ -1,6 +1,6 @@
 # 🔒 Relatório de Testes Schemathesis
 
-*Gerado em: 2026-06-23 10:46:13*
+*Gerado em: 2026-06-24 11:00:12*
 
 ## ⚙️ Configuração dos Testes
 
@@ -10,20 +10,20 @@
 
 | Métrica | Valor |
 |---------|-------|
-| **Total de casos de teste gerados** | **48** |
-| ✅ Testes bem-sucedidos | 4 |
-| ❌ Testes com falha | 8 |
+| **Total de casos de teste gerados** | **614** |
+| ✅ Testes bem-sucedidos | 45 |
+| ❌ Testes com falha | 144 |
 | ⚠️ Erros de schema | 0 |
-| ⏭️ Testes ignorados | 6 |
-| **Taxa de sucesso** | **33.3%** |
-| ⏱️ Duração total | 3.23s |
+| ⏭️ Testes ignorados | 78 |
+| **Taxa de sucesso** | **23.8%** |
+| ⏱️ Duração total | 60.07s |
 
 ## 🎯 Cobertura de Endpoints
 
 | Métrica | Valor |
 |---------|-------|
-| Total de operações na spec | 6 |
-| ✅ Endpoints testados | 6 |
+| Total de operações na spec | 78 |
+| ✅ Endpoints testados | 78 |
 | ⚠️ Endpoints com erro | 0 |
 | ⏭️ Endpoints ignorados | 0 |
 
@@ -31,9 +31,9 @@
 
 | Tipo de Falha | Quantidade | Severidade |
 |---------------|------------|------------|
-| Erro interno do servidor (500) | 4 | 🔴 Alta |
-| Rejeita requisição válida (falso positivo) | 4 | 🟠 Média |
-| Status HTTP não documentado | 4 | 🟡 Baixa |
+| Erro interno do servidor (500) | 67 | 🔴 Alta |
+| Rejeita requisição válida (falso positivo) | 67 | 🟠 Média |
+| Status HTTP não documentado | 67 | 🟡 Baixa |
 
 ## 📋 Detalhamento por Endpoint (Top 10 com mais falhas)
 
@@ -42,29 +42,67 @@
 
 ## 🐛 Principais Falhas Encontradas
 
-**1. PUT /oauth/v1/oauth/applications/{clientId}**
+**1. POST /oauth/v1/oauth/aplicativos/solicitacao/assinatura**
 
 ```
-1. Test Case ID: nmSIkj  - Undocumented HTTP status code      Received: 415     Documented: 200, 400, 401, 403, 404, 500  [415] Unsupported Media Type:      `[{"error_description":["RESTEASY003065: Cannot consume content type"],"error":"Http exception"}]`  Reproduce with:      curl -X PUT 'https://h
+1. Test Case ID: pk1p7a  - API rejected schema-compliant request      Valid data should have been accepted     Expected: 2xx, 401, 403, 404, 409, 5xx  - Undocumented HTTP status code      Received: 415     Documented: 200, 400, 401, 403, 404, 500  [415] Unsupported Media Type:      `[{"error_descrip
 ```
 
 **2. POST /oauth/v1/oauth/applications/{clientId}/activation**
 
 ```
-1. Test Case ID: x8ujcP  - API rejected schema-compliant request      Valid data should have been accepted     Expected: 2xx, 401, 403, 404, 409, 5xx  - Undocumented HTTP status code      Received: 412     Documented: 200, 400, 401, 403, 404, 500  [412] Precondition Failed:      `{"code":"CLIENTE_OA
+1. Test Case ID: OnbKe9  - API rejected schema-compliant request      Valid data should have been accepted     Expected: 2xx, 401, 403, 404, 409, 5xx  - Undocumented HTTP status code      Received: 412     Documented: 200, 400, 401, 403, 404, 500  [412] Precondition Failed:      `{"code":"CLIENTE_OA
 ```
 
 **3. POST /oauth/v1/oauth/applications/{clientId}/redirect-uris**
 
 ```
-1. Test Case ID: a6mqj9  - Undocumented HTTP status code      Received: 415     Documented: 200, 400, 401, 403, 404, 500  [415] Unsupported Media Type:      `[{"error_description":["RESTEASY003065: Cannot consume content type"],"error":"Http exception"}]`  Reproduce with:      curl -X POST 'https://
+1. Test Case ID: bcEnxT  - Undocumented HTTP status code      Received: 415     Documented: 200, 400, 401, 403, 404, 500  [415] Unsupported Media Type:      `[{"error_description":["RESTEASY003065: Cannot consume content type"],"error":"Http exception"}]`  Reproduce with:      curl -X POST 'https://
 ```
 
-**4. DELETE /oauth/v1/oauth/applications/{clientId}/redirect-uris**
+**4. POST /oauth/v1/oauth/dispositivos/cadastrar-com-credencial-pedido/pedido/{numeroReferencia}**
 
 ```
-1. Test Case ID: ya17X1  - Undocumented HTTP status code      Received: 415     Documented: 200, 400, 401, 403, 404, 500  [415] Unsupported Media Type:      `[{"error_description":["RESTEASY003065: Cannot consume content type"],"error":"Http exception"}]`  Reproduce with:      curl -X DELETE 'https:
+1. Test Case ID: 7rMJpp  - Undocumented HTTP status code      Received: 406     Documented: 200, 400, 401, 403, 404, 500  [406] Not Acceptable:      `{"code":"VERSAO_APP_INCOMPATIVEL","msg":"Versão da aplicação incompatível com a versão atual.","debug":""}`  Reproduce with:      curl -X POST 'https:
 ```
+
+**5. POST /oauth/v1/oauth/dispositivos/email/otp/enviar**
+
+```
+1. Test Case ID: OMarBW  - API rejected schema-compliant request      Valid data should have been accepted     Expected: 2xx, 401, 403, 404, 409, 5xx  - Undocumented HTTP status code      Received: 406     Documented: 200, 400, 401, 403, 404, 500  [406] Not Acceptable:      `{"code":"VERSAO_APP_INCO
+```
+
+**6. POST /oauth/v1/oauth/dispositivos/otp/validar**
+
+```
+1. Test Case ID: dDm07M  - API rejected schema-compliant request      Valid data should have been accepted     Expected: 2xx, 401, 403, 404, 409, 5xx  - Undocumented HTTP status code      Received: 406     Documented: 200, 400, 401, 403, 404, 500  [406] Not Acceptable:      `{"code":"VERSAO_APP_INCO
+```
+
+**7. POST /oauth/v1/oauth/dispositivos/sms/otp/enviar**
+
+```
+1. Test Case ID: qr3WHH  - API rejected schema-compliant request      Valid data should have been accepted     Expected: 2xx, 401, 403, 404, 409, 5xx  - Undocumented HTTP status code      Received: 406     Documented: 200, 400, 401, 403, 404, 500  [406] Not Acceptable:      `{"code":"VERSAO_APP_INCO
+```
+
+**8. POST /oauth/v1/oauth/dispositivos/{dispositivo}/chave/instalacao/{idInstalacao}**
+
+```
+1. Test Case ID: 8Loejl  - API rejected schema-compliant request      Valid data should have been accepted     Expected: 2xx, 401, 403, 404, 409, 5xx  - Undocumented HTTP status code      Received: 406     Documented: 200, 400, 401, 403, 404, 500  [406] Not Acceptable:      `{"code":"VERSAO_APP_INCO
+```
+
+**9. POST /oauth/v1/oauth/drivers/assinatura**
+
+```
+1. Test Case ID: CRVlOp  - Undocumented HTTP status code      Received: 412     Documented: 200, 400, 401, 403, 404, 500  [412] Precondition Failed:      `{"code":"UUID_NAO_INFORMADO","msg":"UUID não foi informado","debug":""}`  Reproduce with:      curl -X POST 'https://hom.serproid.serpro.gov.br/o
+```
+
+**10. POST /oauth/v1/oauth/v2/drivers/assinatura**
+
+```
+1. Test Case ID: qwzNo8  - Undocumented HTTP status code      Received: 412     Documented: 200, 400, 401, 403, 404, 500  [412] Precondition Failed:      `{"code":"UUID_NAO_INFORMADO","msg":"UUID não foi informado","debug":""}`  Reproduce with:      curl -X POST 'https://hom.serproid.serpro.gov.br/o
+```
+
+*... e mais 57 falhas*
 
 ## 💡 Recomendações
 

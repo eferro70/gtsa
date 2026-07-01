@@ -1,0 +1,4 @@
+# file: /home/s231991563/projetos/gtsa/src/gtsa/domain/ports/__init__.py
+# hypothesis_version: 6.152.3
+
+['IArtifactStore', 'IAuthProvider', 'IEndpointRepository', 'IHttpClient', 'ILlmClient', 'IOpenApiGenerator', 'IPiiDetector', 'IReportBuilder', 'ISourceParser', 'ISourceParserFactory', 'ITestRunner']

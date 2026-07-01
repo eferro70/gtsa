@@ -1,394 +1,160 @@
-# GTSA - Gerador de Testes de Segurança de APIs
+# GTSA — Gerador de Testes de Segurança de APIs
 
-Este projeto executa uma pipeline automatizada para análise de segurança de APIs, gerando relatórios detalhados sobre potenciais riscos, exemplos de dados, enriquecimento de informações e testes automatizados com LLMs. O objetivo é facilitar a avaliação de segurança de APIs REST a partir de código-fonte ou especificações OpenAPI.
+O GTSA executa uma pipeline automatizada de análise de segurança de APIs REST. A partir do
+código-fonte de um projeto (ou de uma especificação OpenAPI), ele extrai endpoints, enriquece a
+especificação, avalia riscos (OWASP API Top 10 2023 / SANS Top 25), executa testes com
+[Schemathesis](https://schemathesis.readthedocs.io/) e consolida tudo em relatórios Markdown.
+
+O projeto segue **Clean Architecture** com _src layout_: as regras de negócio ficam isoladas em
+`domain`/`application`, e a `infrastructure` implementa as portas (interfaces) definidas pelo
+domínio. As interfaces de linha de comando (`interfaces/cli`) apenas orquestram os casos de uso.
 
 ## Início Rápido
 
 ```bash
-# 1. Configurar variáveis de ambiente (opcional)
-# Editar .env para habilitar/desabilitar passos opcionais
-nano .env
+# 1. Criar e ativar o ambiente virtual
+python3 -m venv .venv
+source .venv/bin/activate
 
-# 2. Executar a pipeline completa
-./orquestrador.sh
+# 2. Instalar o pacote (modo editável) com as dependências
+pip install -e .
+
+# 3. Criar o arquivo de ambiente da API alvo (ex.: neosigner)
+#    Veja a seção "Configuração" para as variáveis obrigatórias
+nano .env.neosigner
+
+# 4. Executar a pipeline completa para essa API
+./orquestrador.sh neosigner
 ```
 
-## Estrutura do Projeto
+O log fica em `orquestrador-<api>.log` e os relatórios em `output-<api>/`.
+
+## Arquitetura
+
+A pipeline é organizada em camadas, respeitando a regra de dependência (setas apontam para
+dentro; a infraestrutura implementa as portas do domínio):
+
+```
+interfaces (CLI)  ──►  application (use cases)  ──►  domain (entities / ports / services)
+                                                          ▲
+                            infrastructure (adapters) ─────┘
+```
+
+- **domain/** — Núcleo independente de frameworks.
+  - `entities.py`, `value_objects.py`, `errors.py`
+  - `ports/` — contratos (parsing, openapi, analysis, testing, reporting, auth, http, llm, storage…)
+  - `services/` — regras puras (`pii_rules.py`, `vulnerability_rules.py`)
+- **application/use_cases/** — Um caso de uso por passo da pipeline:
+  `scan_source`, `generate_openapi`, `generate_example_data`, `analyze_and_enrich`,
+  `run_schemathesis`, `build_report`.
+- **infrastructure/** — Implementações concretas das portas: `parsers/` (tree-sitter),
+  `openapi/`, `examples/`, `analysis/`, `testing/` (Schemathesis), `reporting/`, `auth/`,
+  `http/`, `llm/`, `persistence/`, `config/`.
+- **interfaces/cli/** — Pontos de entrada `stepN_*` invocados via `python -m`.
+- **bootstrap.py** — _Composition root_: instancia os adapters, injeta-os nos casos de uso e
+  devolve um `Container` pronto para as interfaces.
+
+### Estrutura do projeto
 
 ```
 gtsa/
-├── orquestrador.sh                 # Script principal da pipeline
-├── .env                            # Configuração de passos opcionais
-├── README.md                       # Este arquivo
-├── requirements.txt                # Dependências Python
-├── config/                         # Configurações
-│   ├── auth_config.json           # Configurações de autenticação
-│   ├── pii_patterns.json          # Padrões de detecção de dados sensíveis
+├── orquestrador.sh                # Pipeline completa (recebe <api_name>)
+├── pyproject.toml                 # Empacotamento, dependências e scripts de console
+├── requirements.txt               # Dependências (uso alternativo ao pip install -e .)
+├── conftest.py                    # Insere src/ no path para os testes
+├── config/                        # Configurações versionadas
+│   ├── auth_config.json           # Headers fixos e tokens por role
+│   ├── pii_patterns.json          # Padrões de detecção de PII
 │   └── vulnerability_mapping.json # Mapeamento de vulnerabilidades
-├── output/                         # Artefatos gerados
-│   ├── openapi.json               # Especificação OpenAPI gerada
-│   ├── openapi.yaml               # Especificação OpenAPI (YAML)
-│   ├── openapi.json-report.md     # Relatório dos endpoints OpenAPI
-│   ├── final_security_report.md   # Relatório detalhado de segurança
-│   └── test_api_llm_summary.md    # Sumário dos testes executados
-└── src/
-    ├── application/pipeline/       # Scripts da pipeline
-    │   ├── step1_scan.py          # Scan AST do código-fonte
-    │   ├── step2_openapi.py       # Geração OpenAPI (opcional)
-    │   ├── step3_dados_exemplo.py # Dados de exemplo (opcional)
-    │   ├── step4_analyzer_and_enricher.py  # Análise de segurança
-    │   ├── step5_generator.py     # Gerador de testes
-    │   ├── step6_run_llm_tests.sh # Executor de testes com LLM
-    │   ├── step7_gerar_relatorio_markdown.py # Gerador de relatório
-    │   └── tests/
-    │       ├── dados/             # Exemplos de dados gerados
-    │       └── scan_*/            # Resultados dos scans
-    └── infrastructure/            # Utilitários e hooks
-        └── interfaces/
-            └── hooks/             # Hooks de autenticação e LLM
+├── src/gtsa/
+│   ├── bootstrap.py               # Composition root (build_container)
+│   ├── domain/                    # Entidades, value objects, ports e services
+│   ├── application/use_cases/     # Casos de uso da pipeline
+│   ├── infrastructure/            # Adapters (parsers, openapi, testing, ...)
+│   └── interfaces/
+│       ├── cli/                   # step1..6 (entrypoints python -m)
+│       └── stateful/              # Testes stateful (state machine)
+├── tests/                         # Testes unitários (pytest)
+├── runtime/                       # Artefatos de execução (gitignored)
+│   ├── scans/scan_<timestamp>/    # Resultado de cada scan (all_endpoints.json)
+│   └── dados/                     # Dados de exemplo gerados
+└── output-<api>/                  # Relatórios finais por API
 ```
-
-## Configuração
-
-### Variáveis de Ambiente (`.env`)
-
-```bash
-# Controle dos passos opcionais
-STEP_2_ENABLED=false      # Gerar OpenAPI (true/false)
-STEP_3_ENABLED=false      # Gerar dados de exemplo (true/false)
-
-# Configurações LLM
-LLM_BACKEND=ollama        # Backend LLM (ollama, gatiator, etc)
-LLM_MODEL=gemma          # Modelo LLM a usar
-```
-
-## Pipeline de Execução
-
-### Passo 1: Scan AST do Código-Fonte
-
-```bash
-python3 src/application/pipeline/step1_scan.py -i <caminho_projeto>
-```
-
-**Descrição**: Analisa recursivamente o código-fonte (Node/TypeScript/Python), extraindo endpoints de APIs usando parser AST.
-
-**Entradas**:
-
-- Diretório raiz do projeto (`-i`)
-- (Opcional) Tipo de parser (`--parser`)
-
-**Saídas**:
-
-- `src/application/pipeline/tests/scan_<timestamp>/all_endpoints.json`
-- Relatórios JSON/Markdown
-
----
-
-### Passo 2: Geração OpenAPI (Opcional)
-
-```bash
-python3 src/application/pipeline/step2_openapi.py
-```
-
-**Descrição**: Gera especificação OpenAPI 3.0 a partir dos endpoints extraídos.
-
-**Dependências**: Passo 1 deve ter executado antes
-
-**Controle**: `STEP_2_ENABLED=true` no `.env`
-
-**Saídas**:
-
-- `output/openapi.json`
-- `output/openapi.yaml` (se PyYAML instalado)
-- `output/openapi.json-report.md`
-
----
-
-### Passo 3: Dados de Exemplo (Opcional)
-
-```bash
-python3 src/application/pipeline/step3_dados_exemplo.py <openapi.json>
-```
-
-**Descrição**: Gera exemplos de dados para cada endpoint (body, path params).
-
-**Dependências**: OpenAPI deve existir
-
-**Controle**: `STEP_3_ENABLED=true` no `.env`
-
-**Prioridade de exemplo**:
-
-1. Exemplo inline no requestBody → usa diretamente
-2. Mapa de exemplos → pega o primeiro
-3. Exemplo no schema `$ref` → usa diretamente
-4. Fallback: gera via LLM
-
-**Saídas**:
-
-- `src/application/pipeline/tests/dados/METHOD_endpoint.json`
-
----
-
-### Passo 4: Análise de Segurança
-
-```bash
-python3 src/application/pipeline/step4_analyzer_and_enricher.py <all_endpoints.json>
-```
-
-**Descrição**: Análise de risco com enriquecimento de dados. Detecta vulnerabilidades, identifica PII e mapeia para OWASP API Top 10 2023 e SANS Top 25.
-
-**Funcionalidades**:
-
-- 🔄 **Modo Híbrido**: LLM local com fallback para heurística
-- 🛡️ **OWASP API Top 10 2023**: Mapeamento automático
-- 📊 **SANS Top 25**: Classificação de vulnerabilidades
-- 🔍 **10+ vulnerabilidades**: BOLA, BFLA, Injection, SSRF, etc
-- 📝 **Detecção PII**: CPF, CNPJ, email, telefone
-- ⚡ **Determinístico**: Mapeamento 100% heurístico
-
-**Entradas**:
-
-- `all_endpoints.json` (Passo 1)
-- (Opcional) OpenAPI (`--openapi`)
-- (Opcional) parâmetros LLM
-
-**Saídas**:
-
-- `src/application/pipeline/tests/enriched_endpoints.json`
-- `output/final_security_report.md`
-
----
-
-### Passo 5: Gerador de Testes
-
-```bash
-python3 src/application/pipeline/step5_generator.py <openapi.json>
-```
-
-**Descrição**: Gera testes Python automaticamente com verificações de segurança avançadas.
-
-**Funcionalidades**:
-
-- 🔒 Testes específicos por vulnerabilidade
-- 🛡️ Verificação de vazamento de PII
-- 📊 Contexto de segurança por endpoint
-- 🔑 Hooks de autenticação e roles
-- 🚀 Runner Bash otimizado com filtros
-
-**Entradas**:
-
-- `output/openapi.json`
-- `src/application/pipeline/tests/enriched_endpoints.json`
-
-**Saídas**:
-
-- `src/application/pipeline/tests/test_api_security.py`
-- `src/application/pipeline/step6_run_llm_tests.sh`
-- Hooks de autenticação em `src/infrastructure/interfaces/hooks/`
-
----
-
-### Passo 6: Execução de Testes com LLM
-
-```bash
-bash src/application/pipeline/step6_run_llm_tests.sh \
-  --llm-backend ollama \
-  --llm-model gemma
-```
-
-**Descrição**: Executa testes de segurança com LLMs, gerando sumário dos resultados.
-
-**Funcionalidades**:
-
-- 🔴 Filtro por nível de risco: `ONLY_HIGH_RISK=true`
-- 📊 Filtro por score: `MAX_RISK_SCORE=0.7`
-- ⏭️ Pular endpoints sem auth: `SKIP_NO_AUTH=true`
-- 🔄 Execução paralela: `PARALLEL_JOBS=2`
-
-**Entradas**:
-
-- `src/application/pipeline/tests/enriched_endpoints.json`
-- `src/application/pipeline/tests/test_api_security.py`
-- `config/auth_config.json`
-
-**Saídas**:
-
-- `llm_analyzer.log` (log detalhado)
-- Sumário integrado ao relatório final
-
----
-
-### Passo 7: Geração de Relatório Final
-
-```bash
-python3 src/application/pipeline/step7_gerar_relatorio_markdown.py
-```
-
-**Descrição**: Consolida resultados de todos os passos em relatório final em Markdown.
-
-**Entradas**:
-
-- `llm_analyzer.log`
-- `output/final_security_report.md`
-- Resultados dos testes
-
-**Saídas**:
-
-- `output/test_api_llm_summary.md`
-
----
-
-## Exemplos de Uso
-
-### Execução Completa da Pipeline
-
-```bash
-./orquestrador.sh
-```
-
-Log será salvo em `orquestrador.log` e os artefatos em `output/` e `src/application/pipeline/tests/`.
-
-### Pular Passos Opcionais
-
-```bash
-# Editar .env
-STEP_2_ENABLED=false
-STEP_3_ENABLED=false
-
-./orquestrador.sh
-```
-
-### Teste com Apenas Endpoints de Alto Risco
-
-```bash
-ONLY_HIGH_RISK=true ./src/application/pipeline/step6_run_llm_tests.sh
-```
-
-### Teste com Score Máximo e Jobs Paralelos
-
-```bash
-MAX_RISK_SCORE=0.7 PARALLEL_JOBS=2 ./src/application/pipeline/step6_run_llm_tests.sh
-```
-
-## Fluxo de Dados
-
-```
-Código-Fonte
-    ↓ (Passo 1: Scan AST)
-all_endpoints.json
-    ↓
-    ├─→ (Passo 2 - opcional) → openapi.json ──┐
-    │                                          ↓
-    │                          (Passo 3 - opcional) → dados/
-    │                                          ↑
-    └─────────────────────────────────────────┘
-                    ↓
-    (Passo 4: Análise) → enriched_endpoints.json
-                    ↓
-    (Passo 5: Gerador) → test_api_security.py
-                    ↓
-    (Passo 6: Testes) → llm_analyzer.log
-                    ↓
-    (Passo 7: Relatório) → test_api_llm_summary.md
-```
-
-## Artefatos Gerados
-
-### Em `output/`
-
-- `openapi.json` - Especificação OpenAPI
-- `openapi.yaml` - Especificação em YAML
-- `openapi.json-report.md` - Relatório dos endpoints
-- `final_security_report.md` - Análise detalhada de segurança
-- `test_api_llm_summary.md` - Sumário final dos testes
-
-### Em `src/application/pipeline/tests/`
-
-- `scan_<timestamp>/` - Resultados do scan AST
-- `dados/` - Exemplos de dados gerados
-- `enriched_endpoints.json` - Endpoints com análise de segurança
-- `test_api_security.py` - Testes executáveis
-- `test_api_llm_summary.md` - Resultados dos testes
-
-## Requisitos
-
-- Python 3.8+
-- Bash 4.0+
-- (Opcional) Ollama ou Gatiator para LLM local
-- Dependências Python: `pip install -r requirements.txt`
 
 ## Instalação
 
 ```bash
-# Clonar e instalar
 git clone <repo>
 cd gtsa
 
-# Criar ambiente virtual
 python3 -m venv .venv
 source .venv/bin/activate
 
-# Instalar dependências
-pip install -r requirements.txt
+# Opção recomendada: instala o pacote e expõe os scripts de console
+pip install -e .
 
-# Configurar (se necessário)
-cp .env.example .env
-nano .env
+# Extras opcionais
+pip install -e ".[llm]"   # Suporte a LLM local (transformers, torch, accelerate)
+pip install -e ".[dev]"   # Ferramentas de desenvolvimento (pytest, ruff, mypy, ...)
 ```
 
-## Suporte
+Requisitos:
 
-Consulte os logs para detalhes:
+- Python 3.9+
+- Bash 4.0+
+- (Opcional) Backend LLM local (Ollama, Gatiator, etc.) para os passos que usam LLM
 
-- `orquestrador.log` - Execução geral da pipeline
-- `llm_analyzer.log` - Detalhes dos testes com LLM
-- `output/` - Relatórios finais
+> Se preferir não instalar o pacote, o `orquestrador.sh` já exporta `PYTHONPATH=src`, permitindo
+> rodar os módulos diretamente com `PYTHONPATH=src python -m gtsa.interfaces.cli.stepN_*`.
 
-**Saídas:**
+## Configuração
 
-- `output/test_api_llm_summary.md` (relatório consolidado)
+### Arquivo `.env.<api_name>`
 
-Saídas e Relatórios (output/)
-A pasta output/ contém os principais resultados da pipeline:
-
-**api_analyse_report.md**: Relatório detalhado da análise de segurança da API, incluindo endpoints, riscos identificados, recomendações e evidências.
-
-**final_security_report.md**: Relatório final consolidado com OWASP API Top 10 2023 e SANS Top 25, pronto para apresentação ou auditoria.
-
-**test_api_llm_summary.md**: Sumário dos testes automatizados realizados, destacando falhas, comportamentos suspeitos e sugestões de mitigação.
-
-## Como Executar
-
-Crie e ative um ambiente virtual (recomendado):
+O orquestrador é sempre invocado com o nome da API (`./orquestrador.sh <api_name>`) e carrega o
+arquivo `.env.<api_name>` correspondente. As variáveis principais:
 
 ```bash
-python3 -m venv .venv
-source .venv/bin/activate
-```
+# Fonte do código a analisar (obrigatório)
+API_SOURCE="/caminho/para/o/projeto"
 
-Instale as dependências:
+# URL base da API sob teste
+API_BASE_URL="http://localhost:8080"
 
-```bash
-pip install -r requirements.txt
-```
+# Especificação OpenAPI (padrão: output-<api>/openapi.json)
+OPENAPI_JSON="output-neosigner/openapi.json"
 
-Configure as variáveis de ambiente no arquivo .env:
+# Controle de passos opcionais
+STEP_2_ENABLED=false   # Gerar OpenAPI a partir do scan
+STEP_3_ENABLED=true    # Gerar dados de exemplo (usa LLM)
 
-```bash
-# Tokens para cada role (para testes)
+# LLM
+LLM_BACKEND=ollama
+LLM_MODEL=gemma
+
+# Filtros de execução e relatório
+ONLY_HIGH_RISK=false
+MAX_EXAMPLES=10
+VERBOSE=false
+PYTHON_DEBUG=false
+
+# Tokens por role (usados nos testes autenticados)
+CHAVE_ACESSO_SISTEMA="..."
 TOKEN_ADMINISTRADOR="eyJhbGciOiJIUzI1NiIs..."
 TOKEN_GESTOR="eyJhbGciOiJIUzI1NiIs..."
 TOKEN_REQUISITANTE="eyJhbGciOiJIUzI1NiIs..."
 TOKEN_INTERESSADO="eyJhbGciOiJIUzI1NiIs..."
-# URL base da API
-API_BASE_URL="http://localhost:8080"
 ```
 
-Configure a autenticação no arquivo config/auth_config.json:
+### `config/auth_config.json`
+
+Mapeia headers fixos e os tokens por role para variáveis de ambiente (definidas no `.env.<api>`):
 
 ```json
 {
-  "fixed_headers": [],
+  "fixed_headers": [
+    { "name": "x-chave-acesso-sistema", "env_var": "CHAVE_ACESSO_SISTEMA" }
+  ],
   "role_tokens": {
     "ADMINISTRADOR": { "env_var": "TOKEN_ADMINISTRADOR" },
     "GESTOR": { "env_var": "TOKEN_GESTOR" },
@@ -401,22 +167,139 @@ Configure a autenticação no arquivo config/auth_config.json:
 }
 ```
 
-Execute o orquestrador:
+## Pipeline de Execução
+
+Cada passo é um módulo CLI executado com `python -m gtsa.interfaces.cli.stepN_*`. Todos aceitam
+`--env-file` e `--output-dir`. O orquestrador encadeia os seis passos automaticamente.
+
+### Passo 1 — Scan do código-fonte
 
 ```bash
-bash orquestrador.sh
+python -m gtsa.interfaces.cli.step1_scan -i <caminho_projeto> --output-dir output-<api> [--language typescript] [--debug]
 ```
 
-Os relatórios serão gerados na pasta output/.
+Varre o projeto e extrai endpoints usando parsers baseados em tree-sitter. A linguagem é
+detectada automaticamente (TypeScript/JavaScript, Java, Python, Go, Ruby) ou forçada via
+`--language`.
 
-## Configurações
+**Saída:** `runtime/scans/scan_<timestamp>/all_endpoints.json` (contrato oficial da pipeline).
 
-- Ajuste arquivos em config/ conforme necessário para autenticação e padrões de dados sensíveis.
-- O mapeamento de vulnerabilidades OWASP API Top 10 2023 pode ser customizado em config/vulnerability_mapping.json.
-- Os dados de teste podem ser customizados em src/application/pipeline/tests/dados/.
+### Passo 2 — Geração de OpenAPI (opcional)
 
-## Observações
+```bash
+python -m gtsa.interfaces.cli.step2_openapi --output-dir output-<api> --env-file .env.<api> [--title ...] [--version ...] [--prefix ...] [--base-url ...]
+```
 
-- A pipeline é modular: cada etapa pode ser executada individualmente para depuração.
-- Os arquivos intermediários (JSON) são salvos em subpastas de tests/ para rastreabilidade.
-- O projeto é extensível para novos tipos de análise ou integrações com outros sistemas de segurança.
+Gera uma especificação OpenAPI 3.0 a partir dos endpoints do scan. Habilitado por
+`STEP_2_ENABLED=true`.
+
+**Saída:** `output-<api>/openapi.json`.
+
+### Passo 3 — Dados de exemplo (opcional, LLM)
+
+```bash
+python -m gtsa.interfaces.cli.step3_dados_exemplo <openapi.json> --only-with-body --env-file .env.<api> --llm-backend ollama --llm-model gemma
+```
+
+Gera dados de exemplo (body/parâmetros) para os endpoints, priorizando exemplos inline do próprio
+schema e recorrendo ao LLM como fallback. Habilitado por `STEP_3_ENABLED=true`.
+
+**Saída:** `runtime/dados/`.
+
+### Passo 4 — Análise de risco e enriquecimento
+
+```bash
+python -m gtsa.interfaces.cli.step4_analyzer_and_enricher <all_endpoints.json> --output-dir output-<api> --openapi <openapi.json> --env-file .env.<api> [--no-llm]
+```
+
+Classifica riscos, detecta PII e mapeia vulnerabilidades para OWASP API Top 10 2023 e SANS Top 25.
+Opera em modo híbrido (LLM com fallback heurístico); `--no-llm` usa apenas as heurísticas
+determinísticas.
+
+**Saídas:** `output-<api>/openapi_enriched.json` e `output-<api>/final_security_report.md`.
+
+### Passo 5 — Schemathesis com dados reais
+
+```bash
+python -m gtsa.interfaces.cli.step5_schemathesis_with_data --output-dir output-<api> --env-file .env.<api> [--only-high-risk] [--verbose]
+```
+
+Executa o Schemathesis contra a API, injetando dados de exemplo e autenticação condicional por
+role. Um hook (`schemathesis_hooks.py`) é gerado no diretório de saída. `--only-high-risk`
+restringe os testes aos endpoints de maior risco.
+
+**Saída:** `output-<api>/schemathesis_results.xml`.
+
+### Passo 6 — Relatório Markdown
+
+```bash
+python -m gtsa.interfaces.cli.step6_gerar_relatorio_markdown --output-dir output-<api> --env-file .env.<api> [--full] [--hide-success] [--hide-skip]
+```
+
+Consolida os resultados do Schemathesis em um relatório final. As flags controlam a verbosidade
+(incluir todos os endpoints, omitir sucessos, omitir pulados).
+
+**Saída:** `output-<api>/test_api_summary.md`.
+
+## Fluxo de Dados
+
+```
+Código-Fonte
+   │  (Passo 1: scan)
+   ▼
+runtime/scans/scan_<ts>/all_endpoints.json
+   │
+   ├─► (Passo 2, opcional) ─► output-<api>/openapi.json
+   │                              │
+   │        (Passo 3, opcional) ─► runtime/dados/
+   ▼
+(Passo 4: análise) ─► openapi_enriched.json + final_security_report.md
+   │
+   ▼
+(Passo 5: Schemathesis) ─► schemathesis_results.xml
+   │
+   ▼
+(Passo 6: relatório) ─► test_api_summary.md
+```
+
+## Scripts de Console
+
+Após `pip install -e .`, os passos ficam disponíveis como comandos:
+
+| Comando             | Módulo                                               |
+| ------------------- | ---------------------------------------------------- |
+| `gtsa-scan`         | `gtsa.interfaces.cli.step1_scan`                     |
+| `gtsa-openapi`      | `gtsa.interfaces.cli.step2_openapi`                  |
+| `gtsa-examples`     | `gtsa.interfaces.cli.step3_dados_exemplo`            |
+| `gtsa-analyze`      | `gtsa.interfaces.cli.step4_analyzer_and_enricher`    |
+| `gtsa-schemathesis` | `gtsa.interfaces.cli.step5_schemathesis_with_data`   |
+| `gtsa-report`       | `gtsa.interfaces.cli.step6_gerar_relatorio_markdown` |
+
+## Artefatos Gerados
+
+**`output-<api>/`** (relatórios por API):
+
+- `openapi.json` / `openapi_enriched.json` — especificação e versão enriquecida
+- `final_security_report.md` — análise de segurança (OWASP / SANS)
+- `schemathesis_results.xml` — resultado bruto dos testes
+- `test_api_summary.md` — sumário final dos testes
+
+**`runtime/`** (temporário, gitignored):
+
+- `scans/scan_<timestamp>/all_endpoints.json` — endpoints extraídos
+- `dados/` — dados de exemplo gerados
+
+## Testes
+
+```bash
+pip install -e ".[dev]"
+pytest
+```
+
+Os testes ficam em `tests/`; o `conftest.py` garante que `src/` esteja no `sys.path`.
+A configuração do pytest está centralizada no `pyproject.toml`.
+
+## Suporte / Logs
+
+- `orquestrador-<api>.log` — execução geral da pipeline
+- `output-<api>/` — relatórios finais e artefatos por API

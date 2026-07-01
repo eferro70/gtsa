@@ -1,8 +1,0 @@
-{
-  "_path_params": {
-    "id": "exemplo_id"
-  },
-  "code": "abc123",
-  "codeVerifier": "verifier123",
-  "redirect": "https://callback.url"
-}

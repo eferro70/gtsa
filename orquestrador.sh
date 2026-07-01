@@ -15,7 +15,11 @@ fi
 LOGFILE="orquestrador-${API_NAME}.log"
 REPORTS_DIR="output-${API_NAME}"
 LLM_MODEL="gemma"
-OPENAPI_LOCAL="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/openapi.json"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+OPENAPI_LOCAL="$SCRIPT_DIR/openapi.json"
+
+# Garante que o pacote 'gtsa' (layout src/) seja importável sem instalação.
+export PYTHONPATH="$SCRIPT_DIR/src:${PYTHONPATH:-}"
 
 # Carrega variáveis de ambiente do arquivo .env.${API_NAME}
 ENV_FILE="$(dirname "${BASH_SOURCE[0]}")/.env.${API_NAME}"
@@ -107,14 +111,14 @@ main() {
 
     # Passo 1: Scan inicial
     run_step 1 "Scan do projeto" \
-        python3 src/application/pipeline/step1_scan.py -i "$API_SOURCE" \
+        python3 -m gtsa.interfaces.cli.step1_scan -i "$API_SOURCE" \
         --output-dir "$REPORTS_DIR" \
         ${PYTHON_DEBUG:+--debug}
 
     # Passo 2: Geração de OpenAPI (opcional)
     if [[ "${STEP_2_ENABLED:-false}" == "true" ]]; then
         run_step 2 "Geração automática da especificação OpenAPI" \
-            python3 src/application/pipeline/step2_openapi.py \
+            python3 -m gtsa.interfaces.cli.step2_openapi \
             --output-dir "$REPORTS_DIR" \
             --env-file "$ENV_FILE"
     else
@@ -124,8 +128,7 @@ main() {
     # Passo 3: [LLM] Dados de exemplo
     if [[ "$STEP_3_ENABLED" == "true" ]]; then
         run_step 3 "[LLM] Geração de dados de exemplo para testes" \
-            python3 src/application/pipeline/step3_dados_exemplo.py "$OPENAPI_LOCAL" \
-            --data-dir "src/application/pipeline/tests/dados" \
+            python3 -m gtsa.interfaces.cli.step3_dados_exemplo "$OPENAPI_LOCAL" \
             --only-with-body \
             --env-file "$ENV_FILE" \
             --llm-backend "$LLM_BACKEND" \
@@ -135,7 +138,7 @@ main() {
     fi
 
     # Descobre diretório do scan mais recente
-    SCAN_DIR=$(ls -td src/application/pipeline/tests/scan_* 2>/dev/null | head -n1)
+    SCAN_DIR=$(ls -td "$SCRIPT_DIR"/runtime/scans/scan_* 2>/dev/null | head -n1)
     if [[ -z "$SCAN_DIR" ]]; then
         log "❌ Nenhum diretório 'scan_*' encontrado"
         exit 1
@@ -143,7 +146,7 @@ main() {
 
     # Passo 4: Análise de risco
     run_step 4 "Análise de risco e enriquecimento" \
-        python3 src/application/pipeline/step4_analyzer_and_enricher.py "$SCAN_DIR/all_endpoints.json" \
+        python3 -m gtsa.interfaces.cli.step4_analyzer_and_enricher "$SCAN_DIR/all_endpoints.json" \
         --output-dir "$REPORTS_DIR" \
         --openapi "$OPENAPI_LOCAL" \
         --env-file "$ENV_FILE" \
@@ -163,7 +166,7 @@ main() {
     fi
 
     STEP5_EXIT=0
-    python3 src/application/pipeline/step5_schemathesis_with_data.py \
+    python3 -m gtsa.interfaces.cli.step5_schemathesis_with_data \
         --output-dir "$REPORTS_DIR" \
         --env-file "$ENV_FILE" \
         $ONLY_HIGH_RISK_FLAG \
@@ -171,7 +174,7 @@ main() {
 
     # Passo 6: Relatório
     run_step 6 "Gerar relatório de testes" \
-        python3 src/application/pipeline/step6_gerar_relatorio_markdown.py \
+        python3 -m gtsa.interfaces.cli.step6_gerar_relatorio_markdown \
         --output-dir "$REPORTS_DIR" \
         --env-file "$ENV_FILE" \
         ${FULL_REPORT:+--full} \

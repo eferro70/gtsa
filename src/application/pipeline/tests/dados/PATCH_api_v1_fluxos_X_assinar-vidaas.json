@@ -1,8 +1,0 @@
-{
-  "_path_params": {
-    "id": "exemplo_id"
-  },
-  "code": "vidaas-xyz",
-  "codeVerifier": "verifier-vidaas",
-  "redirect": "https://callback.vidaas"
-}

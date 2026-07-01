@@ -1,8 +1,0 @@
-{
-  "_path_params": {
-    "id": "exemplo_id"
-  },
-  "code": "dscloud-xyz",
-  "codeVerifier": "verifier-dscloud",
-  "redirect": "https://callback.dscloud"
-}

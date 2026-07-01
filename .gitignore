@@ -6,6 +6,7 @@ __pycache__/
 .Python
 env/
 venv/
+.venv/
 ENV/
 build/
 develop-eggs/
@@ -23,6 +24,13 @@ wheels/
 .installed.cfg
 *.egg
 
+# Ferramentas / caches
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
 # IDE
 .vscode/
 .idea/
@@ -30,19 +38,23 @@ wheels/
 *.swo
 *~
 
-# Dados gerados para testes
-src/application/pipeline/tests/
+# Artefatos de runtime da pipeline (scans, dados de exemplo, etc.)
+runtime/
 
-# Outputs do projeto
+# Outputs por API e relatórios gerados
 output/
+output-*/
+/openapi.json
 llm_analyzer.log
+orquestrador-*.log
 *.log
 
-# Arquivos de ambiente
+# Arquivos de ambiente (mantém exemplo versionado)
 .env
 .env.local
 .env.*.local
 .env.*
+!.env.example
 
 # Backup files
 *.bak

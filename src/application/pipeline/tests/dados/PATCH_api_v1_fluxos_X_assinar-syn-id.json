@@ -1,8 +1,0 @@
-{
-  "_path_params": {
-    "id": "exemplo_id"
-  },
-  "code": "synid-xyz",
-  "codeVerifier": "verifier-synid",
-  "redirect": "https://callback.synid"
-}

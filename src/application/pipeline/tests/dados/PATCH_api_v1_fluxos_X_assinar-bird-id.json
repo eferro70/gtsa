@@ -1,8 +1,0 @@
-{
-  "_path_params": {
-    "id": "exemplo_id"
-  },
-  "code": "birdid-xyz",
-  "codeVerifier": "verifier-bird",
-  "redirect": "https://callback.birdid"
-}

@@ -1,0 +1,78 @@
+{
+  "operation": "GET /api/assinador/hello",
+  "method": "GET",
+  "path_template": "/api/assinador/hello",
+  "fingerprint": "53b4e7c8",
+  "case_id": "P4y0Zt",
+  "code_sample": "curl -X GET http://localhost/api/assinador/hello",
+  "sequence": [
+    {
+      "method": "GET",
+      "url": "http://localhost/api/assinador/hello",
+      "url_template": "http://localhost/api/assinador/hello",
+      "headers": {
+        "User-Agent": "schemathesis/4.22.4",
+        "Accept-Encoding": "gzip, deflate",
+        "Accept": "*/*",
+        "Connection": "keep-alive",
+        "X-Schemathesis-TestCaseId": "P4y0Zt"
+      },
+      "response": {
+        "status_code": 404,
+        "headers": {
+          "server": "nginx/1.31.3",
+          "date": "Tue, 04 Aug 2026 17:42:45 GMT",
+          "content-type": "text/plain",
+          "content-length": "18",
+          "connection": "keep-alive",
+          "content-security-policy": "default-src 'self'; base-uri 'self'; frame-ancestors 'none'; object-src 'none'",
+          "vary": "Origin",
+          "x-krakend": "Version undefined",
+          "x-krakend-completed": "false"
+        },
+        "body": "404 page not found"
+      },
+      "link": null,
+      "checks": [
+        {
+          "name": "status_code_conformance",
+          "status": "failure",
+          "message": "Undocumented HTTP status code\n\nReceived: 404\nDocumented: 200"
+        }
+      ],
+      "meta": {
+        "generation": {
+          "time": 3.476300116744824e-05,
+          "mode": "positive"
+        },
+        "components": {},
+        "phase": {
+          "name": "coverage",
+          "data": {
+            "type": "CoveragePhaseData",
+            "description": "Default positive test case",
+            "location": null,
+            "parameter": null,
+            "parameter_location": null,
+            "scenario": "default_positive_test"
+          }
+        },
+        "pool_draws": [],
+        "pool_misses": [],
+        "semantic_draws": [],
+        "dictionary_draws": [],
+        "raw_containers": {}
+      },
+      "path": "/api/assinador/hello",
+      "path_parameters": {},
+      "query": {},
+      "case_headers": {},
+      "cookies": {},
+      "case_body": {
+        "encoding": "none"
+      },
+      "media_type": null,
+      "parent_index": null
+    }
+  ]
+}

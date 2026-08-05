@@ -1,13 +1,32 @@
 # GTSA — Gerador de Testes de Segurança de APIs
 
-O GTSA executa uma pipeline automatizada de análise de segurança de APIs REST. A partir do
-código-fonte de um projeto (ou de uma especificação OpenAPI), ele extrai endpoints, enriquece a
-especificação, avalia riscos (OWASP API Top 10 2023 / SANS Top 25), executa testes com
+O **GTSA** é uma ferramenta de análise e teste de segurança para APIs REST. A partir do
+código-fonte de um projeto (Java, TypeScript, Python, Go ou Ruby) ou de uma especificação OpenAPI
+existente, o GTSA extrai endpoints, classifica riscos segundo o **OWASP API Top 10 2023** e
+**SANS Top 25**, executa testes de conformidade e fuzzing com
 [Schemathesis](https://schemathesis.readthedocs.io/) e consolida tudo em relatórios Markdown.
 
-O projeto segue **Clean Architecture** com _src layout_: as regras de negócio ficam isoladas em
-`domain`/`application`, e a `infrastructure` implementa as portas (interfaces) definidas pelo
-domínio. As interfaces de linha de comando (`interfaces/cli`) apenas orquestram os casos de uso.
+A ferramenta é **agnóstica à API testada**: toda configuração específica de um projeto fica
+isolada em `apis/<nome>/` (arquivo `.env`, hooks Python opcionais), sem tocar no código do GTSA.
+
+---
+
+## Sumário
+
+- [Início Rápido](#início-rápido)
+- [Arquitetura](#arquitetura)
+- [Instalação](#instalação)
+- [Configurando uma Nova API](#configurando-uma-nova-api)
+  - [Exemplo: Neosigner](#exemplo-neosigner)
+- [Pipeline de Execução](#pipeline-de-execução)
+- [Fluxo de Dados](#fluxo-de-dados)
+- [Hooks Customizados por API](#hooks-customizados-por-api)
+- [Scripts de Console](#scripts-de-console)
+- [Artefatos Gerados](#artefatos-gerados)
+- [Testes](#testes)
+- [Suporte / Logs](#suporte--logs)
+
+---
 
 ## Início Rápido
 
@@ -19,67 +38,81 @@ source .venv/bin/activate
 # 2. Instalar o pacote (modo editável) com as dependências
 pip install -e .
 
-# 3. Criar o arquivo de ambiente da API alvo (ex.: neosigner)
-#    Veja a seção "Configuração" para as variáveis obrigatórias
-nano .env.neosigner
+# 3. Criar o diretório e o arquivo de ambiente da API alvo
+mkdir -p apis/minha-api
+cp apis/neosigner/.env apis/minha-api/.env   # use como base
+nano apis/minha-api/.env                     # ajuste as variáveis
 
-# 4. Executar a pipeline completa para essa API
-./orquestrador.sh neosigner
+# 4. Executar a pipeline completa
+./orquestrador.sh minha-api
 ```
 
-O log fica em `orquestrador-<api>.log` e os relatórios em `output-<api>/`.
+O log fica em `logs/<api>.log` e os relatórios em `output-<api>/`.
+
+---
 
 ## Arquitetura
 
-A pipeline é organizada em camadas, respeitando a regra de dependência (setas apontam para
-dentro; a infraestrutura implementa as portas do domínio):
+O GTSA segue **Clean Architecture**: as camadas internas não conhecem as externas. A regra de
+dependência diz que as setas de importação só apontam para dentro.
 
 ```
-interfaces (CLI)  ──►  application (use cases)  ──►  domain (entities / ports / services)
-                                                          ▲
-                            infrastructure (adapters) ─────┘
+┌─────────────────────────────────────────────────────────┐
+│  interfaces/cli  (step1..step6)                         │  ← entrada do usuário
+│        │ chama                                          │
+│        ▼                                                │
+│  application/use_cases                                  │  ← orquestra o fluxo
+│        │ chama contratos (ports) definidos em           │
+│        ▼                                                │
+│  domain  (entities, value_objects, ports, services)     │  ← regras puras, sem deps externas
+│        ▲                                                │
+│        │ implementa os ports                            │
+│  infrastructure  (adapters)                             │  ← detalhes técnicos
+│    ├── parsers (tree-sitter)                            │
+│    ├── openapi, analysis, reporting                     │
+│    ├── testing (Schemathesis)                           │
+│    ├── auth, http, llm, persistence                     │
+│    └── ...                                              │
+└─────────────────────────────────────────────────────────┘
 ```
 
-- **domain/** — Núcleo independente de frameworks.
-  - `entities.py`, `value_objects.py`, `errors.py`
-  - `ports/` — contratos (parsing, openapi, analysis, testing, reporting, auth, http, llm, storage…)
-  - `services/` — regras puras (`pii_rules.py`, `vulnerability_rules.py`)
-- **application/use_cases/** — Um caso de uso por passo da pipeline:
-  `scan_source`, `generate_openapi`, `generate_example_data`, `analyze_and_enrich`,
-  `run_schemathesis`, `build_report`.
-- **infrastructure/** — Implementações concretas das portas: `parsers/` (tree-sitter),
-  `openapi/`, `examples/`, `analysis/`, `testing/` (Schemathesis), `reporting/`, `auth/`,
-  `http/`, `llm/`, `persistence/`, `config/`.
-- **interfaces/cli/** — Pontos de entrada `stepN_*` invocados via `python -m`.
-- **bootstrap.py** — _Composition root_: instancia os adapters, injeta-os nos casos de uso e
-  devolve um `Container` pronto para as interfaces.
+**Como ler:** a `infrastructure` implementa os contratos (`ports`) que o `domain` define, mas
+nunca ao contrário. A `application` só enxerga o `domain`. As CLIs (`interfaces`) só enxergam a
+`application`. Isso permite trocar qualquer adapter (ex.: LLM, parser, banco) sem tocar nas
+regras de negócio.
+
+O **`bootstrap.py`** é o único ponto onde todas as camadas se encontram: ele instancia os
+adapters concretos e os injeta nos casos de uso via `build_container()`.
 
 ### Estrutura do projeto
 
 ```
 gtsa/
 ├── orquestrador.sh                # Pipeline completa (recebe <api_name>)
-├── pyproject.toml                 # Empacotamento, dependências e scripts de console
-├── requirements.txt               # Dependências (uso alternativo ao pip install -e .)
-├── conftest.py                    # Insere src/ no path para os testes
-├── config/                        # Configurações versionadas
-│   ├── auth_config.json           # Headers fixos e tokens por role
-│   ├── pii_patterns.json          # Padrões de detecção de PII
-│   └── vulnerability_mapping.json # Mapeamento de vulnerabilidades
+├── pyproject.toml
+├── apis/                          # Configuração por API (gitignored para .env)
+│   └── <api_name>/
+│       ├── .env                   # Variáveis de ambiente da API
+│       └── hooks.py               # Hooks Schemathesis específicos (opcional)
+├── logs/                          # Logs de execução por API
+│   └── <api_name>.log
+├── config/                        # Configurações globais versionadas
+│   ├── pii_patterns.json
+│   └── vulnerability_mapping.json
 ├── src/gtsa/
-│   ├── bootstrap.py               # Composition root (build_container)
-│   ├── domain/                    # Entidades, value objects, ports e services
-│   ├── application/use_cases/     # Casos de uso da pipeline
-│   ├── infrastructure/            # Adapters (parsers, openapi, testing, ...)
-│   └── interfaces/
-│       ├── cli/                   # step1..6 (entrypoints python -m)
-│       └── stateful/              # Testes stateful (state machine)
-├── tests/                         # Testes unitários (pytest)
+│   ├── bootstrap.py
+│   ├── domain/
+│   ├── application/use_cases/
+│   ├── infrastructure/
+│   └── interfaces/cli/
+├── tests/
 ├── runtime/                       # Artefatos de execução (gitignored)
-│   ├── scans/scan_<timestamp>/    # Resultado de cada scan (all_endpoints.json)
-│   └── dados/                     # Dados de exemplo gerados
+│   ├── scans/scan_<timestamp>/
+│   └── dados/
 └── output-<api>/                  # Relatórios finais por API
 ```
+
+---
 
 ## Instalação
 
@@ -90,156 +123,197 @@ cd gtsa
 python3 -m venv .venv
 source .venv/bin/activate
 
-# Opção recomendada: instala o pacote e expõe os scripts de console
 pip install -e .
 
 # Extras opcionais
 pip install -e ".[llm]"   # Suporte a LLM local (transformers, torch, accelerate)
-pip install -e ".[dev]"   # Ferramentas de desenvolvimento (pytest, ruff, mypy, ...)
+pip install -e ".[dev]"   # Ferramentas de desenvolvimento (pytest, ruff, mypy)
 ```
 
-Requisitos:
+Requisitos: Python 3.9+, Bash 4.0+, e opcionalmente um backend LLM local (Ollama, etc.).
 
-- Python 3.9+
-- Bash 4.0+
-- (Opcional) Backend LLM local (Ollama, Gatiator, etc.) para os passos que usam LLM
+---
 
-> Se preferir não instalar o pacote, o `orquestrador.sh` já exporta `PYTHONPATH=src`, permitindo
-> rodar os módulos diretamente com `PYTHONPATH=src python -m gtsa.interfaces.cli.stepN_*`.
+## Configurando uma Nova API
 
-## Configuração
+Toda a configuração de uma API fica em `apis/<nome>/`:
 
-### Arquivo `.env.<api_name>`
+```
+apis/
+  <nome>/
+    .env        ← variáveis obrigatórias e tokens
+    hooks.py    ← hooks Schemathesis específicos (opcional)
+```
 
-O orquestrador é sempre invocado com o nome da API (`./orquestrador.sh <api_name>`) e carrega o
-arquivo `.env.<api_name>` correspondente. As variáveis principais:
+### Variáveis do `.env`
 
 ```bash
 # Fonte do código a analisar (obrigatório)
 API_SOURCE="/caminho/para/o/projeto"
 
-# URL base da API sob teste
+# URL base da API em execução
 API_BASE_URL="http://localhost:8080"
 
-# Especificação OpenAPI (padrão: output-<api>/openapi.json)
-OPENAPI_JSON="output-neosigner/openapi.json"
+# Linguagem do projeto (opcional — detectada automaticamente se omitida)
+# API_LANGUAGE=java
+
+# Especificação OpenAPI de entrada (padrão: output-<api>/openapi.json)
+OPENAPI_JSON="output-<api>/openapi.json"
 
 # Controle de passos opcionais
-STEP_2_ENABLED=false   # Gerar OpenAPI a partir do scan
-STEP_3_ENABLED=true    # Gerar dados de exemplo (usa LLM)
+STEP_2_ENABLED=false   # gerar OpenAPI a partir do scan
+STEP_3_ENABLED=true    # gerar dados de exemplo (usa LLM)
 
 # LLM
 LLM_BACKEND=ollama
 LLM_MODEL=gemma
 
-# Filtros de execução e relatório
+# Filtros de execução
 ONLY_HIGH_RISK=false
 MAX_EXAMPLES=10
 VERBOSE=false
-PYTHON_DEBUG=false
 
-# Tokens por role (usados nos testes autenticados)
+# Tokens de autenticação por role
 CHAVE_ACESSO_SISTEMA="..."
-TOKEN_ADMINISTRADOR="eyJhbGciOiJIUzI1NiIs..."
-TOKEN_GESTOR="eyJhbGciOiJIUzI1NiIs..."
-TOKEN_REQUISITANTE="eyJhbGciOiJIUzI1NiIs..."
-TOKEN_INTERESSADO="eyJhbGciOiJIUzI1NiIs..."
+TOKEN_ADMINISTRADOR="eyJ..."
+TOKEN_GESTOR="eyJ..."
+TOKEN_REQUISITANTE="eyJ..."
+TOKEN_INTERESSADO="eyJ..."
+
+# Hooks Python específicos desta API (opcional)
+SCHEMATHESIS_HOOKS_EXTRA=apis/<nome>/hooks.py
 ```
 
-### `config/auth_config.json`
+### Exemplo: Neosigner
 
-Mapeia headers fixos e os tokens por role para variáveis de ambiente (definidas no `.env.<api>`):
+A API Neosigner (`apis/neosigner/`) ilustra o caso mais completo: autenticação com múltiplos
+perfis de usuário, dados de exemplo gerados por LLM e hooks customizados.
 
-```json
-{
-  "fixed_headers": [
-    { "name": "x-chave-acesso-sistema", "env_var": "CHAVE_ACESSO_SISTEMA" }
-  ],
-  "role_tokens": {
-    "ADMINISTRADOR": { "env_var": "TOKEN_ADMINISTRADOR" },
-    "GESTOR": { "env_var": "TOKEN_GESTOR" },
-    "REQUISITANTE": { "env_var": "TOKEN_REQUISITANTE" },
-    "INTERESSADO": { "env_var": "TOKEN_INTERESSADO" }
-  },
-  "default_role": "REQUISITANTE",
-  "auth_header": "Authorization",
-  "auth_prefix": "Bearer "
-}
+**`apis/neosigner/.env`** (fragmento):
+
+```bash
+API_SOURCE="/caminho/para/neosigner/controlador-api"
+API_BASE_URL="http://localhost"
+OPENAPI_JSON="output-neosigner/openapi.json"
+STEP_2_ENABLED=false
+STEP_3_ENABLED=true
+LLM_BACKEND=ollama
+LLM_MODEL=gemma
+TOKEN_ADMINISTRADOR="eyJ..."
+TOKEN_GESTOR="eyJ..."
+TOKEN_REQUISITANTE="eyJ..."
+TOKEN_INTERESSADO="eyJ..."
+SCHEMATHESIS_HOOKS_EXTRA=apis/neosigner/hooks.py
 ```
+
+**`apis/neosigner/hooks.py`** — customizações necessárias para esta API:
+
+```python
+import secrets
+import schemathesis
+
+def _gerar_cnpj():
+    """Gera CNPJ válido a cada chamada para evitar conflito de duplicata."""
+    def _d(nums, pesos):
+        r = sum(n * p for n, p in zip(nums, pesos)) % 11
+        return 0 if r < 2 else 11 - r
+    base = [secrets.randbelow(10) for _ in range(12)]
+    d = base + [_d(base, [5,4,3,2,9,8,7,6,5,4,3,2])]
+    return ''.join(map(str, d + [_d(d, [6,5,4,3,2,9,8,7,6,5,4,3,2])]))
+
+@schemathesis.hook
+def before_call(context, case, kwargs):
+    if case.operation.path == '/api/v1/clientes' and case.operation.method.upper() == 'POST':
+        if case.body and isinstance(case.body.get('contratante'), dict):
+            import copy
+            b = copy.deepcopy(case.body)
+            b['contratante']['identificador'] = _gerar_cnpj()
+            for t in b['contratante'].get('tecnicosProducao') or []:
+                if not isinstance(t, dict): continue
+                if not isinstance(t.get('telefone'), (str, type(None))): t['telefone'] = None
+                if not isinstance(t.get('paisIso3'), (str, type(None))): t['paisIso3'] = None
+            case.body = b
+```
+
+Para executar:
+
+```bash
+./orquestrador.sh neosigner
+```
+
+---
 
 ## Pipeline de Execução
 
-Cada passo é um módulo CLI executado com `python -m gtsa.interfaces.cli.stepN_*`. Todos aceitam
-`--env-file` e `--output-dir`. O orquestrador encadeia os seis passos automaticamente.
+Cada passo é um módulo CLI executado com `python -m gtsa.interfaces.cli.stepN_*`. O orquestrador
+encadeia os seis passos automaticamente. Todos aceitam `--env-file` e `--output-dir`.
 
-### Passo 1 — Scan do código-fonte
+| Passo | Módulo                           | Função                                   |
+| ----- | -------------------------------- | ---------------------------------------- |
+| 1     | `step1_scan`                     | Varre o código-fonte e extrai endpoints  |
+| 2     | `step2_openapi`                  | Gera OpenAPI a partir do scan (opcional) |
+| 3     | `step3_dados_exemplo`            | Gera dados de exemplo via LLM (opcional) |
+| 4     | `step4_analyzer_and_enricher`    | Classifica riscos e enriquece a spec     |
+| 5     | `step5_schemathesis_with_data`   | Executa testes com Schemathesis          |
+| 6     | `step6_gerar_relatorio_markdown` | Consolida resultados em Markdown         |
 
-```bash
-python -m gtsa.interfaces.cli.step1_scan -i <caminho_projeto> --output-dir output-<api> [--language typescript] [--debug]
-```
-
-Varre o projeto e extrai endpoints usando parsers baseados em tree-sitter. A linguagem é
-detectada automaticamente (TypeScript/JavaScript, Java, Python, Go, Ruby) ou forçada via
-`--language`.
-
-**Saída:** `runtime/scans/scan_<timestamp>/all_endpoints.json` (contrato oficial da pipeline).
-
-### Passo 2 — Geração de OpenAPI (opcional)
+### Passo 1 — Scan
 
 ```bash
-python -m gtsa.interfaces.cli.step2_openapi --output-dir output-<api> --env-file .env.<api> [--title ...] [--version ...] [--prefix ...] [--base-url ...]
+python -m gtsa.interfaces.cli.step1_scan -i <projeto> --output-dir output-<api> [--language java]
 ```
 
-Gera uma especificação OpenAPI 3.0 a partir dos endpoints do scan. Habilitado por
-`STEP_2_ENABLED=true`.
+Parsers baseados em tree-sitter extraem endpoints. Linguagem detectada automaticamente ou forçada
+via `--language`. **Saída:** `runtime/scans/scan_<ts>/all_endpoints.json`.
 
-**Saída:** `output-<api>/openapi.json`.
-
-### Passo 3 — Dados de exemplo (opcional, LLM)
+### Passo 2 — OpenAPI (opcional)
 
 ```bash
-python -m gtsa.interfaces.cli.step3_dados_exemplo <openapi.json> --only-with-body --env-file .env.<api> --llm-backend ollama --llm-model gemma
+python -m gtsa.interfaces.cli.step2_openapi --output-dir output-<api> --env-file apis/<api>/.env
 ```
 
-Gera dados de exemplo (body/parâmetros) para os endpoints, priorizando exemplos inline do próprio
-schema e recorrendo ao LLM como fallback. Habilitado por `STEP_3_ENABLED=true`.
+Gera especificação OpenAPI 3.0 a partir dos endpoints. Ativo com `STEP_2_ENABLED=true`.
 
-**Saída:** `runtime/dados/`.
-
-### Passo 4 — Análise de risco e enriquecimento
+### Passo 3 — Dados de exemplo (opcional)
 
 ```bash
-python -m gtsa.interfaces.cli.step4_analyzer_and_enricher <all_endpoints.json> --output-dir output-<api> --openapi <openapi.json> --env-file .env.<api> [--no-llm]
+python -m gtsa.interfaces.cli.step3_dados_exemplo openapi.json --only-with-body \
+  --env-file apis/<api>/.env --llm-backend ollama --llm-model gemma
 ```
 
-Classifica riscos, detecta PII e mapeia vulnerabilidades para OWASP API Top 10 2023 e SANS Top 25.
-Opera em modo híbrido (LLM com fallback heurístico); `--no-llm` usa apenas as heurísticas
-determinísticas.
+Gera corpos de requisição realistas para os endpoints. **Saída:** `runtime/dados/`.
 
-**Saídas:** `output-<api>/openapi_enriched.json` e `output-<api>/final_security_report.md`.
-
-### Passo 5 — Schemathesis com dados reais
+### Passo 4 — Análise de risco
 
 ```bash
-python -m gtsa.interfaces.cli.step5_schemathesis_with_data --output-dir output-<api> --env-file .env.<api> [--only-high-risk] [--verbose]
+python -m gtsa.interfaces.cli.step4_analyzer_and_enricher all_endpoints.json \
+  --output-dir output-<api> --openapi openapi.json --env-file apis/<api>/.env [--no-llm]
 ```
 
-Executa o Schemathesis contra a API, injetando dados de exemplo e autenticação condicional por
-role. Um hook (`schemathesis_hooks.py`) é gerado no diretório de saída. `--only-high-risk`
-restringe os testes aos endpoints de maior risco.
+Classifica riscos (OWASP API Top 10, SANS Top 25) e detecta PII. `--no-llm` usa apenas
+heurísticas determinísticas. **Saídas:** `openapi_enriched.json`, `final_security_report.md`.
 
-**Saída:** `output-<api>/schemathesis_results.xml`.
-
-### Passo 6 — Relatório Markdown
+### Passo 5 — Schemathesis
 
 ```bash
-python -m gtsa.interfaces.cli.step6_gerar_relatorio_markdown --output-dir output-<api> --env-file .env.<api> [--full] [--hide-success] [--hide-skip]
+python -m gtsa.interfaces.cli.step5_schemathesis_with_data \
+  --output-dir output-<api> --env-file apis/<api>/.env [--only-high-risk]
 ```
 
-Consolida os resultados do Schemathesis em um relatório final. As flags controlam a verbosidade
-(incluir todos os endpoints, omitir sucessos, omitir pulados).
+Executa testes de conformidade, coverage e fuzzing com autenticação condicional por role. Gera
+`schemathesis_hooks.py` no diretório de saída; se `SCHEMATHESIS_HOOKS_EXTRA` estiver definido,
+appenda o arquivo de hooks da API. **Saída:** `schemathesis_results.xml`.
 
-**Saída:** `output-<api>/test_api_summary.md`.
+### Passo 6 — Relatório
+
+```bash
+python -m gtsa.interfaces.cli.step6_gerar_relatorio_markdown \
+  --output-dir output-<api> --env-file apis/<api>/.env [--full] [--hide-success]
+```
+
+Consolida os resultados em um relatório Markdown. **Saída:** `test_api_summary.md`.
+
+---
 
 ## Fluxo de Dados
 
@@ -262,9 +336,22 @@ runtime/scans/scan_<ts>/all_endpoints.json
 (Passo 6: relatório) ─► test_api_summary.md
 ```
 
+---
+
+## Hooks Customizados por API
+
+O Passo 5 gera `output-<api>/schemathesis_hooks.py` com infraestrutura genérica (autenticação,
+query fixtures). Para comportamentos específicos da API testada, crie `apis/<nome>/hooks.py` e
+aponte com `SCHEMATHESIS_HOOKS_EXTRA=apis/<nome>/hooks.py` no `.env`.
+
+O conteúdo do arquivo extra é appendado ao hooks gerado a cada execução. Isso mantém o código do
+GTSA livre de lógica específica de qualquer API.
+
+---
+
 ## Scripts de Console
 
-Após `pip install -e .`, os passos ficam disponíveis como comandos:
+Após `pip install -e .`:
 
 | Comando             | Módulo                                               |
 | ------------------- | ---------------------------------------------------- |
@@ -274,6 +361,8 @@ Após `pip install -e .`, os passos ficam disponíveis como comandos:
 | `gtsa-analyze`      | `gtsa.interfaces.cli.step4_analyzer_and_enricher`    |
 | `gtsa-schemathesis` | `gtsa.interfaces.cli.step5_schemathesis_with_data`   |
 | `gtsa-report`       | `gtsa.interfaces.cli.step6_gerar_relatorio_markdown` |
+
+---
 
 ## Artefatos Gerados
 
@@ -289,6 +378,8 @@ Após `pip install -e .`, os passos ficam disponíveis como comandos:
 - `scans/scan_<timestamp>/all_endpoints.json` — endpoints extraídos
 - `dados/` — dados de exemplo gerados
 
+---
+
 ## Testes
 
 ```bash
@@ -296,10 +387,9 @@ pip install -e ".[dev]"
 pytest
 ```
 
-Os testes ficam em `tests/`; o `conftest.py` garante que `src/` esteja no `sys.path`.
-A configuração do pytest está centralizada no `pyproject.toml`.
+---
 
 ## Suporte / Logs
 
-- `orquestrador-<api>.log` — execução geral da pipeline
-- `output-<api>/` — relatórios finais e artefatos por API
+- `logs/<api>.log` — execução geral da pipeline
+- `output-<api>/schemathesis_execution.log` — log detalhado do Schemathesis

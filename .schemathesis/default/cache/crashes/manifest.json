@@ -1,0 +1,7 @@
+{
+  "format_version": 1,
+  "schemathesis_version": "4.22.4",
+  "schema_location": "/home/s231991563/projetos/gtsa/output-neosigner/openapi_enriched.json",
+  "base_url": "http://localhost",
+  "created_at": "2026-08-05T17:29:47.671772+00:00"
+}

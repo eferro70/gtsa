@@ -5,10 +5,13 @@ gerados pelo Step 3 (tests/dados/) via spec aumentada com x-example,
 e cobre endpoints GET com query params via WSGI hook.
 
 Autenticação condicional baseada em enriched_endpoints.json:
-- custom_auth_headers → headers específicos (ex: x-chave-acesso-sistema)
-- Role REQUISITANTE   → Authorization: Bearer <TOKEN_REQUISITANTE>
-- Outras roles        → Cookie: <AUTH_COOKIE_NAME>=<TOKEN_<ROLE>>
-- Sem role definida   → headers padrão do auth_loader
+- custom_auth_headers        → headers específicos (ex: x-chave-acesso-sistema)
+- Roles REQUISITANTE / PAV   → Authorization: Bearer <TOKEN_<ROLE>>
+- Outras roles               → Cookie: <AUTH_COOKIE_NAME>=<TOKEN_<ROLE>>
+- Sem role definida          → headers padrão do auth_loader
+
+Migração realizada: substituição do hook map_headers por classes de autenticação
+Schemathesis com @schemathesis.auth() para compatibilidade com check ignored_auth.
 """
 import json
 import os
@@ -246,25 +249,20 @@ def inject_examples_into_spec(spec_path: Path, dados: dict, output_dir: Path) ->
 def generate_hook_file(query_fixtures: dict, auth_headers: dict,
                        output_dir: Path, endpoint_auth_info: Dict[str, Dict]) -> Path:
     """
-    Gera schemathesis_hooks.py com autenticação condicional:
-    1. custom_auth_headers → headers específicos (ex: x-chave-acesso-sistema)
-    2. REQUISITANTE → Authorization: Bearer
-    3. Outras roles → Cookie
-    4. Fallback → auth_loader padrão
+    Gera schemathesis_hooks.py com classe de autenticação unificada.
     """
     fixtures_repr = json.dumps(query_fixtures, ensure_ascii=False, indent=4)
     auth_info_repr = json.dumps(endpoint_auth_info, ensure_ascii=False, indent=4)
 
     lines = [
         "# Hook gerado automaticamente pelo Step 5 — não editar manualmente",
-        "# Compatível com Schemathesis >= 4.0",
+        "# Classe de autenticação unificada com @schemathesis.auth()",
         "import sys",
         "import os",
         "from pathlib import Path",
         "import schemathesis",
         "",
-        "# Garante que o pacote 'gtsa' seja importável mesmo sem instalação",
-        "# editável, localizando a raiz do projeto (que contém 'pyproject.toml').",
+        "# Garante que o pacote 'gtsa' seja importável",
         "for _p in Path(__file__).resolve().parents:",
         "    if (_p / 'pyproject.toml').exists():",
         "        _src = _p / 'src'",
@@ -294,9 +292,7 @@ def generate_hook_file(query_fixtures: dict, auth_headers: dict,
         "import re as _re",
         "",
         "def _canonical_path(path):",
-        '    """Normaliza um path para comparação: remove prefixo de versão',
-        "    (ex: /v1, /v2), converte tanto {param} quanto :param em um",
-        '    marcador genérico, e remove barras finais."""',
+        '    """Normaliza um path para comparação."""',
         "    p = _re.sub(r'/v\\d+(?=/|$)', '', path)",
         "    p = _re.sub(r'\\{[^}/]+\\}', '{X}', p)",
         "    p = _re.sub(r':[^/]+', '{X}', p)",
@@ -310,116 +306,155 @@ def generate_hook_file(query_fixtures: dict, auth_headers: dict,
         "        _CANONICAL_AUTH_INFO[(_cmethod, _cpath)] = _info",
         "",
         "def _lookup_auth(method, path):",
-        '    """Busca info de auth comparando formas canônicas dos paths,',
-        "    pois ENDPOINT_AUTH_INFO (vindo do scan do código-fonte) e o path",
-        "    enviado pelo Schemathesis (vindo da spec OpenAPI) podem usar",
-        "    prefixos de versão e sintaxes de placeholder diferentes",
-        '    (ex: /api/fluxos/:id vs /api/v1/fluxos/{id})."""',
+        '    """Busca info de auth comparando formas canônicas dos paths."""',
         "    key = (method.upper(), _canonical_path(path))",
         "    return _CANONICAL_AUTH_INFO.get(key)",
         "",
-        "# Endpoints que exigem o cookie de sessão mesmo sem checagem de role",
-        "# (ex: endpoints de refresh/renovação que apenas decodificam o token",
-        "# atual para emitir um novo, sem exigir uma role específica). O KrakenD",
-        "# reporta roles=[] para esses casos, então o fallback genérico (Modo 4)",
-        "# nunca tentaria montar o Cookie — por isso a regra explícita abaixo.",
+        "# Endpoints que exigem Cookie mesmo sem role definida",
         "FORCE_COOKIE_PATHS = {",
         "    ('PUT', '/api/token'),",
+        "    ('PUT', '/api/v1/token'),",
         "}",
         "",
-        "@schemathesis.hook",
-        "def map_headers(context, headers):",
-        '    """Injeta autenticação condicional baseada em enriched_endpoints.json."""',
-        "    # Na fase Stateful, o Schemathesis pode passar um objeto interno",
-        "    # (ex: GeneratedValue) que não suporta atribuição de item direta",
-        "    # como um dict normal. Convertendo explicitamente para dict aqui",
-        "    # evita 'TypeError: ... object does not support item assignment'.",
-        "    if headers is None:",
-        "        headers = {}",
-        "    elif not isinstance(headers, dict):",
-        "        try:",
-        "            headers = dict(headers)",
-        "        except (TypeError, ValueError):",
-        "            headers = {}",
-        "    path = context.operation.path",
-        "    method = context.operation.method",
+        "def _token_from_authorization(value):",
+        "    if not value:",
+        "        return None",
+        "    raw = str(value).strip()",
+        "    if not raw:",
+        "        return None",
+        "    if raw.lower().startswith('bearer '):",
+        "        raw = raw[7:]",
+        "    raw = raw.strip()",
+        "    return raw or None",
         "",
-        "    canon_key = (method.upper(), _canonical_path(path))",
-        "    if canon_key in FORCE_COOKIE_PATHS:",
-        "        cookie_name = os.getenv('AUTH_COOKIE_NAME', 'auth_token')",
-        "        token = None",
-        "        if 'Cookie' in _AUTH_HEADERS:",
-        "            ch = _AUTH_HEADERS.get('Cookie', '')",
-        "            if '=' in ch:",
-        "                token = ch.split('=', 1)[1]",
-        "        if not token:",
-        "            token = os.getenv('TOKEN_REQUISITANTE') or os.getenv('TOKEN_GESTOR')",
-        "        if token:",
-        "            headers['Cookie'] = f'{cookie_name}={token}'",
-        "            headers.pop('Authorization', None)",
-        "            headers['Origin'] = os.getenv('API_BASE_URL', 'http://localhost')",
-        "        return headers",
+        "def _get_token_from_env(role):",
+        "    \"\"\"Busca token especifico da role. Sem fallback cross-role.\"\"\"",
+        "    if not role:",
+        "        return None",
+        "    return os.getenv(f'TOKEN_{role}')",
         "",
-        "    info = _lookup_auth(method, path)",
+        "def _bearer_fallback():",
+        "    \"\"\"Fallback Bearer: usa apenas Authorization de _AUTH_HEADERS (mesmo formato).\"\"\"",
+        "    if 'Authorization' in _AUTH_HEADERS:",
+        "        return _token_from_authorization(_AUTH_HEADERS.get('Authorization'))",
+        "    return None",
         "",
-        "    if info:",
+        "def _cookie_fallback():",
+        "    \"\"\"Fallback Cookie: usa apenas Cookie de _AUTH_HEADERS (mesmo formato).\"\"\"",
+        "    if 'Cookie' in _AUTH_HEADERS:",
+        "        ch = _AUTH_HEADERS.get('Cookie', '')",
+        "        if '=' in ch:",
+        "            token = ch.split('=', 1)[1].split(';', 1)[0].strip()",
+        "            if token:",
+        "                return token",
+        "    return None",
+        "",
+        "# ===================================================================",
+        "# CLASSE DE AUTENTICAÇÃO ÚNICA",
+        "# ===================================================================",
+        "@schemathesis.auth()",
+        "class ConditionalAuth:",
+        "    def get(self, case: schemathesis.Case, ctx: schemathesis.AuthContext):",
+        '        """Retorna os headers de autenticação apropriados para o endpoint."""',
+        "        path = case.operation.path",
+        "        method = case.operation.method",
+        "        canon_key = (method.upper(), _canonical_path(path))",
+        "        ",
+        "        # 1. FORCE_COOKIE_PATHS",
+        "        if canon_key in FORCE_COOKIE_PATHS:",
+        "            cookie_name = os.getenv('AUTH_COOKIE_NAME', 'auth_token')",
+        "            token = _cookie_fallback()",
+        "            if token:",
+        "                origin = os.getenv('API_BASE_URL', 'http://localhost')",
+        "                return {",
+        "                    'Cookie': f'{cookie_name}={token}',",
+        "                    'Origin': origin,",
+        "                    'Referer': f'{origin}/'",
+        "                }",
+        "            return {}",
+        "        ",
+        "        # 2. Busca info do endpoint",
+        "        info = _lookup_auth(method, path)",
+        "        ",
+        "        if not info:",
+        "            # Sem info → fallback para auth_loader",
+        "            return dict(_AUTH_HEADERS)",
+        "        ",
+        "        # 3. Headers Customizados (prioridade máxima)",
         "        custom = info.get('custom_headers', {})",
         "        if custom:",
-        "            # Modo 1: Headers customizados (ex: x-chave-acesso-sistema)",
+        "            headers = {}",
         "            for hdr_name, env_var in custom.items():",
         "                val = os.getenv(env_var)",
         "                if val:",
         "                    headers[hdr_name] = val",
-        "            headers.pop('Authorization', None)",
-        "            headers.pop('Cookie', None)",
-        "            return headers",
-        "",
+        "            # Retorna IMEDIATAMENTE, sem tentar outros métodos",
+        "            if headers:",
+        "                return headers",
+        "            return {}",
+        "        ",
+        "        # 4. Roles",
         "        roles = info.get('roles', [])",
-        "        if 'REQUISITANTE' in roles:",
-        "            # Modo 2: REQUISITANTE → Bearer",
-        "            token = os.getenv('TOKEN_REQUISITANTE')",
-        "            if not token and 'Authorization' in _AUTH_HEADERS:",
-        "                token = _AUTH_HEADERS['Authorization'].replace('Bearer ', '')",
+        "        origin = os.getenv('API_BASE_URL', 'http://localhost')",
+        "        cookie_name = os.getenv('AUTH_COOKIE_NAME', 'auth_token')",
+        "        _BEARER_ONLY_ROLES = ('REQUISITANTE', 'PAV')",
+        "        _bearer_role = next((r for r in roles if r in _BEARER_ONLY_ROLES), None)",
+        "        ",
+        "        if _bearer_role:",
+        "            # Token especifico da role, com fallback só pra Authorization (mesmo formato)",
+        "            token = _get_token_from_env(_bearer_role) or _bearer_fallback()",
         "            if token:",
-        "                headers['Authorization'] = f'Bearer {token}'",
-        "                headers.pop('Cookie', None)",
-        "            return headers",
+        "                return {'Authorization': f'Bearer {token}'}",
+        "            return {}",
         "        elif roles:",
-        "            # Modo 3: Outras roles → Cookie",
-        "            cookie_name = os.getenv('AUTH_COOKIE_NAME', 'auth_token')",
+        "            # APENAS Cookie para outras roles",
         "            role = roles[0]",
-        "            token = os.getenv(f'TOKEN_{role}')",
-        "            if not token and 'Cookie' in _AUTH_HEADERS:",
-        "                ch = _AUTH_HEADERS.get('Cookie', '')",
-        "                if '=' in ch:",
-        "                    token = ch.split('=', 1)[1]",
-        "            if token:",
-        "                headers['Cookie'] = f'{cookie_name}={token}'",
-        "                headers.pop('Authorization', None)",
-        "                # CsrfProtectionMiddleware exige Origin/Referer válido",
-        "                # para métodos state-changing autenticados via Cookie.",
-        "                _origin = os.getenv('API_BASE_URL', 'http://localhost')",
-        "                headers['Origin'] = _origin",
-        "            return headers",
+        "            # Token especifico da role, com fallback só pra Cookie (mesmo formato)",
+        "            cookie_token = _get_token_from_env(role) or _cookie_fallback()",
+        "            if cookie_token:",
+        "                return {",
+        "                    'Cookie': f'{cookie_name}={cookie_token}',",
+        "                    'Origin': origin,",
+        "                    'Referer': f'{origin}/'",
+        "                }",
+        "            return {}",
+        "        ",
+        "        # 5. Fallback",
+        "        return dict(_AUTH_HEADERS)",
+        "    ",
+        "    def set(self, case: schemathesis.Case, data, ctx: schemathesis.AuthContext) -> None:",
+        '        """Injeta os headers no caso de teste."""',
+        "        if not data:",
+        "            return",
+        "        ",
+        "        case.headers = case.headers or {}",
+        "        ",
+        "        # Remove TODOS os headers de autenticação (case-insensitive)",
+        "        auth_headers = ['authorization', 'cookie', 'x-chave-acesso-sistema']",
+        "        for key in list(case.headers.keys()):",
+        "            if key.lower() in auth_headers:",
+        "                del case.headers[key]",
+        "        ",
+        "        # Injeta os novos headers",
+        "        for k, v in data.items():",
+        "            if v is not None:",
+        "                case.headers[k] = str(v)",
+        "        ",
+        "        # SEMPRE adicionar Origin/Referer se Cookie estiver presente",
+        "        if 'Cookie' in case.headers:",
+        "            origin = os.getenv('API_BASE_URL', 'http://localhost')",
+        "            case.headers.setdefault('Origin', origin)",
+        "            case.headers.setdefault('Referer', f'{origin}/')",
         "",
-        "    # Modo 4: Fallback → auth_loader padrão",
-        "    for k, v in _AUTH_HEADERS.items():",
-        "        headers.setdefault(k, v)",
-        "    if 'Cookie' in headers and method.upper() in ('POST', 'PUT', 'PATCH', 'DELETE'):",
-        "        headers.setdefault('Origin', os.getenv('API_BASE_URL', 'http://localhost'))",
-        "    return headers",
-        "",
-        "",
+        "# ===================================================================",
+        "# HOOK map_query",
+        "# ===================================================================",
         "@schemathesis.hook",
         "def map_query(context, query):",
         '    """Injeta query params fixos para endpoints GET críticos."""',
         "    path = context.operation.path",
         "    if path in _QUERY_FIXTURES:",
         "        base = dict(_QUERY_FIXTURES[path])",
-        "        # Na fase Stateful, 'query' pode vir como um objeto interno",
-        "        # (ex: GeneratedValue) que não é iterável como um dict normal.",
-        "        # Convertendo explicitamente evita",
-        "        # 'TypeError: ... object is not iterable'.",
         "        if query:",
         "            try:",
         "                base.update(dict(query))",
@@ -430,6 +465,20 @@ def generate_hook_file(query_fixtures: dict, auth_headers: dict,
     ]
 
     hook_code = "\n".join(lines) + "\n"
+
+    # Appenda hooks específicos da API, se configurados
+    hooks_extra_path = os.getenv("SCHEMATHESIS_HOOKS_EXTRA", "")
+    if hooks_extra_path:
+        extra_file = Path(hooks_extra_path)
+        if not extra_file.is_absolute():
+            extra_file = Path(__file__).resolve().parents[4] / hooks_extra_path
+        if extra_file.exists():
+            hook_code += "\n# === Hooks específicos da API (SCHEMATHESIS_HOOKS_EXTRA) ===\n"
+            hook_code += extra_file.read_text(encoding="utf-8")
+            print(f"      → Hooks extras carregados: {extra_file}")
+        else:
+            print(f"   ⚠️  SCHEMATHESIS_HOOKS_EXTRA definido mas arquivo não encontrado: {extra_file}")
+
     output_dir.mkdir(parents=True, exist_ok=True)
     hook_path = output_dir / "schemathesis_hooks.py"
     with open(hook_path, "w", encoding="utf-8") as f:
@@ -437,6 +486,40 @@ def generate_hook_file(query_fixtures: dict, auth_headers: dict,
     print(f"   🔧 Hook gerado em: {hook_path}")
     print(f"      → Auth condicional: {len(endpoint_auth_info)} endpoints mapeados")
     return hook_path
+
+def _strip_redundant_auth_header_params(spec: dict) -> int:
+    """Remove parâmetros soltos 'in: header, name: Authorization/Cookie'
+    quando a operação já tem 'security' definido.
+
+    Esses dois mecanismos são redundantes no OpenAPI (o 'security' já
+    diz que o endpoint exige auth), mas quando ambos aparecem juntos o
+    Schemathesis passa a fuzzar 'Authorization'/'Cookie' como parâmetro
+    normal de dado -- inclusive em casos de Coverage/Fuzzing que não são
+    testes de segurança propositais. Isso faz o header (às vezes lixo,
+    às vezes ausente) chegar pronto no hook `map_headers`, que então
+    respeita esse valor "explícito" e nunca injeta a credencial real.
+    Removendo o parâmetro duplicado, o `security` scheme continua
+    documentando a exigência de auth, mas só os checks de segurança
+    dedicados do Schemathesis (missing_required_header, etc.) mexem
+    nesse header -- a geração normal para de fuzzá-lo à toa.
+    """
+    removed = 0
+    global_security = spec.get("security")
+    for path, methods in spec.get("paths", {}).items():
+        for method, op in methods.items():
+            if not (op.get("security") or global_security):
+                continue
+            params = op.get("parameters", [])
+            kept = []
+            for p in params:
+                if p.get("in") == "header" and p.get("name", "").lower() in ("authorization", "cookie"):
+                    removed += 1
+                    continue
+                kept.append(p)
+            if len(kept) != len(params):
+                op["parameters"] = kept
+    return removed
+
 
 def filter_openapi_spec(spec_path: Path, output_dir: Path) -> Path:
     with open(spec_path, 'r') as f:
@@ -456,6 +539,9 @@ def filter_openapi_spec(spec_path: Path, output_dir: Path) -> Path:
     print(f"   ✅ Endpoints mantidos: {filtered_count}")
     print(f"   🚫 Endpoints removidos: {original_count - filtered_count}")
     spec["paths"] = filtered_paths
+    removed_auth_params = _strip_redundant_auth_header_params(spec)
+    if removed_auth_params:
+        print(f"   🔧 Parâmetros Authorization/Cookie redundantes removidos: {removed_auth_params}")
     filtered_spec = output_dir / "openapi_filtered.json"
     with open(filtered_spec, 'w') as f:
         json.dump(spec, f, indent=2)

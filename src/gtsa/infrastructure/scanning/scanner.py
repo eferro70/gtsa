@@ -187,16 +187,17 @@ def analyze_project(
             project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../../..'))
             output_dir = os.path.join(project_root, output_dir)
         output_dir = os.path.abspath(output_dir)
-    
-    # Cria o diretório de output
-    Path(output_dir).mkdir(parents=True, exist_ok=True)
+
+    # O diretório de relatórios só é criado quando houver relatório a gravar
+    # (evita criar 'output/' vazio em execuções que não produzem saída aqui).
     print(f"📁 Diretório de relatórios: {output_dir}")
-    
-    # Limpa arquivos antigos
-    for old in Path(output_dir).glob("*_endpoints.json"):
-        old.unlink(missing_ok=True)
-    for old in Path(output_dir).glob("*_relatorio_api.md"):
-        old.unlink(missing_ok=True)
+
+    # Limpa arquivos antigos (apenas se o diretório já existir)
+    if Path(output_dir).exists():
+        for old in Path(output_dir).glob("*_endpoints.json"):
+            old.unlink(missing_ok=True)
+        for old in Path(output_dir).glob("*_relatorio_api.md"):
+            old.unlink(missing_ok=True)
 
     # -- inicializa contadores --------------------------------------------------
     total_files = 0
@@ -355,6 +356,7 @@ def analyze_project(
 
     # Gera o relatório Markdown no diretório de output
     report_path = Path(output_dir) / f"api_analyse_report_{language}.md"
+    report_path.parent.mkdir(parents=True, exist_ok=True)
     # No step1_scan.py, na geração do relatório:
     with open(report_path, "w", encoding="utf-8") as f:
         f.write(f"# Relatório de Análise de API - {language}\n\n")

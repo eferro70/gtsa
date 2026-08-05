@@ -30,6 +30,7 @@ wheels/
 .ruff_cache/
 .coverage
 htmlcov/
+.hypothesis/
 
 # IDE
 .vscode/
@@ -48,6 +49,9 @@ output-*/
 llm_analyzer.log
 orquestrador-*.log
 *.log
+
+# Inputs
+/apis/*
 
 # Arquivos de ambiente (mantém exemplo versionado)
 .env

@@ -438,9 +438,7 @@ class OpenAPIEnricher:
             with open(krakend_conf, 'r', encoding='utf-8') as f:
                 krakend_data = json.load(f)
             for ep in krakend_data.get("endpoints", []):
-                ep_path = ep.get("endpoint", "")
-                if endpoint_prefix:
-                    ep_path = ep_path.replace("$ENDPOINT_PREFIX", endpoint_prefix)
+                ep_path = ep.get("endpoint", "").replace("$ENDPOINT_PREFIX", endpoint_prefix)
                 ep_method = ep.get("method", "").upper()
                 extra = ep.get("extra_config", {})
                 jose = extra.get("github.com/devopsfaith/krakend-jose/validator")
@@ -461,9 +459,7 @@ class OpenAPIEnricher:
             with open(krakend_conf, 'r', encoding='utf-8') as f:
                 krakend_data = json.load(f)
             for ep in krakend_data.get("endpoints", []):
-                ep_path = ep.get("endpoint", "")
-                if endpoint_prefix:
-                    ep_path = ep_path.replace("$ENDPOINT_PREFIX", endpoint_prefix)
+                ep_path = ep.get("endpoint", "").replace("$ENDPOINT_PREFIX", endpoint_prefix)
                 ep_method = ep.get("method", "").upper()
                 extra = ep.get("extra_config", {})
                 jose = extra.get("github.com/devopsfaith/krakend-jose/validator")

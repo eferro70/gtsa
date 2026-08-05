@@ -18,7 +18,6 @@ class FilesystemArtifactStore:
 
     def __init__(self, settings: Settings) -> None:
         self._base = settings.output_dir
-        self._base.mkdir(parents=True, exist_ok=True)
 
     def path_for(self, relative_path: str) -> Path:
         return self._base / relative_path

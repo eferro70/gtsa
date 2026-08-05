@@ -1,0 +1,102 @@
+{
+  "operation": "POST /api/v1/verify-authentication",
+  "method": "POST",
+  "path_template": "/api/v1/verify-authentication",
+  "fingerprint": "f1768189",
+  "case_id": "vRIvsg",
+  "code_sample": "curl -X POST -H 'Authorization: [Filtered]' -H 'Content-Type: application/json' -d '{\"id\": \"\", \"rawId\": \"\", \"response\": {}, \"type\": \"\", \"clientExtensionResults\": {}}' http://localhost/api/v1/verify-authentication",
+  "sequence": [
+    {
+      "method": "POST",
+      "url": "http://localhost/api/v1/verify-authentication",
+      "url_template": "http://localhost/api/v1/verify-authentication",
+      "headers": {
+        "User-Agent": "schemathesis/4.22.4",
+        "Accept-Encoding": "gzip, deflate",
+        "Accept": "*/*",
+        "Connection": "keep-alive",
+        "Authorization": "[Filtered]",
+        "X-Schemathesis-TestCaseId": "vRIvsg",
+        "Content-Type": "application/json",
+        "Content-Length": "81"
+      },
+      "response": {
+        "status_code": 422,
+        "headers": {
+          "server": "nginx/1.31.2",
+          "date": "Fri, 10 Jul 2026 18:10:46 GMT",
+          "content-type": "application/json; charset=utf-8",
+          "content-length": "112",
+          "connection": "keep-alive",
+          "content-security-policy": "default-src 'self'; base-uri 'self'; frame-ancestors 'none'; object-src 'none'",
+          "etag": "W/\"70-2HGOPwXcWlDww9OLnYC/GaJJFUw\"",
+          "vary": "Origin",
+          "x-krakend": "Version undefined",
+          "x-krakend-completed": "false"
+        },
+        "body": "{\"property\":\"authenticatorResponse\",\"message\":\"Par\u00e2metro 'authenticatorResponse' \u00e9 obrigat\u00f3rio.\",\"data\":null}"
+      },
+      "link": null,
+      "checks": [
+        {
+          "name": "positive_data_acceptance",
+          "status": "failure",
+          "message": "API rejected schema-compliant request\n\nValid data should have been accepted\nExpected: 2xx, 401, 403, 404, 409, 5xx"
+        }
+      ],
+      "meta": {
+        "generation": {
+          "time": 8.985000022221357e-06,
+          "mode": "positive"
+        },
+        "components": {
+          "BODY": "positive"
+        },
+        "phase": {
+          "name": "coverage",
+          "data": {
+            "type": "CoveragePhaseData",
+            "description": "Object with valid 'response' value: Object with only required properties",
+            "location": null,
+            "parameter": "application/json",
+            "parameter_location": "BODY",
+            "scenario": "valid_object"
+          }
+        },
+        "pool_draws": [],
+        "pool_misses": [
+          [
+            "body",
+            "id"
+          ],
+          [
+            "body",
+            "rawId"
+          ]
+        ],
+        "semantic_draws": [],
+        "dictionary_draws": [],
+        "raw_containers": {}
+      },
+      "path": "/api/v1/verify-authentication",
+      "path_parameters": {},
+      "query": {},
+      "case_headers": {
+        "Authorization": "[Filtered]"
+      },
+      "cookies": {},
+      "case_body": {
+        "encoding": "json",
+        "value": {
+          "id": "",
+          "rawId": "",
+          "response": {},
+          "type": "",
+          "clientExtensionResults": {}
+        }
+      },
+      "media_type": "application/json",
+      "parent_index": null
+    }
+  ]
+}

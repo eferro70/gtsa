@@ -1,0 +1,88 @@
+{
+  "operation": "POST /api/documento/verificacao-assinantes-ausentes",
+  "method": "POST",
+  "path_template": "/api/documento/verificacao-assinantes-ausentes",
+  "fingerprint": "99c8a022",
+  "case_id": "V63a6z",
+  "code_sample": "curl -X POST -H 'Content-Type: application/json' -d '{\"idsDocumentos\": [], \"codigosAssinantes\": [{}]}' http://localhost/api/documento/verificacao-assinantes-ausentes",
+  "sequence": [
+    {
+      "method": "POST",
+      "url": "http://localhost/api/documento/verificacao-assinantes-ausentes",
+      "url_template": "http://localhost/api/documento/verificacao-assinantes-ausentes",
+      "headers": {
+        "User-Agent": "schemathesis/4.22.4",
+        "Accept-Encoding": "gzip, deflate",
+        "Accept": "*/*",
+        "Connection": "keep-alive",
+        "X-Schemathesis-TestCaseId": "V63a6z",
+        "Content-Type": "application/json",
+        "Content-Length": "48"
+      },
+      "response": {
+        "status_code": 404,
+        "headers": {
+          "server": "nginx/1.31.3",
+          "date": "Tue, 04 Aug 2026 17:42:45 GMT",
+          "content-type": "text/plain",
+          "content-length": "18",
+          "connection": "keep-alive",
+          "content-security-policy": "default-src 'self'; base-uri 'self'; frame-ancestors 'none'; object-src 'none'",
+          "vary": "Origin",
+          "x-krakend": "Version undefined",
+          "x-krakend-completed": "false"
+        },
+        "body": "404 page not found"
+      },
+      "link": null,
+      "checks": [
+        {
+          "name": "status_code_conformance",
+          "status": "failure",
+          "message": "Undocumented HTTP status code\n\nReceived: 404\nDocumented: 400, 200"
+        }
+      ],
+      "meta": {
+        "generation": {
+          "time": 8.19500201032497e-06,
+          "mode": "negative"
+        },
+        "components": {
+          "BODY": "negative"
+        },
+        "phase": {
+          "name": "coverage",
+          "data": {
+            "type": "CoveragePhaseData",
+            "description": "codigosAssinantes -> Array with invalid items: Incorrect type",
+            "location": "/properties/codigosAssinantes/items/type",
+            "parameter": "application/json",
+            "parameter_location": "BODY",
+            "scenario": "incorrect_type"
+          }
+        },
+        "pool_draws": [],
+        "pool_misses": [],
+        "semantic_draws": [],
+        "dictionary_draws": [],
+        "raw_containers": {}
+      },
+      "path": "/api/documento/verificacao-assinantes-ausentes",
+      "path_parameters": {},
+      "query": {},
+      "case_headers": {},
+      "cookies": {},
+      "case_body": {
+        "encoding": "json",
+        "value": {
+          "idsDocumentos": [],
+          "codigosAssinantes": [
+            {}
+          ]
+        }
+      },
+      "media_type": "application/json",
+      "parent_index": null
+    }
+  ]
+}

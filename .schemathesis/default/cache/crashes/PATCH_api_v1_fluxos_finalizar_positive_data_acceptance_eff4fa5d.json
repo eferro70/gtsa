@@ -1,0 +1,82 @@
+{
+  "operation": "PATCH /api/v1/fluxos/finalizar",
+  "method": "PATCH",
+  "path_template": "/api/v1/fluxos/finalizar",
+  "fingerprint": "eff4fa5d",
+  "case_id": "1jqtM5",
+  "code_sample": "curl -X PATCH -H 'Authorization: [Filtered]' http://localhost/api/v1/fluxos/finalizar",
+  "sequence": [
+    {
+      "method": "PATCH",
+      "url": "http://localhost/api/v1/fluxos/finalizar",
+      "url_template": "http://localhost/api/v1/fluxos/finalizar",
+      "headers": {
+        "User-Agent": "schemathesis/4.22.4",
+        "Accept-Encoding": "gzip, deflate",
+        "Accept": "*/*",
+        "Connection": "keep-alive",
+        "Authorization": "[Filtered]",
+        "X-Schemathesis-TestCaseId": "1jqtM5",
+        "Content-Length": "0"
+      },
+      "response": {
+        "status_code": 405,
+        "headers": {
+          "server": "nginx/1.31.2",
+          "date": "Fri, 10 Jul 2026 16:40:51 GMT",
+          "content-type": "text/plain",
+          "content-length": "22",
+          "connection": "keep-alive",
+          "content-security-policy": "default-src 'self'; base-uri 'self'; frame-ancestors 'none'; object-src 'none'",
+          "vary": "Origin",
+          "x-krakend": "Version undefined",
+          "x-krakend-completed": "false"
+        },
+        "body": "405 method not allowed"
+      },
+      "link": null,
+      "checks": [
+        {
+          "name": "positive_data_acceptance",
+          "status": "failure",
+          "message": "API rejected schema-compliant request\n\nValid data should have been accepted\nExpected: 2xx, 401, 403, 404, 409, 5xx"
+        }
+      ],
+      "meta": {
+        "generation": {
+          "time": 3.599499905249104e-05,
+          "mode": "positive"
+        },
+        "components": {},
+        "phase": {
+          "name": "coverage",
+          "data": {
+            "type": "CoveragePhaseData",
+            "description": "Default positive test case",
+            "location": null,
+            "parameter": null,
+            "parameter_location": null,
+            "scenario": "default_positive_test"
+          }
+        },
+        "pool_draws": [],
+        "pool_misses": [],
+        "semantic_draws": [],
+        "dictionary_draws": [],
+        "raw_containers": {}
+      },
+      "path": "/api/v1/fluxos/finalizar",
+      "path_parameters": {},
+      "query": {},
+      "case_headers": {
+        "Authorization": "[Filtered]"
+      },
+      "cookies": {},
+      "case_body": {
+        "encoding": "none"
+      },
+      "media_type": null,
+      "parent_index": null
+    }
+  ]
+}

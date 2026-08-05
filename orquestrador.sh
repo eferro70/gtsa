@@ -12,17 +12,20 @@ if [[ -z "$API_NAME" ]]; then
     echo "❌ Uso: $0 <api_name>"
     exit 1
 fi
-LOGFILE="orquestrador-${API_NAME}.log"
 REPORTS_DIR="output-${API_NAME}"
 LLM_MODEL="gemma"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 OPENAPI_LOCAL="$SCRIPT_DIR/openapi.json"
+mkdir -p "$SCRIPT_DIR/logs"
+LOGFILE="$SCRIPT_DIR/logs/${API_NAME}.log"
 
 # Garante que o pacote 'gtsa' (layout src/) seja importável sem instalação.
 export PYTHONPATH="$SCRIPT_DIR/src:${PYTHONPATH:-}"
+# Comando Python padronizado para todos os passos do pipeline.
+PYTHON_CMD=(env PYTHONPATH="$PYTHONPATH" python3)
 
-# Carrega variáveis de ambiente do arquivo .env.${API_NAME}
-ENV_FILE="$(dirname "${BASH_SOURCE[0]}")/.env.${API_NAME}"
+# Carrega variáveis de ambiente do arquivo apis/${API_NAME}/.env
+ENV_FILE="$SCRIPT_DIR/apis/${API_NAME}/.env"
 if [[ -f "$ENV_FILE" ]]; then
     set +u
     # shellcheck source=.env.${API_NAME}
@@ -32,6 +35,10 @@ else
     echo "⚠️  Arquivo .env.${API_NAME} não encontrado em: $ENV_FILE"
     exit 1
 fi
+
+# Força isolamento por API e evita fallback acidental para "output/".
+REPORTS_DIR="output-${API_NAME}"
+export REPORTS_DIR
 
 # Verifica se API_SOURCE está definido
 if [[ -z "${API_SOURCE:-}" ]]; then
@@ -111,14 +118,15 @@ main() {
 
     # Passo 1: Scan inicial
     run_step 1 "Scan do projeto" \
-        python3 -m gtsa.interfaces.cli.step1_scan -i "$API_SOURCE" \
+        "${PYTHON_CMD[@]}" -m gtsa.interfaces.cli.step1_scan -i "$API_SOURCE" \
         --output-dir "$REPORTS_DIR" \
+        ${API_LANGUAGE:+--language "$API_LANGUAGE"} \
         ${PYTHON_DEBUG:+--debug}
 
     # Passo 2: Geração de OpenAPI (opcional)
     if [[ "${STEP_2_ENABLED:-false}" == "true" ]]; then
         run_step 2 "Geração automática da especificação OpenAPI" \
-            python3 -m gtsa.interfaces.cli.step2_openapi \
+            "${PYTHON_CMD[@]}" -m gtsa.interfaces.cli.step2_openapi \
             --output-dir "$REPORTS_DIR" \
             --env-file "$ENV_FILE"
     else
@@ -128,7 +136,7 @@ main() {
     # Passo 3: [LLM] Dados de exemplo
     if [[ "$STEP_3_ENABLED" == "true" ]]; then
         run_step 3 "[LLM] Geração de dados de exemplo para testes" \
-            python3 -m gtsa.interfaces.cli.step3_dados_exemplo "$OPENAPI_LOCAL" \
+            "${PYTHON_CMD[@]}" -m gtsa.interfaces.cli.step3_dados_exemplo "$OPENAPI_LOCAL" \
             --only-with-body \
             --env-file "$ENV_FILE" \
             --llm-backend "$LLM_BACKEND" \
@@ -146,7 +154,7 @@ main() {
 
     # Passo 4: Análise de risco
     run_step 4 "Análise de risco e enriquecimento" \
-        python3 -m gtsa.interfaces.cli.step4_analyzer_and_enricher "$SCAN_DIR/all_endpoints.json" \
+        "${PYTHON_CMD[@]}" -m gtsa.interfaces.cli.step4_analyzer_and_enricher "$SCAN_DIR/all_endpoints.json" \
         --output-dir "$REPORTS_DIR" \
         --openapi "$OPENAPI_LOCAL" \
         --env-file "$ENV_FILE" \
@@ -166,7 +174,7 @@ main() {
     fi
 
     STEP5_EXIT=0
-    python3 -m gtsa.interfaces.cli.step5_schemathesis_with_data \
+    "${PYTHON_CMD[@]}" -m gtsa.interfaces.cli.step5_schemathesis_with_data \
         --output-dir "$REPORTS_DIR" \
         --env-file "$ENV_FILE" \
         $ONLY_HIGH_RISK_FLAG \
@@ -174,7 +182,7 @@ main() {
 
     # Passo 6: Relatório
     run_step 6 "Gerar relatório de testes" \
-        python3 -m gtsa.interfaces.cli.step6_gerar_relatorio_markdown \
+        "${PYTHON_CMD[@]}" -m gtsa.interfaces.cli.step6_gerar_relatorio_markdown \
         --output-dir "$REPORTS_DIR" \
         --env-file "$ENV_FILE" \
         ${FULL_REPORT:+--full} \
